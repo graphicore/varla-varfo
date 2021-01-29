@@ -1,0 +1,122 @@
+@font-face {
+    font-family: 'RobotoFlex';
+    src: url('../fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'AmstelVar';
+    src: url('../fonts/Amstelvar/Amstelvar-Roman[wdth,wght,opsz].ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'AmstelVar';
+    src: url('../fonts/Amstelvar/Amstelvar-Italic[wdth,wght,opsz].ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+}
+
+:root{
+    --display-wdth: 100;
+    --display-opsz: 16;
+    --display-GRAD: 88;
+
+    --display-wgth-start: 100;
+    --display-wgth-end: 900;
+
+    /* can't use this per @font-face rule */
+    font-synthesis: none;
+}
+
+@keyframes animation-00-testing {
+  from {
+    font-variation-settings: 'wght' var(--display-wgth-start),
+                             'wdth' var(--display-wdth),
+                             'opsz' var(--display-opsz),
+                             'GRAD' var(--display-GRAD);
+  }
+  to {
+    font-variation-settings: 'wght' var(--display-wgth-end),
+                             'wdth' var(--display-wdth),
+                             'opsz' var(--display-opsz),
+                             'GRAD' var(--display-GRAD);
+
+  }
+}
+
+
+/**
+ * vw 	1% of the viewport's width.
+ * We can calculate with different widht/dimension units!
+ * But we are not be able to remove the unit from a calculation
+ * (e.g. by dividing by 1px). But we'd need a unitless number
+ * to use it in other calculations) :-(
+ */
+
+.js-based {
+    --animation-position: var(--animation-position-js);
+}
+.media-query-based{
+    --animation-position: var(--animation-position-mediaq);
+}
+
+
+h1 {
+    font-family: "AmstelVar", monospace; /* monospace to make it pop if it doesn't load! */
+    font-size: 5rem;
+
+    /* This does not apply because of the  "animation-fill-mode: both;"
+     * which overrides it. It may be an thing for a fallback.
+     */
+    font-variation-settings: 'wght' var(--display-wght-start),
+                             'wdth' var(--display-wdth),
+                             'opsz' var(--display-opsz),
+                             'GRAD' var(--display-GRAD);
+
+    animation-name: animation-00-testing;
+    animation-duration: 1s;
+    /* Maximally verbose to make it good to read:*/
+
+    /* With these min and max positions, we'll see redundancies in the
+     * exploration examples, but eventually, it will be coming centrally
+     * from the compiler.
+     */
+    --absolute-min-animation-pos: 440 ; /* offset */
+    --absolute-max-animation-pos: 1400; /* actual max screen width that is considered */
+    --relative-max-animation-pos: calc(var(--absolute-max-animation-pos) - var(--absolute-min-animation-pos));
+    --relative-animation-pos: calc(var(--animation-position) - var(--absolute-min-animation-pos));
+    --animation-progression: calc(var(--relative-animation-pos) / var(--relative-max-animation-pos));
+    /* typetura does: calc(-1s * var(--tt-bind) / var(--tt-max))
+     * --tt-max, default: 1600 (pixes screen width)
+     * --tt-bind: element.style.setProperty('--tt-bind', element.offsetWidth);
+     *
+     * NOTE: the -1s part does two things:
+     *       * use a negative delay to jump to the right position in the animation
+     *       * add a unit (s, second) to the unitless --animation-progression
+     */
+    animation-delay: calc(-1s * var(--animation-progression));
+    animation-play-state: paused;
+    /*needed to apply --animation-position at 0 and 1
+     I.e. the values of @keyframes "to" and "from" apply as styles
+     before and after the animation duration.
+     */
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+}
+
+.short-form-example {
+  animation:
+    var(--animation-name) /*animation-name*/
+    1s /*animation-duration*/
+    var(--animation-timing-function) /*animation-timing-function*/
+    1 /* animation-iteration-count */
+    calc(-1s * var(--animation-progression)) /*animation-delay*/
+    both /*animation-fill-mode*/
+    paused /*animation-play-state*/;
+}
+

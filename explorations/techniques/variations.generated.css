@@ -1,0 +1,53 @@
+:root {
+    --animation-position-mediaq: 400
+}
+@media (min-width: 500px) {
+    :root {
+        --animation-position-mediaq: 500
+    }
+}
+@media (min-width: 600px) {
+    :root {
+        --animation-position-mediaq: 600
+    }
+}
+@media (min-width: 700px) {
+    :root {
+        --animation-position-mediaq: 700
+    }
+}
+@media (min-width: 800px) {
+    :root {
+        --animation-position-mediaq: 800
+    }
+}
+@media (min-width: 900px) {
+    :root {
+        --animation-position-mediaq: 900
+    }
+}
+@media (min-width: 1000px) {
+    :root {
+        --animation-position-mediaq: 1000
+    }
+}
+@media (min-width: 1100px) {
+    :root {
+        --animation-position-mediaq: 1100
+    }
+}
+@media (min-width: 1200px) {
+    :root {
+        --animation-position-mediaq: 1200
+    }
+}
+@media (min-width: 1300px) {
+    :root {
+        --animation-position-mediaq: 1300
+    }
+}
+@media (min-width: 1400px) {
+    :root {
+        --animation-position-mediaq: 1400
+    }
+}

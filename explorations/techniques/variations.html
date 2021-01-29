@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+
+    <script async src="./variations.js"></script>
+    <link rel="stylesheet" href="./variations.generated.css">
+    <link rel="stylesheet" href="./variations.css">
+</head>
+<body>
+  <p>These examples explore a Typetura inspired style of changing CSS
+  <code>font-variation-settings</code> via CSS keyframe <code>animation</code>.</p>
+  <p>
+  Typetura influnced using CSS-Animations that are paused (not animating)
+  and which animation position is accessed via a negative value for CSS
+  <code>animation-delay</code>, this is used to access a specific point in
+  the animation timeline. That animation position in these cases depends on
+  screen-size, more specifically, screen-width.
+  </p>
+  <p>
+  This should help with reducing <code>@media</code> queries based break points
+  because we can create a fluid transitions when screen sizes change.
+  </p>
+  <hr />
+  <div>
+  Screen width/animation-position via JavaScript onResize (Typetura-style).
+  <h1 class="js-based">Typography</h1>
+  </div>
+
+  <div>
+  Screen width via @media queries (generated), stepped at 100px increments.<br />
+  This would work without client side javascript and increments could also be 10px,
+  barely noticable.
+  <h1 class="media-query-based">Typography</h1>
+
+  </div>
+  </body>
+</html>
