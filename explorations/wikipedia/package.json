@@ -1,0 +1,16 @@
+{
+  "name": "variable-layout-editor",
+  "version": "0.0.0",
+  "description": "Editor for variable layouts.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lasse Fister <commander@graphicore.de>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "simple-http-server": "^0.1.8",
+    "wtf-plugin-html": "^0.2.1",
+    "wtf_wikipedia": "^8.5.1"
+  }
+}
