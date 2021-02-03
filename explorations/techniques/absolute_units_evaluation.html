@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./main.css">
+    <style>
+
+    .scale-container {
+        margin: 1em auto;
+        padding: 1em;
+        background: lightgrey;
+    }
+
+    .scale{
+        display: inline-flex;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        white-space: nowrap;
+    }
+    .scale li{
+        display: block;
+        width: 1cm;
+        height: 1cm;
+        margin:0;
+        padding: 0;
+    }
+
+    .scale li:nth-child(2n+1){
+        background: black
+    }
+    .scale li:nth-child(2n){
+        background: white
+    }
+    .scale-transformed{
+        transform-origin: left top;
+    }
+    .result{
+        text-decoration: underline double 2px;
+    }
+    </style>
+    <script>
+function initMeasurementUI(elem){
+    var val = elem.getElementsByClassName('val')[0]
+      , unit = elem.getElementsByClassName('unit')[0]
+      ;
+    function setTextContent(selector, content) {
+        for(let target of document.querySelectorAll(selector))
+            target.textContent = content;
+    }
+    function setMeasurements() {
+        // allow for "," (comma) as decimal separator
+        var inputValue = parseFloat(val.value.replace(',', '.'))
+          , centimeters
+          , ratio
+          ;
+        if(inputValue !== inputValue) // NaN
+            return
+        switch(unit.value) {
+            case 'm':
+                centimeters = inputValue * 100;
+                break;
+            case 'cm':
+                centimeters = inputValue;
+                break;
+            case 'mm':
+                centimeters = inputValue / 10;
+                break
+            case 'in':
+                centimeters = inputValue * 2.54;
+                break;
+        }
+        scaleFactor = 10 / centimeters;
+        for(let scale of document.querySelectorAll('.scale-transformed')) {
+            scale.style.setProperty('transform', `scale(${scaleFactor})`);
+            scale.parentElement.style.setProperty('height', `calc( 1cm * ${scaleFactor})`);
+        }
+
+        var CSS_PPCM = 96 / 2.54;
+        for(let [selector, content] of [
+                ['.scale-factor', scaleFactor]
+              , ['.css-ppcm', CSS_PPCM]
+              , ['.screen-width', window.screen.width]
+              , ['.screen-height', window.screen.height]
+              , ['.css-display-width-cm', window.screen.width / CSS_PPCM]
+              , ['.css-display-height-cm', window.screen.height / CSS_PPCM]
+              , ['.device-width-cm', window.screen.width / CSS_PPCM / scaleFactor]
+              , ['.device-height-cm', window.screen.height / CSS_PPCM / scaleFactor]
+              , ['.device-pixel-ratio', window.devicePixelRatio]
+              , ['.device-ppi', 96 * scaleFactor * window.devicePixelRatio]
+              , ['.measurement-centimeters', centimeters]
+        ])
+            setTextContent(selector, content);
+    }
+    for(let ui of [val, unit])
+        ui.addEventListener('input', setMeasurements);
+    setMeasurements(); // initial
+}
+window.onload = () => {
+    for(let ui of document.getElementsByClassName('measurements'))
+        initMeasurementUI(ui);
+}
+    </script>
+</head>
+<body>
+    <h1>Real World Absolute Length Units Evaluation</h1>
+
+    <p>
+    An important link to read is <a href="https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Values_and_units#lengths">
+    CSS Values and units: lengths</a> at MDN. We can take from that: The
+    definition of <em>Absolute length units</em> is bound to physical/real
+    world measurements of length:
+    </p>
+    <quote>1 in = 2.54 cm = 96 px</quote>
+    <p>Even the size of a pixel is bound to a real world physical size,
+    1 px ~ 0.378 mm.</p>
+    <p>However, there is a fundamental problem, as old as computer displays.
+    <strong>Browser CSS-units don't relate to physical units</strong> as
+    defined by the International System of Units (SI). Wikipedia discusses
+    some of it in <a href="https://en.wikipedia.org/wiki/Dots_per_inch">Dots
+    per inch</a>. <em>NOTE: for computer displays some prefer talking about
+    PPI (pixels per inch) rather than DPI (dots per inch), which often is
+    interchangeable in meaning.</em> The root lies in different
+    <a href="https://en.wikipedia.org/wiki/Pixel_density">pixel densities</a>
+    per display and becomes more apparent since more and more "high DPI"
+    displays are around.
+    </p>
+    <p>Essentially, CSS absolute length units are fantasy units that don't
+    have anything to do with physical real world units. Each device with
+    a different PPI will have a different manifestation of e.g. a centimeter,
+    unless it has been calibrated/compensated in some way.
+    </p>
+
+    <h2>What the display "knows" about the world:</h2>
+    <p>
+    A LED-panel can inform the computer of its PPI, in my case on a GNU/Linux:</p>
+    <pre><code>
+$ xrandr | grep -w connected
+eDP-1 connected primary 3200x1800+0+0 (normal left inverted right x axis y axis) 293mm x 165mm
+</code></pre>
+    <p>This is enough information to calculate a PPI of 277.41 ( ~ <code>3200 / (29.3 / 2.54)</code>)</p>
+    <p>
+    However, a digital projector usually can't tell: its PPI changes with
+    the focal length of the lens and the distance to the wall/screen and
+    that info is usually not available (not to the projector nor to the connected computer).
+    An example:</p>
+    <pre><code>
+$ xrandr | grep -w connected
+HDMI-2 connected 1920x1080+3200+0 (normal left inverted right x axis y axis) 1600mm x 900mm
+</code></pre>
+    <p>The actual measurements of the projected image were:
+    <code>~ 2570mm x 1430 mm</code> (not exactly 16:9, but close enough).
+    So, the real world measurements were ~ 1.6 (or 8/5) times bigger than
+    the reported values.
+    </p>
+    <p><strong>CAVEAT:</strong> even though the operating system may know the physical
+    display size and resolution, the browser doesn't expose that information.</p>
+    <h2>How the browser compensates high DPI displays</h2>
+    <p>In Javascript/DOM <code>window.devicePixelRatio</code> (aka. Dots Per
+    Pixel/dppx) describes the ratio used to map CSS pixels to device/screen/physical
+    pixels. This is how websites can be designed using pixels (or centimeters),
+    without knowing exactly how big a pixel actually is. It also is just
+    a really rough approximation that does not match 96 pixels = 1 inches
+    in real world units on most devices . On my Laptop in front of me the
+    <code>window.devicePixelRatio</code> is 2, which is caused by having
+    set a scale of 200 % for my display in the Gnome 3 settings menu.
+    zooming into the web page also changes this number. At 150 % browser
+    zoom, I get a devicePixelRatio of 3, this matches real world units
+    to CSS units a bit better.</p>
+    <h3>The limits of control</h3>
+    <p>To decide my scale factor in Gnome 3, I just used a setting that
+    suited me, 100 % being too small to read comfortably. I never measured
+    any real values, nor can I set other values than 100 % or 200 % (there's
+    a 300 % option, but it has the same effect as 200 %, probably a bug).</p>
+
+    <h2>Experiment: calibrate to real world units</h2>
+    <p>This scale is marked up to be 10 cm wide in CSS units.</p>
+    <div class="scale-container">
+        <ol class="scale scale-raw"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ol>
+    </div>
+    <p>Measure the scale above on your physical screen with a physical ruler.</p>
+    <div class="measurements">
+        <label>Enter your measurement: <input class="val" type="text" value="10" /></label>
+        <select class="unit"><option>cm</option><option>mm</option><option>in</option><option>m</option></select>
+    </div>
+    <p>If the measurement was correct, this scale is now 10 cm wide in real work units.</p>
+    <div class="scale-container">
+        <ol class="scale scale-transformed"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ol>
+    </div>
+    <pre><code><strong>Scale Factor</strong> = CSS Value / Real World Value <em>(the measurement)</em>
+<strong>Scale Factor</strong> = 10 cm / <span class="measurement-centimeters"></span> cm
+<strong>Scale Factor</strong> = <span class="result"><span class="scale-factor"></span></span>
+</code></pre>
+    <p>With this information, we can calculate the actual device PPI fairly accurately:</p>
+    <pre><code><strong>CSS-PPI</strong> = 96 <em>(constant as shown above)</em>
+<strong>Device-PPI</strong> = CSS_PPI * Scale-Factor * window.devicePixelRatio
+<strong>Device-PPI</strong> = 96 * <span class="scale-factor"></span> * <span class="device-pixel-ratio"></span>
+<strong>Device-PPI</strong> = <span class="result"><span class="device-ppi"></span></span>
+</code></pre>
+
+    <p>And also we can calculate the real world display size(<a
+                    href="https://bugzilla.mozilla.org/show_bug.cgi?id=1661540"
+                    title="There's a bug for screen.width/height on Firefox with Wayland">!</a>):</p>
+    <pre><code><strong>CSS-PPCM (pixel per cm)</strong> = 96 / 2.54
+<strong>CSS-PPCM (pixel per cm)</strong> = <span class="css-ppcm"></span>
+
+<strong>CSS-Display-Width (in CSS-cm)</strong> = window.screen.width / CSS-PPCM
+<strong>CSS-Display-Width (in CSS-cm)</strong> = <span class="screen-width"></span> / <span class="css-ppcm"></span>
+<strong>CSS-Display-Width (in CSS-cm)</strong> = <span class="css-display-width-cm"></span> cm
+
+<strong>Device-width</strong> = CSS-Display-Width / Scale-Factor
+<strong>Device-width</strong> = <span class="css-display-width-cm"></span> / <span class="scale-factor"></span>
+<strong>Device-width</strong> = <span class="result"><span class="device-width-cm"></span> cm</span>
+
+<strong>CSS-Display-Height (in CSS-cm)</strong> = window.screen.height / CSS-PPCM
+<strong>CSS-Display-Height (in CSS-cm)</strong> = <span class="screen-height"></span> / <span class="css-ppcm"></span>
+<strong>CSS-Display-Height (in CSS-cm)</strong> = <span class="css-display-height-cm"></span> cm
+
+<strong>Device-height</strong> = CSS-Display-Height / Scale-Factor
+<strong>Device-height</strong> = <span class="css-display-height-cm"></span> / <span class="scale-factor"></span>
+<strong>Device-height</strong> = <span class="result"><span class="device-height-cm"></span> cm</span>
+</code></pre>
+
+
+<h2>Conclusion</h2>
+<p><strong>Bad:</strong> There's no relation to real world units in the
+browser. Operating Systems may be able to know real world measurements,
+depending if the display reports them correctly, but they also don't make
+use of it. Operating System scaling support is sketchy, but also not intended
+for calibration, display zoom settings are rather just used to make the screen
+contents readable at all on "high DPI" displays.</p>
+
+<p><strong>Good:</strong> A simple widget and a simple measurement performed
+by the user is enough to establish a conversion factor that is sufficient
+to map between the real world units and abstract computer units. That widget
+can be deployed on a per app or website basis. With convincing applications for
+real world measurements a general browser support API and even some kind
+of operating system support is thinkable, especially because the majority
+of displays already can report correct measurements.</p>
+</body>
+
+<h3>Calibration use cases</h3>
+<p>This list unfinished, please submit suggestions via <a href="https://github.com/graphicore/varla-vafo/issues">GitHub</a>.</p>
+
+<ul>
+<li>Design for correct sizes on screens and improve readability etc. E.g.
+font sizes and optical sizes of type are specified in Point (1 pt = 1/72 in),
+if a browser Point is smaller or bigger than a real world Point, optical
+size is not picked optimally.</li>
+<li>Give designers a correct preview impression of a website at a specific
+screen size. E.g. for a specific phone model.</li>
+<li>Make size matching simple. E.g. for online shopping, decide the correct
+size of gloves by matching the users hand on the screen directly.</li>
+</ul>
+
+<h3>Calibration-Widget ideas</h3>
+<p>This list unfinished, please submit suggestions via <a href="https://github.com/graphicore/varla-vafo/issues">GitHub</a>.</p>
+<ul>
+<li>Use a ruler to measure a length defined in browser-space units. As shown above.</li>
+<li>Resize a widget to match a real world item of known proportions, e.g.
+an ATM-card is 85.60 mm × 53.98 mm or a one US Dollar bill is 6.14 in×  2.61 in.</li>
+</ul>
+
+
+</html>

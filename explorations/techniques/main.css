@@ -1,0 +1,45 @@
+
+
+@font-face {
+    font-family: 'RobotoFlex';
+    src: url('../fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'AmstelVar';
+    src: url('../fonts/Amstelvar/Amstelvar-Roman[wdth,wght,opsz].ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'AmstelVar';
+    src: url('../fonts/Amstelvar/Amstelvar-Italic[wdth,wght,opsz].ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+}
+
+
+html{
+    font-family: "RobotoFlex";
+}
+
+html {
+    background: #f6f5f4;
+}
+
+body {
+    max-width: 60rem;
+    padding: 1em;
+    margin: auto;
+    overflow: visible;
+}
+
+h1, h2, h3, h4{
+    font-family: "AmstelVar", monospace;
+    font-weight: 700;
+}
