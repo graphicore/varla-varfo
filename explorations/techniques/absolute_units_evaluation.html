@@ -3,9 +3,18 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
+    <!-- On my tiny iPhone 6 SE calibration doesn't work like this.
+    It scales wildly around depending of content size, and then it doesn't
+    return to the same min scale factor as when measuring.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Real World Absolute Length Units Evaluation</title>
     <link rel="stylesheet" href="./main.css">
     <style>
+
+    body {
+        overflow: scroll;
+    }
 
     .scale-container {
         margin: 1em auto;
@@ -239,7 +248,6 @@ can be deployed on a per app or website basis. With convincing applications for
 real world measurements a general browser support API and even some kind
 of operating system support is thinkable, especially because the majority
 of displays already can report correct measurements.</p>
-</body>
 
 <h3>Calibration use cases</h3>
 <p>This list unfinished, please submit suggestions via <a href="https://github.com/graphicore/varla-vafo/issues">GitHub</a>.</p>
@@ -263,5 +271,5 @@ size of gloves by matching the users hand on the screen directly.</li>
 an ATM-card is 85.60 mm × 53.98 mm or a one US Dollar bill is 6.14 in × 2.61 in.</li>
 </ul>
 
-
+</body>
 </html>
