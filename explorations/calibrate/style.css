@@ -1,0 +1,122 @@
+.widget_calibrate {
+    background: khaki;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    max-height: 100vh;
+    overflow: auto;
+    padding: 1.5em .5em 3em;
+}
+
+.widget-calibrate__method-ruler .widget-calibrate__resize{
+    display: none;
+}
+
+.widget-calibrate__method-resize .widget-calibrate__ruler{
+    display: none;
+}
+
+.widget-calibrate__is_portrait .widget-calibrate__ruler-container {
+    display: flex;
+}
+
+.widget-calibrate__ruler-val_label{
+    flex: 0;
+}
+.widget-calibrate__ruler-val{
+    width: 4em;
+}
+
+.widget-calibrate__ruler-measure_box:before,
+.widget-calibrate__ruler-feedback:before {
+    display: block;
+    position: relative;
+}
+
+
+.widget-calibrate__is_landscape .widget-calibrate__ruler-measure_box,
+.widget-calibrate__is_landscape .widget-calibrate__ruler-feedback {
+    margin-top: 2em;
+    margin-bottom: .5em;
+    height: 2em;
+    background-image: linear-gradient(90deg, black 50%, white 50%);
+    /* background-size: set in Javascript according to unit. */
+}
+
+.widget-calibrate__is_landscape .widget-calibrate__ruler-measure_box:before,
+.widget-calibrate__is_landscape .widget-calibrate__ruler-feedback:before{
+    top: -1.7em;
+}
+
+.widget-calibrate__is_portrait .widget-calibrate__ruler-measure_box,
+.widget-calibrate__is_portrait .widget-calibrate__ruler-feedback {
+    margin-left: 2em;
+    margin-right: .5em;
+    width: 2em;
+    background-image: linear-gradient(0deg, black 50%, white 50%);
+    /* background-size: set in Javascript according to unit. */
+}
+
+.widget-calibrate__is_portrait .widget-calibrate__ruler-measure_box:before,
+.widget-calibrate__is_portrait .widget-calibrate__ruler-feedback:before{
+    writing-mode: sideways-lr;
+    left: -1.7em;
+    margin-top: 1em;
+}
+
+.widget-calibrate__is_landscape .widget-calibrate__ruler-measure_box:before {
+    content: '← measure horizontally →';
+}
+.widget-calibrate__is_portrait .widget-calibrate__ruler-measure_box:before {
+    content: '← measure vertically →';
+}
+.widget-calibrate__ruler-feedback:before {
+    content: 'Scaled to real world size:';
+}
+
+
+.widget-calibrate__ruler-container,
+.widget-calibrate__resize-container {
+    background-color: darkgrey;
+    overflow: auto;
+    padding: .3em;
+    margin: 1em 0;
+}
+
+.widget-calibrate__resize-box{
+    background-color: white;
+    padding: 0;
+    margin: auto;
+    position: relative;
+    overflow: visible;
+}
+
+.widget-calibrate__set-orientation{
+  visibility: hidden;
+  position: absolute;
+  cursor: pointer;
+}
+
+.widget-calibrate__set-orientation ~ span:after {
+  content: " Landscape";
+}
+
+.widget-calibrate__set-orientation ~ span:before {
+  display: inline-block;
+  content: " ";
+  background: lightgrey;
+  border: 1px solid black;
+  border-radius: .1em;
+  vertical-align:middle;
+  width: 1em;
+  height: .5em;
+}
+
+.widget-calibrate__set-orientation:checked ~ span:after {
+  content: " Portrait";
+}
+.widget-calibrate__set-orientation:checked ~ span:before {
+  width: .5em;
+  height: 1em;
+}
