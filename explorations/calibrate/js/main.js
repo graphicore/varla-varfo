@@ -249,6 +249,21 @@ class CalibrationWidget{
                                              `${scaledUnit} ${scaledUnit}`);
     }
 
+    setRulerChange() {
+        var inputValue = parseFloat( this.rulerVal.value.replace(',', '.') )
+          , inputValuePx
+          , cssValuePx = this.isPortrait
+                ? this.rulerMeasureBox.clientHeight
+                : this.rulerMeasureBox.clientWidth
+          , ratio
+          ;
+        if(inputValue !== inputValue) // NaN
+            return;
+        inputValuePx = CalibrationWidget.unitToPx(inputValue, this.rulerUnit.value);
+        this.scale2real = cssValuePx / inputValuePx;
+        this._updateRulerFeedback();
+    }
+
     _setup() {
         console.log('_setup', this.currentMethod);
 
@@ -408,9 +423,8 @@ class CalibrationWidget{
             if(this.pinchstate.currentTouches.has(touch.identifier))
                 this.pinchstate.currentTouches.delete(touch.identifier);
         }
-        // if it's not an event it os called as a handler and
-        //
-        if(event && this.pinchstate.currentTouches.size == 2)
+
+        if(this.pinchstate.currentTouches.size == 2)
             return;
 
         this.container.style.background = 'cyan';
@@ -422,7 +436,7 @@ class CalibrationWidget{
         let [
             {pageX: x1, pageY: y1},
             {pageX: x2, pageY: y2}
-        ] = Array.from(touches.values());
+        ] = touches.values();
         return Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
     }
 
@@ -451,22 +465,6 @@ class CalibrationWidget{
         this.container.style.background = 'lime';
         this.updateResizeBox(width, height);
     }
-
-    setRulerChange() {
-        var inputValue = parseFloat( this.rulerVal.value.replace(',', '.') )
-          , inputValuePx
-          , cssValuePx = this.isPortrait
-                ? this.rulerMeasureBox.clientHeight
-                : this.rulerMeasureBox.clientWidth
-          , ratio
-          ;
-        if(inputValue !== inputValue) // NaN
-            return;
-        inputValuePx = CalibrationWidget.unitToPx(inputValue, this.rulerUnit.value);
-        this.scale2real = cssValuePx / inputValuePx;
-        this._updateRulerFeedback();
-    }
-
 }
 function main() {
     // initCalibrate should only perform if the calibration widget is not already
