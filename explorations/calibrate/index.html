@@ -3,14 +3,19 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
+
     <!-- On my tiny iPhone 6 SE calibration doesn't work like this.
     It scales wildly around depending of content size, and then it doesn't
     return to the same min scale factor as when measuring.
 
     FIXME: Seems like this way landscape orientation uses another scale as
-    portrait.
+    portrait NOTE: that impression was caused by text-size-adjust.
     -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+
     <title>Calibration of Browser Length-Units</title>
     <link rel="stylesheet" href="../techniques/main.css">
     <link rel="stylesheet" href="./style.css">
@@ -32,6 +37,14 @@
     <p>First things first, click this button:
         <button class="ui-init-calibrate">calibrate</button>.</p>
 
+
+    <p><em>Note to me</em>
+    The behavior of the "auto" algorithm of
+    <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/text-size-adjust"><code>text-size-adjust</code></a>
+    is a case where we need a good automation in <code>font-optical-sizing</code>
+    to automatically adjust, <code>font-variation-settings</code> won't do it in that case.
+
+    </p>
 
 
 </body>
