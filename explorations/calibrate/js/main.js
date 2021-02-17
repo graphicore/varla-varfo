@@ -116,6 +116,7 @@ class CalibrationWidget{
         this.rulerShowUnitAll = dom.querySelectorAll('.widget-calibrate__ruler__show-unit');
 
         this.dragstate = null;
+        this.pinchstate = null;
         this.scale2real = 1;
         this._intialize();
     }
@@ -126,7 +127,12 @@ class CalibrationWidget{
         selectAddEvent(this.container, '.widget-calibrate__button_done', 'click', ()=>this.close());
 
         addEvent(this.selectMethod, 'change', ()=>this.setMethod());
-        addEvent(this.resizeBox.parentElement, ['mousedown', 'touchstart'], (e)=>this.dragStart(e));
+        addEvent(this.resizeBox.parentElement, 'mousedown', (e)=>this.dragStart(e));
+        addEvent(this.resizeBox.parentElement, 'touchstart', (e)=>this.pinchStart(e));
+        addEvent(this.resizeBox.parentElement, 'touchmove', (e)=>this.pinchMove(e));
+        addEvent(this.resizeBox.parentElement, ['touchend', 'touchcancel'], (e)=>this.pinchEnd(e));
+        addEvent(this.resizeBox.parentElement, 'touchstart', (e)=>this.pinchStart(e));
+
         addEvent(this.resizeSelectObject, 'change', (_)=>this._setupResizeBox());
         addEvent(this.setOrientation, 'change', (_)=>this._setup());
 
@@ -266,9 +272,11 @@ class CalibrationWidget{
 
     setMethod() {
         var makeClass = method=>`widget-calibrate__method-${method}`;
-
-        for(let method of this.selectMethod.getElementsByTagName('option'))
+        for(let method of this.selectMethod.getElementsByTagName('option')){
+            if(method === this.currentMethod)
+                continue;
             this.container.classList.remove(makeClass(method.value));
+        }
         this.container.classList.add(makeClass(this.currentMethod));
         this._setup();
     }
@@ -297,6 +305,7 @@ class CalibrationWidget{
         // event listeners are preserved
         this._domTool.removeNode(this.container);
         this._isActive = false;
+
     }
 
     dragStart(event) {
@@ -305,9 +314,8 @@ class CalibrationWidget{
             return;
         this.dragstate = {
             eventHandlers: [
-                [event.type === 'mousedown' ? 'mousemove' : 'touchmove', this.dragMove.bind(this), false],
-                [event.type === 'mousedown' ? 'mouseup' : 'touchend',  this.dragEnd.bind(this), false],
-                ['touchcancel', this.dragEnd.bind(this), false]
+                ['mousemove', this.dragMove.bind(this), false],
+                ['mouseup',  this.dragEnd.bind(this), false],
             ]
           , lastX: event.pageX
           , lastY: event.pageY
@@ -324,17 +332,20 @@ class CalibrationWidget{
             this._baseElement.ownerDocument.addEventListener(...eventDefinition);
     }
 
+    resizeSetScale2Real() {
+        // Picking the longer side `w`, in the hope it reduces manual measurement error.
+        let { w, h, unit } = CALIBRATION_OBJECTS[this.resizeSelectObject.value]
+          , clientSize = this.isPortrait
+                                ? this.resizeBox.clientHeight
+                                : this.resizeBox.clientWidth
+          ;
+        this.scale2real = clientSize / CalibrationWidget.unitToPx(w, unit);
+    }
+
     dragEnd(event) {
         for(let eventDefinition of this.dragstate.eventHandlers)
             this._baseElement.ownerDocument.removeEventListener(...eventDefinition);
-
-        let { w, h, unit } = CALIBRATION_OBJECTS[this.resizeSelectObject.value];
-
-        // Picking the longer side `w`, in the hope it reduces manual measurement error.
-        if(this.isPortrait)
-            this.scale2real = this.resizeBox.clientHeight / CalibrationWidget.unitToPx(w, unit);
-        else
-            this.scale2real = this.resizeBox.clientWidth / CalibrationWidget.unitToPx(w, unit);
+        this.resizeSetScale2Real();
         this.dragstate = null;
     }
 
@@ -359,6 +370,85 @@ class CalibrationWidget{
             height = this.resizeBox.clientHeight + heightChange;
             width = height * this.dragstate.aspectRatio;
         }
+        this.updateResizeBox(width, height);
+    }
+
+    static _copyTouch({ identifier, pageX, pageY }) {
+        return { identifier, pageX, pageY };
+    }
+
+    pinchStart(event) {
+        this.container.style.background = 'pink';
+        if (event.targetTouches.length != 2)
+            return;
+        this.container.style.background = 'purple';
+        // All 2-touch touchstart events are handled here (and end here).
+        event.preventDefault();
+        if(this.pinchstate !== null)
+            return;
+
+        this.pinchstate = {
+            currentTouches: new Map()
+          , aspectRatio: this.resizeBox.clientWidth / this.resizeBox.clientHeight
+          , startWidth: this.resizeBox.clientWidth
+          , startHeight: this.resizeBox.clientHeight
+        };
+
+        for (let touch of event.targetTouches)
+            this.pinchstate.currentTouches.set(
+                    touch.identifier, CalibrationWidget._copyTouch(touch));
+    }
+
+    pinchEnd(event) {
+        if(this.pinchstate === null)
+            return;
+        event.preventDefault();
+        // For the touchend event, it is a list of the touch points that have been removed
+        for(let touch of event.changedTouches) {
+            if(this.pinchstate.currentTouches.has(touch.identifier))
+                this.pinchstate.currentTouches.delete(touch.identifier);
+        }
+        // if it's not an event it os called as a handler and
+        //
+        if(event && this.pinchstate.currentTouches.size == 2)
+            return;
+
+        this.container.style.background = 'cyan';
+        this.resizeSetScale2Real();
+        this.pinchstate = null;
+    }
+
+    static _getTouchesDistance(touches) {
+        let [
+            {pageX: x1, pageY: y1},
+            {pageX: x2, pageY: y2}
+        ] = Array.from(touches.values());
+        return Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
+    }
+
+    pinchMove(event) {
+        if(this.pinchstate === null)
+            return;
+        this.container.style.background = 'orange';
+        // Check if the there are two target touches that are the same
+        // ones that started the 2-touch ...
+        var newTouches = new Map();
+        for (let touch of event.targetTouches) {
+            if(this.pinchstate.currentTouches.has(touch.identifier))
+                newTouches.set(touch.identifier, CalibrationWidget._copyTouch(touch));
+        }
+        if(newTouches.size !== 2)
+            return;
+        event.preventDefault();
+
+        this.container.style.background = 'red';
+        var lastDistance = CalibrationWidget._getTouchesDistance(this.pinchstate.currentTouches)
+          , nowDistance = CalibrationWidget._getTouchesDistance(newTouches)
+          , change = nowDistance - lastDistance
+          , width = this.pinchstate.startWidth + change
+          , height = width / this.pinchstate.aspectRatio
+          ;
+        this.container.style.background = 'lime';
         this.updateResizeBox(width, height);
     }
 

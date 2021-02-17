@@ -1,25 +1,25 @@
 .widget_calibrate {
-    background: khaki;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    max-height: 100vh;
-    overflow: auto;
+    background: darkred;
     padding: 1.5em .5em 3em;
+
+    --position: fixed;
+    --top: 0;
+    --left: 0;
+    --width: 100vw;
+    --max-height: 100vh;
+    --overflow: auto;
 }
 
-.widget-calibrate__method-ruler .widget-calibrate__resize{
-    display: none;
-}
-
-.widget-calibrate__method-resize .widget-calibrate__ruler{
-    display: none;
-}
 
 .widget-calibrate__is_portrait .widget-calibrate__ruler-container {
     display: flex;
 }
+
+.widget-calibrate__method-ruler .widget-calibrate__resize,
+.widget-calibrate__method-resize .widget-calibrate__ruler {
+    display: none;
+}
+
 
 .widget-calibrate__ruler-val_label{
     flex: 0;
@@ -60,9 +60,14 @@
 
 .widget-calibrate__is_portrait .widget-calibrate__ruler-measure_box:before,
 .widget-calibrate__is_portrait .widget-calibrate__ruler-feedback:before{
-    writing-mode: sideways-lr;
     left: -1.7em;
     margin-top: 1em;
+    /* This is all about the rotation (sideways-lr is not yet an option): */
+    writing-mode: tb-rl;
+    writing-mode: vertical-rl;
+    -webkit-writing-mode: vertical-rl;
+    -ms-writing-mode: vertical-rl;
+    transform: rotate(-180deg);
 }
 
 .widget-calibrate__is_landscape .widget-calibrate__ruler-measure_box:before {
