@@ -1,3 +1,35 @@
+
+html {
+    /* Putting this here also to not forget abut it.
+       Probably a bad usage example at this point, though I think this will become handy!
+
+       https://developer.mozilla.org/en-US/docs/Web/CSS/text-size-adjust
+
+       NOTE: this text-size-adjust seems to take place even when the font-size
+             is set to a fixed value. i.e. the default font size is not
+             changed, it's happening further more downstream.
+             100% yields the same result as none.
+    */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+}
+
+/* This is fairly brutal, but also simple and silly.
+ * .modal must be a direct child of body, otherwise it will be
+ * hidden by its parent element.
+ *
+ * I think this works pretty charmingly and it circumvents the
+ * troubles of creating a good modal dialogue on mobile, as
+ * position: fixed is not involved.
+ * */
+html.show-modal body > *{
+  display: none;
+}
+html.show-modal body > .modal {
+    display: block;
+}
+
+
 .widget_calibrate {
     background: darkred;
     padding: 1.5em .5em 3em;

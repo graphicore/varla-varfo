@@ -101,7 +101,7 @@ class CalibrationWidget{
         this._isActive = false;
 
         var dom = this._domTool.createElementfromHTML(
-                'div', {'class': 'widget_calibrate'}, CALIBRATE_TEMPLATE);
+                'div', {'class': 'widget_calibrate modal'}, CALIBRATE_TEMPLATE);
         this.container = dom;
 
         this.selectMethod = dom.querySelector('.widget-calibrate__select-method');
@@ -117,6 +117,7 @@ class CalibrationWidget{
 
         this.dragstate = null;
         this.pinchstate = null;
+        this._handleVisualViewportResize = this.handleVisualViewportResize.bind(this);
         this.scale2real = 1;
         this._intialize();
     }
@@ -234,6 +235,7 @@ class CalibrationWidget{
             this.rulerFeedback.style.setProperty('height', '');
             this.rulerFeedback.style.setProperty('width',
                 `${this.scale2real * this.rulerMeasureBox.clientWidth}px`);
+
         }
 
         // Make a scale background to help measuring/controling.
@@ -295,32 +297,62 @@ class CalibrationWidget{
         this.container.classList.add(makeClass(this.currentMethod));
         this._setup();
     }
+    get window(){
+        return this.container.ownerDocument.defaultView; // fancy way to do this
+    }
 
     activate() {
         if(this._isActive)
             return;
 
-        this._baseElement.style.background = 'lime';
         // FIXME: must be configurable
+        this._baseElement.ownerDocument.documentElement.classList.add('show-modal');
         this._domTool.insert(this._baseElement, 'prepend', this.container);
         // Set orientation based on screen orientation.
         // Done on activate, so it's only automatic when the widget is
         // opened, not when the device is rotated and the widget is already
         // open, which would be an anti-pattern.
-        var window = this.container.ownerDocument.defaultView; // fancy way to do this
-        this.setOrientation.checked = window.matchMedia('(orientation: portrait)').matches === true;
-
+        this.setOrientation.checked = this.window.matchMedia('(orientation: portrait)').matches === true;
+        if(this.window.visualViewport) {
+            this.window.visualViewport.addEventListener('resize', this._handleVisualViewportResize);
+            // initial!
+            this.handleVisualViewportResize();
+        }
         this.setMethod();// calls this._setup();
         this._isActive = true;
+    }
+
+    /* This works quite nicely on iOS, tested on an iPhone and iPad
+     * to make sure "pinch-zoom" does not scale the calibration "test device".
+     *
+     */
+    handleVisualViewportResize(event) {
+        var viewport = this.window.visualViewport
+          , targets = [
+                this.rulerMeasureBox.parentElement
+              , this.resizeBox.parentElement
+            ]
+          ;
+        if(viewport.scale !== 1) {
+            let transformation = `scale(calc(1/${viewport.scale}))`;
+            for(let target of targets)
+                target.style.transform = transformation;
+        }
+        else {
+            for(let target of targets)
+                target.style.transform = '';
+        }
     }
 
     close() {
         if(!this._isActive)
             return;
+        if(this.window.visualViewport)
+            this.window.visualViewport.removeEventListener('resize', this._handleVisualViewportResize);
         // event listeners are preserved
         this._domTool.removeNode(this.container);
+        this._baseElement.ownerDocument.documentElement.classList.remove('show-modal');
         this._isActive = false;
-
     }
 
     dragStart(event) {
@@ -337,12 +369,6 @@ class CalibrationWidget{
           , aspectRatio: this.resizeBox.clientWidth / this.resizeBox.clientHeight
         };
 
-        this._baseElement.style.background = 'yellow';
-        // FIXME: visualViewport.scale works on e.g. the IPhone etc. it
-        // can be used to correct calibration for pinch-zoom! Doesn't work
-        // on Firefox out of the box: the dom.visualviewport.enabled preferences
-        // (needs to be set to true).
-        // this.resizeBox.textContent = `${event.type}`;// pinch-zoom: ${visualViewport.scale}`;
         for(let eventDefinition of this.dragstate.eventHandlers)
             this._baseElement.ownerDocument.addEventListener(...eventDefinition);
     }
