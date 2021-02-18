@@ -31,20 +31,24 @@ html.show-modal body > .modal {
 
 
 .widget_calibrate {
-    background: darkred;
-    padding: 1.5em .5em 3em;
 
-    --position: fixed;
-    --top: 0;
-    --left: 0;
-    --width: 100vw;
-    --max-height: 100vh;
-    --overflow: auto;
+}
+
+.widget_calibrate label{
+    white-space: nowrap;
 }
 
 
 .widget-calibrate__is_portrait .widget-calibrate__ruler-container {
     display: flex;
+    justify-content: center;
+}
+
+.widget-calibrate__is_portrait .widget-calibrate__ruler-container hr{
+    margin: 0 2em;
+}
+.widget-calibrate__is_landscape .widget-calibrate__ruler-container hr{
+    margin: 2em 0 3em 0;
 }
 
 .widget-calibrate__method-ruler .widget-calibrate__resize,
@@ -52,10 +56,6 @@ html.show-modal body > .modal {
     display: none;
 }
 
-
-.widget-calibrate__ruler-val_label{
-    flex: 0;
-}
 .widget-calibrate__ruler-val{
     width: 4em;
 }
@@ -109,7 +109,7 @@ html.show-modal body > .modal {
     content: '← measure vertically →';
 }
 .widget-calibrate__ruler-feedback:before {
-    content: 'Scaled to real world size:';
+    content: 'scaled control element';
 }
 
 
@@ -124,7 +124,10 @@ html.show-modal body > .modal {
 .widget-calibrate__resize-box{
     background-color: white;
     padding: 0;
-    margin: auto;
+    /* It's easier to measure when this moves only to the left than
+     * when moving to the left and right with margin: auto;
+     */
+    margin: 0;
     position: relative;
     overflow: visible;
 }

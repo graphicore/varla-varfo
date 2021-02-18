@@ -24,29 +24,30 @@ const CALIBRATION_OBJECTS = [
 ];
 
 const CALIBRATE_TEMPLATE = `
-<h1>calibrate widget</h1>
+<h1>Calibration Widget</h1>
 
-
-<div>
+<p>
     <label>Method:
     <select class="widget-calibrate__select-method">
-        <option value="resize">Use a real world object to resize a widget on screen.</option>
-        <option value="ruler">Use a ruler to measure a distance on screen.</option>
+        <option value="resize">resize to match a physical object</option>
+        <option value="ruler">use a ruler</option>
     </select></label>
-</div>
+</p>
 
-<div class="widget-calibrate__resize">
-    <label>Choose an entry such that at least one dimension of the real world fits onto your screen:
+<p class="widget-calibrate__resize">
+    <label>Standard:
     <select class="widget-calibrate__resize-select_object"></select></label>
-</div>
+    <br />
+    Choose a comparison item, such that, at least in one dimension, the real world item fits onto your screen:
+</p>
 
-<div class="widget-calibrate__ruler">
-    <label>Select a length to measure:
+<p class="widget-calibrate__ruler">
+    <label>Length:
     <!-- NOTE: Could be any length in here, we don't even parse
     the option.value ourselves, just using option.client{Width|Height}.-->
     <select class="widget-calibrate__ruler-select_length">
         <option value="20cm">20 CSS-centimeter</option>
-        <option value="10cm">10 CSS-centimeter</option>
+        <option value="10cm" selected>10 CSS-centimeter</option>
         <option value="5cm">5 CSS-centimeter</option>
         <option value="10in">10 CSS-inch</option>
         <option value="5in">5 CSS-inch</option>
@@ -54,28 +55,36 @@ const CALIBRATE_TEMPLATE = `
         <option value="960px">960 CSS-pixel</option>
         <option value="480px">480 CSS-pixel</option>
         <option value="96px">96 CSS-pixel</option>
+        <option value="7.92in">1 Link (≡ 0.01 Chain)</option>
     </select></label>
 
-    <label>Measure in unit: <select class="widget-calibrate__ruler-unit">
+    <label>Unit:
+    <select class="widget-calibrate__ruler-unit">
         <option>cm</option>
         <option>mm</option>
         <option>in</option>
         <option>m</option>
-    </select></select>
-</div>
+    </select></label>
+    <br />
+    Choose any length that fits onto your screen and a unit scale that matches to your ruler.
+</p>
 
-<div>
+<p>
     <label>Switch Orientation:
         <input type="checkbox" class="widget-calibrate__set-orientation"/><span></span></label>
-</div>
+</p>
 
-<div>
-    <button class="widget-calibrate__button_done">Done</button>
-</div>
+
+<p class="widget-calibrate__ruler">
+    <label class="widget-calibrate__ruler-val_label">Enter your measurement:
+    <input class="widget-calibrate__ruler-val" type="text"
+        />&nbsp;<span class="widget-calibrate__ruler__show-unit"></span></label>
+</p>
 
 <p class="widget-calibrate__resize">
     Resize the white rectangle to match the dimensions of the selected
-    object: click or touch, and drag.</p>
+    object: click and drag or pinch and zoom.
+</p>
 
 <div class="widget-calibrate__resize-container widget-calibrate__resize">
     <div class="widget-calibrate__resize-box"></div>
@@ -83,15 +92,13 @@ const CALIBRATE_TEMPLATE = `
 
 <div class="widget-calibrate__ruler-container widget-calibrate__ruler">
     <div class="widget-calibrate__ruler-measure_box"></div>
-    <label class="widget-calibrate__ruler-val_label">Enter your measurement:
-    <input class="widget-calibrate__ruler-val" type="text"
-        />&nbsp;<span class="widget-calibrate__ruler__show-unit"></span></label>
+    <hr />
     <div class="widget-calibrate__ruler-feedback"></div>
 </div>
 
-<div>
+<p>
     <button class="widget-calibrate__button_done">Done</button>
-</div>
+</p>
 `;
 
 class CalibrationWidget{
@@ -419,10 +426,8 @@ class CalibrationWidget{
     }
 
     pinchStart(event) {
-        this.container.style.background = 'pink';
         if (event.targetTouches.length != 2)
             return;
-        this.container.style.background = 'purple';
         // All 2-touch touchstart events are handled here (and end here).
         event.preventDefault();
         if(this.pinchstate !== null)
@@ -453,7 +458,6 @@ class CalibrationWidget{
         if(this.pinchstate.currentTouches.size == 2)
             return;
 
-        this.container.style.background = 'cyan';
         this.resizeSetScale2Real();
         this.pinchstate = null;
     }
@@ -469,7 +473,6 @@ class CalibrationWidget{
     pinchMove(event) {
         if(this.pinchstate === null)
             return;
-        this.container.style.background = 'orange';
         // Check if the there are two target touches that are the same
         // ones that started the 2-touch ...
         var newTouches = new Map();
@@ -481,14 +484,12 @@ class CalibrationWidget{
             return;
         event.preventDefault();
 
-        this.container.style.background = 'red';
         var lastDistance = CalibrationWidget._getTouchesDistance(this.pinchstate.currentTouches)
           , nowDistance = CalibrationWidget._getTouchesDistance(newTouches)
           , change = nowDistance - lastDistance
           , width = this.pinchstate.startWidth + change
           , height = width / this.pinchstate.aspectRatio
           ;
-        this.container.style.background = 'lime';
         this.updateResizeBox(width, height);
     }
 }
@@ -500,5 +501,20 @@ function main() {
      ;
     for(let initCalibrateButton of document.querySelectorAll('.ui-init-calibrate'))
         initCalibrateButton.addEventListener('click', initCalibrate);
+
+    if(window.visualViewport) {
+        // This is a control output, because pinch-zoom is sometimes
+        // hard to control.Useful for development mostly.
+        let indicator = document.createElement('div')
+          , viewport = window.visualViewport
+          ;
+        indicator.style="position: fixed; z-index: 1000; right:0; bottom:0; height: 1.4em; text-align: right;";
+        // always visible
+        indicator.classList.add('modal');
+        document.body.appendChild(indicator);
+        window.visualViewport.addEventListener('resize', e=>{
+            indicator.textContent = viewport.scale;
+        });
+    }
 }
 main();
