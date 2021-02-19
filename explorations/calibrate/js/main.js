@@ -125,9 +125,25 @@ class CalibrationWidget{
         this.dragstate = null;
         this.pinchstate = null;
         this._handleVisualViewportResize = this.handleVisualViewportResize.bind(this);
-        this.scale2real = 1;
+        this._scale2real = 1;
         this._intialize();
     }
+
+    dispatch(name, value) {
+         var event = new CustomEvent(name, { detail: value, bubbles: true });
+        // dispatch async
+        Promise.resolve(event)
+            .then(event=>this._baseElement.dispatchEvent(event));
+    }
+
+    set scale2real(value){
+        this._scale2real = value;
+        this.dispatch('unitscaleadjust', value);
+    }
+    get scale2real(){
+        return this._scale2real;
+    }
+
     _intialize() {
         addEvent(this.rulerSelectLength, 'input', ()=>this._setupRuler());
         addEvent(this.rulerUnit, 'input',()=>this._setupRuler());
@@ -146,7 +162,6 @@ class CalibrationWidget{
 
         let group = null;
         for(let [i, {label, optgroup, w, h, unit}] of CALIBRATION_OBJECTS.entries()){
-            console.log(i, label);
             if(optgroup === true) // start putting stuff in optgroup
                 group = this._domTool.createChildElement(this.resizeSelectObject,
                                                 'optgroup', {label: label});
@@ -156,7 +171,6 @@ class CalibrationWidget{
                 this._domTool.createChildElement(group || this.resizeSelectObject,
                     'option', {value: i}, `${label} (${w} ${unit} × ${h} ${unit})`);
         }
-        this.setMethod();
     }
 
     get currentMethod() {
@@ -224,6 +238,7 @@ class CalibrationWidget{
                     : this.rulerMeasureBox.clientWidth,
                 this.rulerUnit.value
             ) / this.scale2real;
+        console.log(len, this.scale2real, `${len.toFixed(3)}`);
         this.rulerVal.value = `${len.toFixed(3)}`;
 
         for(let elem of this.rulerShowUnitAll)
@@ -312,9 +327,16 @@ class CalibrationWidget{
         if(this._isActive)
             return;
 
-        // FIXME: must be configurable
+        // FIXME: should be configurable, however, since the "modal" setup
+        // is very specific in this document, there's no clear idea
+        // what could be done better.
         this._baseElement.ownerDocument.documentElement.classList.add('show-modal');
         this._domTool.insert(this._baseElement, 'prepend', this.container);
+
+        // calls this._setup();
+        // must be on the dom to get clientWidth/Height (could be done differently)
+        this.setMethod();
+
         // Set orientation based on screen orientation.
         // Done on activate, so it's only automatic when the widget is
         // opened, not when the device is rotated and the widget is already
@@ -325,13 +347,11 @@ class CalibrationWidget{
             // initial!
             this.handleVisualViewportResize();
         }
-        this.setMethod();// calls this._setup();
         this._isActive = true;
     }
 
     /* This works quite nicely on iOS, tested on an iPhone and iPad
      * to make sure "pinch-zoom" does not scale the calibration "test device".
-     *
      */
     handleVisualViewportResize(event) {
         var viewport = this.window.visualViewport
@@ -342,8 +362,9 @@ class CalibrationWidget{
           ;
         if(viewport.scale !== 1) {
             let transformation = `scale(calc(1/${viewport.scale}))`;
-            for(let target of targets)
+            for(let target of targets){
                 target.style.transform = transformation;
+            }
         }
         else {
             for(let target of targets)
@@ -360,6 +381,7 @@ class CalibrationWidget{
         this._domTool.removeNode(this.container);
         this._baseElement.ownerDocument.documentElement.classList.remove('show-modal');
         this._isActive = false;
+        this.dispatch('calibration', this.scale2real);
     }
 
     dragStart(event) {
@@ -502,6 +524,7 @@ function main() {
     for(let initCalibrateButton of document.querySelectorAll('.ui-init-calibrate'))
         initCalibrateButton.addEventListener('click', initCalibrate);
 
+
     if(window.visualViewport) {
         // This is a control output, because pinch-zoom is sometimes
         // hard to control.Useful for development mostly.
@@ -516,5 +539,39 @@ function main() {
             indicator.textContent = viewport.scale;
         });
     }
+
+    document.body.addEventListener('unitscaleadjust', e=>console.log(e.type, e.detail));
+    document.body.addEventListener('calibration', e=>{
+        console.log(e.type, e.detail);
+        document.documentElement.style.setProperty('--unit-scale-adjust', e.detail);
+
+        // todo: backup with proper math via the angle etc.
+        var normalReadingDistance = 28 / e.detail;
+
+
+        function rad2deg(rad){return rad * 180 / Math.PI;}
+        function deg2rad(deg){return deg * Math.PI / 180;}
+        // 1/96: the size of 1 px at 96 dpi
+        // 28 inch "nominal arm’s length of 28 inches"
+        let alpha_rad = Math.atan2(1/96/2, 28);
+
+
+        // 0.0213 degrees: rad2deg(alpha_rad * 2)
+        // It's interesting that the above is correct: we can also scale
+        // the "nominal arm" directly.
+        // However, this scales the pixel and gets the viewing distance
+        // from the angle. This was made as a proof!
+        //
+        let normalReadingDistance_ = ((1/96)/e.detail/2) / Math.tan(alpha_rad) * 2.54;
+
+        for(let elem of document.querySelectorAll('.insert-normal-reading-distance'))
+            elem.textContent = `${normalReadingDistance} inches or ${normalReadingDistance * 2.54} centimeters`;
+
+    });
+
+
+
+
+
 }
 main();
