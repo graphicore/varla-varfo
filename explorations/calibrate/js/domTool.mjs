@@ -247,15 +247,12 @@ export default class DOMTool {
   }
 
   // TODO: document what this is for.
-  static validateChildEvent(event, stopElement, searchAttribute) {
+  static validateChildEvent(event, stopElement, ...searchAttributes) {
       var elem = event.target
-        , searchAttributes = [searchAttribute]
-        , i, l, results
+        , results
         ;
       if(event.defaultPrevented) return;
 
-      for(i=3,l=arguments.length;i<l;i++)
-          searchAttributes.push(arguments[i]);
       while(true) {
           if(elem === stopElement.parentElement || !elem)
               return;
@@ -267,11 +264,11 @@ export default class DOMTool {
       event.preventDefault();
 
       if(searchAttributes.length === 1)
-          return elem.getAttribute(searchAttribute);
+          return elem.getAttribute(searchAttributes[0]);
 
       results = {};
-      for(i=0,l=searchAttributes.length;i<l;i++)
-          results[searchAttributes[i]] = elem.getAttribute(searchAttributes[i]);
+      for(let attr of searchAttributes)
+          results[attr] = elem.getAttribute(attr);
       return results;
   }
 }
