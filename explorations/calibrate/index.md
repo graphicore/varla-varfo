@@ -36,8 +36,8 @@ physical sizes in CSS.</p>
 
 <h3>Contribute</h3>
 <p>I understand this as an open document, meaning that contributions
-are welcome via the <a href="https://github.com/graphicore/varla-vafo/issues">GitHub
-issue tracker</a> and <a href="https://github.com/graphicore/varla-vafo/blob/main/explorations/calibrate/index.html">Pull
+are welcome via the <a href="https://github.com/graphicore/varla-varfo/issues">GitHub
+issue tracker</a> and <a href="https://github.com/graphicore/varla-varfo/blob/main/explorations/calibrate/index.html">Pull
 Requests on the actual document</a>. But this openness also means it's
 possible, even likely, that the article changes over time. The change
 history can be examined via git, but when quoting, it may still be a
