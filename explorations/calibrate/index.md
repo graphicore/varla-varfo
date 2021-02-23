@@ -6,7 +6,7 @@ modules:
 styles:
     - "explorations/techniques/main.css"
     - "explorations/calibrate/style.css"
-calibrated: calibrated
+class: calibrate-css
 ---
 
 *This is a draft.*
