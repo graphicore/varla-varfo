@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+  <head>
+    {%- include head.html -%}
+  </head>
+  <body>
+    <article class="{{ page.class }}">
+    {{ content }}
+    </article>
+    <footer>
+      {%- capture footer -%}{%- include footer.md -%}{%- endcapture- %}
+      {{ footer | markdownify }}
+    </footer>
+  </body>
+</html>
