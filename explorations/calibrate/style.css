@@ -17,7 +17,7 @@
     text-size-adjust: none;
 }
 
-.calibrated {
+.calibrated-css {
 
     /* the visual default font-size of the user is preserved */
     font-size: calc(100% / var(--unit-scale-adjust));
