@@ -4,12 +4,14 @@
     {%- include head.html -%}
   </head>
   <body>
-    <article class="{{ page.class }}">
-    {{ content }}
-    </article>
+    <main class="{{ page.class }}">
+      <article>
+        {{ content }}
+      </article>
+    </main>
     <footer>
-      {%- capture footer -%}{%- include footer.md -%}{%- endcapture- %}
-      {{ footer | markdownify }}
+          {%- capture footer -%}{%- include footer.md -%}{%- endcapture- %}
+          {{ footer | markdownify }}
     </footer>
   </body>
 </html>
