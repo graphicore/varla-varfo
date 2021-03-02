@@ -140,7 +140,7 @@ export default class CalibrationWidget {
 
     set scale2real(value){
         this._scale2real = value;
-        this.dispatch('unitscaleadjust', value);
+        this.dispatch('unitscalephysical', value);
     }
     get scale2real(){
         return this._scale2real;

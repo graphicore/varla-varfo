@@ -3,7 +3,7 @@
 import DOMTool from './domTool.mjs';
 import CalibrationWidget from './CalibrationWidget.mjs';
 
-const UNIT_SCALE_ADJUST_LOCAL_STORAGE_KEY = 'unit-scale-adjust-physical';
+const UNIT_SCALE_LOCAL_STORAGE_KEY = 'unit-scale-physical';
 
 function makePageOutline(elem, attr) {
     var domTool = new DOMTool(elem.ownerDocument)
@@ -44,11 +44,11 @@ function makePageOutline(elem, attr) {
 }
 
 function main() {
-    function documentSetUnitScaleAdjust(unitScaleAdjust) {
-        console.log('documentSetUnitScaleAdjust', unitScaleAdjust);
-        document.documentElement.style.setProperty('--unit-scale-adjust', unitScaleAdjust);
+    function documentSetUnitScalePhysical(unitScalePhysical) {
+        console.log('documentSetUnitScalePhysical', unitScalePhysical);
+        document.documentElement.style.setProperty('--unit-scale-physical', unitScalePhysical);
         // todo: backup with proper math via the angle etc.
-        var normalReadingDistance = 28 / unitScaleAdjust;
+        var normalReadingDistance = 28 / unitScalePhysical;
 
 
         function rad2deg(rad){return rad * 180 / Math.PI;}
@@ -64,27 +64,32 @@ function main() {
         // However, this scales the pixel and gets the viewing distance
         // from the angle. This was made as a proof!
         //
-        let normalReadingDistance_ = ((1/96)/unitScaleAdjust/2) / Math.tan(alpha_rad) * 2.54;
+        let normalReadingDistance_ = ((1/96)/unitScalePhysical/2) / Math.tan(alpha_rad) * 2.54;
 
-        for(let elem of document.querySelectorAll('.insert-normal-reading-distance'))
-            elem.textContent = `${normalReadingDistance} inches or ${normalReadingDistance * 2.54} centimeters`;
-
+        for(let [selector, textContent] of [
+                ['.insert-normal-reading-distance',
+                 `${normalReadingDistance} inches or ${normalReadingDistance * 2.54} centimeters`]
+              , ['.insert-unit-scale-physical', `${unitScalePhysical}`]
+            ]){
+                for(let elem of document.querySelectorAll(selector))
+                    elem.textContent = textContent;
+        }
     }
 
     // initCalibrate should only perform if the calibration widget is not already
     // active, hence, we need state!
-    let initialUnitScaleAdjust = parseFloat(window.localStorage.getItem(UNIT_SCALE_ADJUST_LOCAL_STORAGE_KEY));
-    if(!isFinite(initialUnitScaleAdjust))
+    let initialUnitScalePhysical = parseFloat(window.localStorage.getItem(UNIT_SCALE_LOCAL_STORAGE_KEY));
+    if(!isFinite(initialUnitScalePhysical))
         // if localStorage returned null or if it can't be parsed as a number
         // it is NaN now. Defaulting to 1:
-        initialUnitScaleAdjust = 1;
+        initialUnitScalePhysical = 1;
 
-    let calibrationWidget = new CalibrationWidget(document.body, initialUnitScaleAdjust)
+    let calibrationWidget = new CalibrationWidget(document.body, initialUnitScalePhysical)
       , initCalibrate = evt=>calibrationWidget.activate()
       ;
 
     // TODO: do this onLoad
-    documentSetUnitScaleAdjust(initialUnitScaleAdjust);
+    documentSetUnitScalePhysical(initialUnitScalePhysical);
     for(let initCalibrateButton of document.querySelectorAll('.ui-init-calibrate'))
         initCalibrateButton.addEventListener('click', initCalibrate);
 
@@ -104,10 +109,10 @@ function main() {
         });
     }
 
-    document.body.addEventListener('unitscaleadjust', e=>{
+    document.body.addEventListener('unitscalephysical', e=>{
         console.log(e.type, e.detail);
-        window.localStorage.setItem(UNIT_SCALE_ADJUST_LOCAL_STORAGE_KEY, e.detail);
-        documentSetUnitScaleAdjust(e.detail);
+        window.localStorage.setItem(UNIT_SCALE_LOCAL_STORAGE_KEY, e.detail);
+        documentSetUnitScalePhysical(e.detail);
     });
 
     DOMTool.insert(document.body, 'prepend',
