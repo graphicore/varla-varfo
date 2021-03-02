@@ -101,7 +101,8 @@ and [Pull Requests on the actual document](https://github.com/graphicore/varla-v
 But this openness also means it's possible, even likely, that the article
 changes over time. The change history can be examined via git, but when
 quoting, it may still be a good idea to keep the current git commit hash
-of the source document.
+of the repository HEAD commit:
+[`{{ site.github.build_revision | slice: 0, 10 }}`]({{site.github.repository_url}}/commit/{{site.github.build_revision}}).
 
 <!-- TODO: include commit hash and link in an automated build step -->
 

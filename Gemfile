@@ -22,6 +22,7 @@ group :jekyll_plugins do
   gem "jekyll-feed", "~> 0.6"
   gem "jekyll-relative-links"
   gem "jekyll-optional-front-matter"
+  gem "jekyll-github-metadata"
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
