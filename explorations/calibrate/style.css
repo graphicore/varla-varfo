@@ -10,8 +10,13 @@
 
        NOTE: this text-size-adjust seems to take place even when the font-size
              is set to a fixed value. i.e. the default font size is not
-             changed, it's happening further more downstream.
+             changed, it's happening further downstream.
              100% yields the same result as none.
+
+            NEEDS FIX: The behavior of the "auto" algorithm of text-size-adjust
+            is a case where we need good automation in `font-optical-sizing`
+            to automatically adjust, `font-variation-settings` won't do it
+            in this case.
     */
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
@@ -73,12 +78,6 @@ html.show-modal body > *{
 }
 html.show-modal body > .modal {
     display: block;
-}
-
-
-.insert_calibration_widget {
-    border-left: 5px solid darkgrey;
-    padding-left: .5em;
 }
 
 .widget_calibrate {
@@ -219,4 +218,17 @@ html.show-modal body > .modal {
 }
 .page_outline-entry:before {
     content: '• ';
+}
+
+.insert_calibration_widget {
+    background: white;
+    padding: .5em;
+}
+
+blockquote{
+    --text-color: #676767;
+    color: var(--text-color);
+    background: #fafafa;
+    padding: .5em;
+    border-left: .2em solid var(--text-color);
 }

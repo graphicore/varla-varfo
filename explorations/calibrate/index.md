@@ -21,7 +21,7 @@ consequences are that a CSS-Pixel is likely not a hardware pixel on the
 display and that a CSS-Inch is likely not a real world physical inch Inch.
 
 This article is about enabling CSS-authors to work with real world physical
-units and to make it easier .
+units and to make it easier to do so.
 
 ## "A robust and minimal calibration scheme"
 
@@ -32,18 +32,18 @@ that it is *quickly done* and *not a big deal*.
 
 <div class="insert_calibration_widget"></div>
 
+If the widget was used correctly, we can now use real-world sizes.
+
 One real centimeter: <span class="sample-physical" style="--sample-size: 1cm"></span>
 One real inch: <span class="sample-physical" style="--sample-size: 1in"></span>
-
 
 The result is stored in CSS on `:root` as `--unit-scale-physical` its value
 is <code class="insert insert-unit-scale-physical"></code>.
 
-CAVEAT: the example works only for square pixels. It's generally
-possible to calibrate width and height separately.
+There a *caveat*: the example expects square pixels. Generally it is possible
+to calibrate width and height separately.
 
-
-The widget above was inspired by [my own experiment](../techniques/absolute_units_evaluation.html)
+The calibration widget was inspired by [my own experiment](../techniques/absolute_units_evaluation.html)
 and an [#614 issue comment](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-611217635)
 where @tabatkins describes a calibration page:
 
@@ -83,7 +83,10 @@ This article is inspired by a
 >
 > Merely stating that there's no downside isn't going to be convincing.
 
-
+In the meantime, there's also an entry in the [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths),
+describing  the history and status of the topic and a new
+[issue #5986 \[css-env\] Device Pixel Ratio](https://github.com/w3c/csswg-drafts/issues/5986)
+trying to move the discussion forward.
 
 ### Disclosure
 
@@ -91,7 +94,6 @@ As of beginning this, I don't know if a good case can be build, but
 I'm instinctively biased towards having the ability to use real world
 physical sizes in CSS. I found out about the discussion right after
 collecting my observations in [Real World Absolute Length Units Evaluation](../techniques/absolute_units_evaluation.html).
-
 
 ### Contribute
 
@@ -104,10 +106,8 @@ quoting, it may still be a good idea to keep the current git commit hash
 of the repository HEAD commit:
 [`{{ site.github.build_revision | slice: 0, 10 }}`]({{site.github.repository_url}}/commit/{{site.github.build_revision}}).
 
-<!-- TODO: include commit hash and link in an automated build step -->
 
 ## Calibration of Browser Length-Units
-
 
 > The reference pixel is the visual angle of one pixel on a device with
 > a pixel density of 96dpi and a distance from the reader of an arm’s
@@ -119,14 +119,9 @@ of the repository HEAD commit:
 Therefore, on your device the reading distance to have one
 CSS-inch to appear at an visual angle of 0.0213 degrees is: <span class="insert insert-normal-reading-distance"></span>
 
-*Note to me*
-The behavior of the "auto" algorithm of
-[`text-size-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/text-size-adjust)
-is a case where we need a good automation in `font-optical-sizing`
-to automatically adjust, `font-variation-settings` won't do it in that case.
 
 
-### more use cases:
+## Use Cases:
 
 * print proofing/designer preview. We can help reducing paper
   wastage!
@@ -163,10 +158,3 @@ to automatically adjust, `font-variation-settings` won't do it in that case.
   smaller than e.g. 12 pt because the device defaults to 20 inches
   viewing distance instead of 28 inches may be unfortunate.
 
-# another 1
-
-## another 2
-
-### another 3.A
-
-### another 3.B
