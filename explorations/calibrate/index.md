@@ -6,7 +6,7 @@ modules:
 styles:
     - "explorations/techniques/main.css"
     - "explorations/calibrate/style.css"
-class: calibrated-css
+class: calibrate-css
 ---
 
 *This is a draft.*
@@ -14,14 +14,14 @@ class: calibrated-css
 # Calibrate CSS
 
 An important but often overlooked property of the CSS-unit system is that
-it's absolute length units don't describe what their names imply.The reasons
+its absolute length units don't describe what their names imply.The reasons
 are historical and the current status quo allows authors to design without
 thinking about the deeper nature of their target devices. However, the
 consequences are that a CSS-Pixel is likely not a hardware pixel on the
 display and that a CSS-Inch is likely not a real world physical inch Inch.
 
-
-This article is about enabling CSS-authors to work with real world physical units.
+This article is about enabling CSS-authors to work with real world physical
+units and to make it easier .
 
 ## "A robust and minimal calibration scheme"
 
@@ -30,20 +30,20 @@ screen, so that it can confidently display real world distance units.
 Calibration is a big word, I hope the widget demonstrates sufficiently,
 that it is *quickly done* and *not a big deal*.
 
-<div class="calibration_widget calibration_widget-allways_on"></div>
+<div class="insert_calibration_widget"></div>
 
-One real centimeter: <span style="display: inline-block; width: 1cm; height: 1cm; background: black"></span>
+One real centimeter: <span class="sample-physical" style="--sample-size: 1cm"></span>
+One real inch: <span class="sample-physical" style="--sample-size: 1in"></span>
 
-One real inch: <span style="display: inline-block; width: 1in; height: 1in; background: black"></span>
 
 The result is stored in CSS on `:root` as `--unit-scale-physical` its value
-is <span class="insert insert-unit-scale-physical"></span>.
+is <code class="insert insert-unit-scale-physical"></code>.
 
 CAVEAT: the example works only for square pixels. It's generally
 possible to calibrate width and height separately.
 
 
-The widget above was inspired by [my own expreiment](../techniques/absolute_units_evaluation.html)
+The widget above was inspired by [my own experiment](../techniques/absolute_units_evaluation.html)
 and an [#614 issue comment](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-611217635)
 where @tabatkins describes a calibration page:
 
@@ -106,15 +106,6 @@ of the source document.
 <!-- TODO: include commit hash and link in an automated build step -->
 
 ## Calibration of Browser Length-Units
-
-
-
-
-I build that calibration device as a widget into this page:<br>
-<button class="ui-init-calibrate">click this button to calibrate</button>.
-
-
-
 
 
 > The reference pixel is the visual angle of one pixel on a device with

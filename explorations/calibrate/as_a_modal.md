@@ -6,7 +6,7 @@ modules:
 styles:
     - "explorations/techniques/main.css"
     - "explorations/calibrate/style.css"
-class: calibrated-css
+class: anchor-calibrated-units
 ---
 
 # Calibration widget as a modal dialogue example

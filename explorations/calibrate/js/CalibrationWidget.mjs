@@ -23,8 +23,7 @@ const CALIBRATION_OBJECTS = [
 ];
 
 const CALIBRATE_TEMPLATE = `
-<h1>Calibration Widget</h1>
-
+<h3 id="css-calibration-widget">Calibration Widget</h3>
 <p>
     <label>Method:
     <select class="widget-calibrate__select-method">
@@ -82,7 +81,7 @@ const CALIBRATE_TEMPLATE = `
 
 <p class="widget-calibrate__resize">
     Resize the white rectangle to match the dimensions of the selected
-    object: click and drag or pinch and zoom.
+    "Standard" comparison item: click and drag or pinch and zoom.
 </p>
 
 <div class="widget-calibrate__resize-container widget-calibrate__resize">
@@ -95,19 +94,28 @@ const CALIBRATE_TEMPLATE = `
     <div class="widget-calibrate__ruler-feedback"></div>
 </div>
 
+
+`;
+
+const CALIBRATE_TEMPLATE_MODAL = `
+${CALIBRATE_TEMPLATE}
 <p>
     <button class="widget-calibrate__button_done">Done</button>
 </p>
 `;
 
 export default class CalibrationWidget {
-    constructor(baseElement, initialScale2real) {
+    constructor(baseElement, initialScale2real, asModal=true) {
         this._baseElement = baseElement;
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
         this._isActive = false;
-
+        this._asModal = asModal;
         var dom = this._domTool.createElementfromHTML(
-                'div', {'class': 'widget_calibrate modal'}, CALIBRATE_TEMPLATE);
+                'div', {'class': 'widget_calibrate modal'},
+                this._asModal
+                    ? CALIBRATE_TEMPLATE_MODAL
+                    : CALIBRATE_TEMPLATE
+                    );
         this.container = dom;
 
         this.selectMethod = dom.querySelector('.widget-calibrate__select-method');
@@ -332,7 +340,8 @@ export default class CalibrationWidget {
         // FIXME: should be configurable, however, since the "modal" setup
         // is very specific in this document, there's no clear idea
         // what could be done better.
-        this._baseElement.ownerDocument.documentElement.classList.add('show-modal');
+        if(this._asModal)
+            this._baseElement.ownerDocument.documentElement.classList.add('show-modal');
         this._domTool.insert(this._baseElement, 'prepend', this.container);
 
         // calls this._setup();
@@ -376,6 +385,8 @@ export default class CalibrationWidget {
 
     close() {
         if(!this._isActive)
+            return;
+        if(!this._asModal)
             return;
         if(this.window.visualViewport)
             this.window.visualViewport.removeEventListener('resize', this._handleVisualViewportResize);

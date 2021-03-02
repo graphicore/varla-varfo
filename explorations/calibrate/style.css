@@ -25,16 +25,16 @@
    CAUTION:
         This is NOT sufficient!
 */
-body{
+body {
     position: relative;
 }
-footer{
+.anchor-calibrated-units + footer{
     position: absolute;
     top: calc(100%  * var(--unit-scale-physical));
     width: 100%;
 }
 
-.calibrated-css {
+.anchor-calibrated-units {
     /* the visual default font-size of the user is preserved */
     font-size: calc(100% / var(--unit-scale-physical));
 
@@ -43,8 +43,22 @@ footer{
     transform-origin: top left;
     /* reset page width to un transformed values */
     width: calc(100% / var(--unit-scale-physical));
-    height: calc(100%);
 }
+
+.sample-physical{
+    display: inline-block;
+    background: black;
+    transform: scale(var(--unit-scale-physical));
+    transform-origin: top left;
+    width: var(--sample-size);
+    height: var(--sample-size);
+    /* transform does not change the element flow, but when we know
+     * element width and height, we are well off.
+     */
+    margin-bottom: calc(var(--sample-size) * var(--unit-scale-physical) - var(--sample-size));
+    margin-right: calc(var(--sample-size) * var(--unit-scale-physical) - var(--sample-size));
+}
+
 
 /* This is fairly brutal, but also simple and silly.
  * .modal must be a direct child of body, otherwise it will be
@@ -61,6 +75,11 @@ html.show-modal body > .modal {
     display: block;
 }
 
+
+.insert_calibration_widget {
+    border-left: 5px solid darkgrey;
+    padding-left: .5em;
+}
 
 .widget_calibrate {
 

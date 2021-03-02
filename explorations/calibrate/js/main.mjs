@@ -84,14 +84,14 @@ function main() {
         // it is NaN now. Defaulting to 1:
         initialUnitScalePhysical = 1;
 
-    let calibrationWidget = new CalibrationWidget(document.body, initialUnitScalePhysical)
-      , initCalibrate = evt=>calibrationWidget.activate()
-      ;
+    let calibrationWidget = new CalibrationWidget(
+                            document.querySelector('.insert_calibration_widget'),
+                            initialUnitScalePhysical,
+                            false);
 
     // TODO: do this onLoad
     documentSetUnitScalePhysical(initialUnitScalePhysical);
-    for(let initCalibrateButton of document.querySelectorAll('.ui-init-calibrate'))
-        initCalibrateButton.addEventListener('click', initCalibrate);
+    calibrationWidget.activate();
 
 
     if(window.visualViewport) {
