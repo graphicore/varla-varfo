@@ -18,7 +18,13 @@
 }
 
 
-/* Compensate the adjustment of main element in relation to the footer element */
+/* Compensate the adjustment of main element in relation to the
+   footer element.
+
+   FIXME:
+   CAUTION:
+        This is NOT sufficient!
+*/
 body{
     position: relative;
 }
@@ -37,6 +43,7 @@ footer{
     transform-origin: top left;
     /* reset page width to un transformed values */
     width: calc(100% / var(--unit-scale-adjust));
+    height: calc(100%);
 }
 
 /* This is fairly brutal, but also simple and silly.
@@ -184,4 +191,13 @@ html.show-modal body > .modal {
 .widget-calibrate__set-orientation:checked ~ span:before {
   width: .5em;
   height: 1em;
+}
+
+
+.page_outline,
+.page_outline-container {
+    list-style: none;
+}
+.page_outline-entry:before {
+    content: '• ';
 }

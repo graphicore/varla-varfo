@@ -29,12 +29,16 @@ class: calibrated-css
     <p>Merely stating that there's no downside isn't going to be convincing.</p>
 </blockquote>
 
-<h3>Disclosure</h3>
-<p>As of beginning this, I don't know if a good case can be build, but
-I'm instinctively biased towards having the ability to use real world
-physical sizes in CSS.</p>
+## About this Document
 
-<h3>Contribute</h3>
+### Disclosure
+
+As of beginning this, I don't know if a good case can be build, but
+I'm instinctively biased towards having the ability to use real world
+physical sizes in CSS.
+
+### Contribute
+
 <p>I understand this as an open document, meaning that contributions
 are welcome via the <a href="https://github.com/graphicore/varla-varfo/issues">GitHub
 issue tracker</a> and <a href="https://github.com/graphicore/varla-varfo/blob/main/explorations/calibrate/index.html">Pull
@@ -44,7 +48,7 @@ history can be examined via git, but when quoting, it may still be a
 good idea to keep the current git commit hash of the source document.
 <!-- TODO: include commit hash and link in an automated build step --></p>
 
-<h2>Calibration of Browser Length-Units</h2>
+## Calibration of Browser Length-Units
 
 <p>In an <a href="https://github.com/w3c/csswg-drafts/issues/614#issuecomment-611217635">#614
 issue comment</a> @tabatkins describes a calibration page:</p>
@@ -141,3 +145,11 @@ to automatically adjust, <code>font-variation-settings</code> won't do it in tha
   requirements? "legible" is one of them, but fonts becoming regularly
   smaller than e.g. 12 pt because the device defaults to 20 inches
   viewing distance instead of 28 inches may be unfortunate.
+
+# another 1
+
+## another 2
+
+### another 3.A
+
+### another 3.B

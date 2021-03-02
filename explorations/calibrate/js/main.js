@@ -5,6 +5,44 @@ import CalibrationWidget from './CalibrationWidget.mjs';
 
 const UNIT_SCALE_ADJUST_LOCAL_STORAGE_KEY = 'unit-scale-adjust-physical';
 
+function makePageOutline(elem, attr) {
+    var domTool = new DOMTool(elem.ownerDocument)
+      , containerTag = 'ol'
+      , result = domTool.createElement(containerTag, attr)
+      , current = [1, result]
+      , depthContainers = [current]
+      ;
+    for(let heading of elem.querySelectorAll('h1,h2,h3,h4,h5,h6')){
+        let depth = parseInt(heading.tagName[1], 10);
+
+        while(depth > current[0]){
+            let [d, parentContaier] = current
+              , newDepth = d + 1
+              , newContainer = domTool.createElement(containerTag,
+                    {'class': `page_outline-container page_outline-container-${newDepth}`})
+              ;
+            parentContaier.appendChild(domTool.createElement('li',
+                    {'class': `page_outline-deeper page_outline-deeper-${newDepth}`},
+                    newContainer));
+            current = [newDepth, newContainer];
+            depthContainers.push(current);
+        }
+        while(depth < current[0]) {
+            depthContainers.pop();
+            current = depthContainers.slice(-1)[0];
+        }
+        let parent = current[1]
+          , anchor = heading.id || null
+          , outlineItemContent = domTool.createTextNode(heading.textContent)
+          , cssClass= `page_outline-entry page_outline-entry-${heading.tagName.toLowerCase()}`
+          ;
+        if(anchor)
+            outlineItemContent = domTool.createElement('a', {href: `#${anchor}`}, outlineItemContent);
+        parent.appendChild(domTool.createElement('li', {'class': cssClass}, outlineItemContent));
+    }
+    return result;
+}
+
 function main() {
     function documentSetUnitScaleAdjust(unitScaleAdjust) {
         console.log('documentSetUnitScaleAdjust', unitScaleAdjust);
@@ -71,5 +109,9 @@ function main() {
         window.localStorage.setItem(UNIT_SCALE_ADJUST_LOCAL_STORAGE_KEY, e.detail);
         documentSetUnitScaleAdjust(e.detail);
     });
+
+    DOMTool.insert(document.body, 'prepend',
+        makePageOutline(document.querySelector('main'), {'class': 'page_outline'}));
+
 }
 main();

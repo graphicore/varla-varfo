@@ -125,11 +125,11 @@ export default class DOMTool {
 
   static createFragment(document, contents, cloneChildNodes) {
       var frag = document.createDocumentFragment();
-      appendChildren(frag, contents, cloneChildNodes);
+      DOMTool.appendChildren(frag, contents, cloneChildNodes);
       return frag;
   }
 
-  createFragment(document, contents, cloneChildNodes) {
+  createFragment(contents, cloneChildNodes) {
       return DOMTool.createFragment(this.document, contents, cloneChildNodes);
   }
 
