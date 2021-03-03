@@ -16,9 +16,14 @@ class: calibrate-css
 An important but often overlooked property of the CSS-unit system is that
 its absolute length units don't describe what their names imply.The reasons
 are historical and the current status quo allows authors to design without
-thinking about the deeper nature of their target devices. However, the
-consequences are that a CSS-Pixel is likely not a hardware pixel on the
-display and that a CSS-Inch is likely not a real world physical inch Inch.
+thinking about the deeper nature of their target devices, which is a good
+thing. However, the consequences are that a CSS-Pixel is likely not a
+hardware pixel on the display and that a CSS-Inch is likely not a real
+world physical Inch. Regarding the latter, two categories of use cases are
+made infeasible or hard to implement:
+
+ * measuring or proofing
+ * accurate design, especially for fixed-media
 
 This article is about enabling CSS-authors to work with real world physical
 units and to make it easier to do so.
@@ -37,29 +42,32 @@ If the widget was used correctly, we can now use real-world sizes.
 One real centimeter: <span class="sample-physical" style="--sample-size: 1cm"></span>
 One real inch: <span class="sample-physical" style="--sample-size: 1in"></span>
 
-The result is stored in CSS on `:root` as `--unit-scale-physical` its value
+The result is set to a custom property in CSS on `:root` as `--unit-scale-physical` its value
 is <code class="insert insert-unit-scale-physical"></code>.
 
-There a *caveat*: the example expects square pixels. Generally it is possible
-to calibrate width and height separately.
+There's a *caveat*: the example expects square pixels. Generally it is possible
+to calibrate width and height separately. However, on the web reasonable
+square pixels can be expected and if they aren't square it should be tackled
+on a different layer, e.g. OS or device driver.
 
 The calibration widget was inspired by [my own experiment](../techniques/absolute_units_evaluation.html)
 and an [#614 issue comment](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-611217635)
-where @tabatkins describes a calibration page:
+(now also [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths))
+where @tabatkins describes a calibration page workaround:
 
 > Notably, this would basically be:
 >
 > 1. Have a calibration page, where you ask the user to measure
->   the distance between two lines that are some CSS distance apart
->   (say, `10cm`), and input the value they get.
-> * Use this to find the scaling factor necessary for that screen
->   (CSS length divided by user-provided length), and store it locally
->   (via localStorage, or a cookie, etc).
-> * On the pages where you need the accurate length, fetch it from
->   local storage, and set a `--unit-scale: 1.07;` (subbing
->   in the real value) property on the `html` element.
-> * Anywhere you use a length that needs to be accurate, instead of
->   `width: 5cm;`, write `width: calc(5cm * var(--unit-scale, 1));`.
+>    the distance between two lines that are some CSS distance apart
+>    (say, `10cm`), and input the value they get.
+> 2. Use this to find the scaling factor necessary for that screen
+>    (CSS length divided by user-provided length), and store it locally
+>    (via localStorage, or a cookie, etc).
+> 3. On the pages where you need the accurate length, fetch it from
+>    local storage, and set a `--unit-scale: 1.07;` (subbing
+>    in the real value) property on the `html` element.
+> 4. Anywhere you use a length that needs to be accurate, instead of
+>    `width: 5cm;`, write `width: calc(5cm * var(--unit-scale, 1));`.
 >
 > This is a robust and minimal calibration scheme that will
 > "fail open" - if the user hasn't calibrated, or clears local data, or
@@ -69,10 +77,9 @@ where @tabatkins describes a calibration page:
 
 ## About this Document
 
-This article is inspired by a
+This article is answering an "work order" in the form of a
 [comment by @frivoal on w3c/csswg-drafts#614](https://github.com/w3c/csswg-drafts/issues/614">)
-, a discussion on the Topic "**[css-values] Ability to address actual physical size #614**":
-
+, a discussion on the Topic **"[css-values] Ability to address actual physical size #614"**:
 
 > […]
 > It is possible that most members of the CSSWG and most browser
@@ -92,7 +99,7 @@ trying to move the discussion forward.
 
 As of beginning this, I don't know if a good case can be build, but
 I'm instinctively biased towards having the ability to use real world
-physical sizes in CSS. I found out about the discussion right after
+physical sizes in CSS. I found out about the bigger discussion right after
 collecting my observations in [Real World Absolute Length Units Evaluation](../techniques/absolute_units_evaluation.html).
 
 ### Contribute
@@ -107,21 +114,184 @@ of the repository HEAD commit:
 [`{{ site.github.build_revision | slice: 0, 10 }}`]({{site.github.repository_url}}/commit/{{site.github.build_revision}}).
 
 
-## Calibration of Browser Length-Units
+## Debunking
+
+Sometimes arguments are made that are not adding value to the discussion.
+There are similar badly shaped arguments on both sides and I hope to get
+by without having to dispute each of the low quality ones in here.
+
+### Critique of the CSS-Reference-Pixel
+
+Examples where the CSS-Reference-Pixel model solves issues, that seem to
+be harder to tackle in the physical-sizes model, are often used as
+counterpoints to having access to physical sizes in CSS at all. Despite
+that kind of argumentation could be considered bad style, rather than
+disputing these points, I'm going to explain where I see the shortcomings
+of the CSS-Reference-Pixel. I hope this will show why **a complementary model**
+with some sort of access to physical units is necessary. I do believe the
+CSS-Reference-Pixel is in general a very good idea.
+
+The way the CSS-Reference-Pixel *"just works"* is, irrespective of its fancy
+definition via the visual angle and viewing distance, still a simple *"just
+scale everything linearly”*.
+
+While this has proven to work in many cases, it breaks down when it comes
+to situations where accuracy and fidelity are required, either by the
+the nature of the viewing situation or by the diligence of the author
+who wants to create the best possible design.
+
+TODO: discuss "fixed-media" here!
+
+> You mention low sighted readers as an example of why you need to know
+> how large something physically is, but that wouldn't not work. Making
+> each letter 2cm tall, which would seem gigantic if you're thinking of
+> text on a phone, would result in small and unreadable text when seen
+> on the projector of a large conference room. The CSS pixel already
+> accounts for that.
+> [… responding to a pizza analogy …] if you had all the parameters, you'd
+> need to boil them down to the same result a we already gave you.
+> [[source](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-254403012)]
+
+
+> What is particularly useful about the angular definition of the pixel
+> and other length units is that they enable robust designs. By that I
+> mean that it enables authors to write a web page that works in environments
+> they know about, **and be confident that it will do the right thing even
+> in environments they haven't tested in or are not even aware of.**
+> [[source](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-254679777)]
+
+
+
+
+Besides, nobody wants to display text in unreadable sizes and everybody
+understands the size and distance implications of phones versus projectors.
+The conference room is also a good example how the CSS-pixel does not
+compensate viewing distances and display size very well: the first row
+versus the last row will have tremendously different viewing angles and
+witness different sizes of the screen. Good design choices based on environment
+data, such as absolute screen size and also the general situation can improve
+the presentation.
+
+The idea that one would come up with the same result when given all the
+parameters as when just scaling everything, despite of a more complicated
+path, sounds to me like an overassessment. It boldly disregards the work
+designers do, the decision making process. Engineers tend to simplify
+issues, and that’s often required in their work, but when it comes to human
+perception, visual language, written language and so on, this simplification
+often tends to yield naive and wrong results.
+
+### "Absolute Physical Measurements Would Mess with Zooming."
+
+Where zooming is possible we must not take it away, it simply has higher
+priority. If there's an important reason why something must be displayed
+true to scale, the page or app should inform the user and if possible
+detect zooming and warn. Further, Page-Zoom already invokes media-queries,
+these will keep working and will likely add support for the new model.
+Ways to work with the fact of zooming will evolve, it's not a blocker.
+
+There are however also situations where zooming is not possible, the UA
+may not be controllable by the viewer, in those cases, informed design with
+physical sizes will likely help to improve the situation, rather than having
+the CSS-Reference-Pixel dictate a solution.
+
+
+#### TODO: critique of the CSS-reference-pixel approach
+
+Yes and no: designers know that size and distance are important, but the
+current approach is insufficient for some use cases.
+
+We can also show the web platform/CSS traditionally is multi-conceptual.
+
+Note: viewing distance is not well defined or specified it’s a joker in the CSS-pixel visual angle argument, but the concept is sloppy, we can work with that!
+
+
+### The CSS pixel is often (but not always) rounded to a integer number of
+ physical pixels by implementations, but it is fundamentally designed
+ so that if you know the size of something in pixels, you know how big it looks.
+
+
+Note: True, but what you think you know is very vague: rounding is rough, there’s no fidelity at all. Not each device scales appropriately, phones/tablets/closed systems probably better than laptops/desktops, generally no one ever asks the user how far they are away from their screen, it’s often just an assumption or educated guess. We can calculate the nominal reading distance of devices, and it is generally somewhere in the ballpark, but then again, heads move, nod and wiggle, if it’s to small they will come closer etc.
+
+### Browsers are bad at reliably and accurate knowing the actual size and resolution of your display.
+
+*Paraphrased from the [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths).*
+
+That's why the suggestion is having a progressively enhancing model. Some
+devices can be very reliable, like phones and tablets, where the display
+is integrated, these devices could just work. In other cases the best solution
+is to ask the user for calibration via a widget, similar to the one that is
+demonstrated here. The calibration could happen on the page directly, but
+it would be better if the user agent or the OS could provide this service.
+The page or app would just use its own widget as a polyfill.
+
+If the hardware reports display sizes, it would in any case be necessary
+that the user can control and, where required, override that information
+with own measurements, using a calibration widget.
+
+### Authors would misuse accurate real-world units and give users a bad experience.
+
+*Paraphrased from the [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths).*
+
+We should not protect authors from themselves, instead teach them how to
+use these tools to achieve the best for their users, and that the CSS-Reference-Pixel
+likely should be their default choice.
+
+The argument broadly could also be turned around, identifying cases where
+the automatism provided by the CSS-Reference-Pixel gives users a bad or
+worse than ideal experience, and since CSS has no escape, this could be
+identified as structural violence.
+
+
+## Use Cases
+
+### Calculate Device Normal Viewing Distance
+
+The viewing distance for which a screen is set up to, according to the
+CSS-reference-pixel, is usually opaque to the user as well as to the CSS-author.
+One result of that is, that it is hard to asses whether a device
+displays contents too big or too small, or **how far away from a device one
+should be to enjoy that standard.**
+
+From the [spec](https://www.w3.org/TR/css-values-3/#absolute-lengths):
 
 > The reference pixel is the visual angle of one pixel on a device with
 > a pixel density of 96dpi and a distance from the reader of an arm’s
-> length. For a nominal arm’s length of 28 inches [71,12 centimeters], the visual angle
-> is therefore about 0.0213 degrees. For reading at arm’s length,
-> 1px thus corresponds to about 0.26 mm (1/96 inch).
+> length. For a nominal arm’s length of 28 inches [71,12 centimeters],
+> the visual angle is therefore about 0.0213 degrees. For reading at
+> arm’s length, 1px thus corresponds to about 0.26 mm (1/96 inch).
 
+With a calibration as established above, it's simple to calculate thimplied viewing distance:
 
-Therefore, on your device the reading distance to have one
-CSS-inch to appear at an visual angle of 0.0213 degrees is: <span class="insert insert-normal-reading-distance"></span>
+`let unitScalePhysical = `<code class="insert insert-unit-scale-physical"></code>`;`
 
+JavaScript, calculating `normalReadingDistance` in inches:
 
+```js
 
-## Use Cases:
+/* It's sufficient to just scale the nominal arm's length: */
+
+let normalReadingDistance = 28 / unitScalePhysical;
+
+/* Alternatively the same result calculated using the visual angle: */
+
+let alphaRad = Math.atan2(1/96/2, 28),
+    normalReadingDistance_ = ((1/96)/unitScalePhysical/2) / Math.tan(alphaRad) * 2.54
+    ;
+```
+
+On your device the reading distance to have one CSS-pixel to appear at an visual angle of 0.0213 degrees is:
+
+<strong class="insert insert-normal-reading-distance"></strong>
+
+In other words at that distance, one inch would appear as big as one physical
+inch appears when viewed from a distance of 28 inches.
+
+#### Other Useful Calculations
+
+TODO
+
+### more
+
 
 * print proofing/designer preview. We can help reducing paper
   wastage!
@@ -158,3 +328,16 @@ CSS-inch to appear at an visual angle of 0.0213 degrees is: <span class="insert 
   smaller than e.g. 12 pt because the device defaults to 20 inches
   viewing distance instead of 28 inches may be unfortunate.
 
+## Browser Support Roadmap
+
+Conceiving a roadmap how progressive browser support could be established in four milestones.
+
+### Level 0
+
+Now.
+
+### Level 1
+
+### Level 2
+
+### Level 3
