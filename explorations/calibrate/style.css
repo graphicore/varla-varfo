@@ -23,11 +23,12 @@
 
     /* we have rather long lines in this piece*/
     line-height: 1.5;
+    --body-width: 50rem
 }
 
 
 body {
-    max-width: 50rem;
+    max-width: var(--body-width);
 }
 
 /* Compensate the adjustment of main element in relation to the
@@ -272,3 +273,10 @@ pre code{
     padding: unset;
     background: transparent;
 }
+
+img {
+    max-width: min(100%, calc(var(--body-width) * .8));
+    margin: 0 auto;
+    display: block;
+}
+
