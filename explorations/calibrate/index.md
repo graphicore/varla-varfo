@@ -360,7 +360,7 @@ things harder, the gist is that it would enable other things that are
 impossible to achieve under the CSS-Reference-Pixel. Despite, models
 would be **complementary**, there's no need to pick a side.
 
-### We would break interoperability/the internet in some way.
+### We would break interoperability/the internet.
 
 If we can't break anything, it will also be hard to do any good. We got
 to think of authors to act in good faith, that they want to create working
