@@ -140,7 +140,7 @@ to situations where **precision and fidelity are required**, either by the
 the nature of the viewing situation or by the diligence of the author
 who wants to create the best possible design.
 
-#### Excursion: The Tale of Fixed Media
+### Excursion: The Tale of Fixed Media
 
 In spite of all the reasons, why physical sizes are said to fail or not,
 we do already [have](https://www.w3.org/TR/css-values-3/#absolute-lengths)
@@ -160,18 +160,22 @@ measurements:
 > that the pixel unit refer to the whole number of device pixels that
 > best approximates the reference pixel.
 
-**Typical viewing distance** is tricky: it's not explicitly set anywhere in
-the device, nor does the spec document it or explain how to determine it.
-Instead, it is left to device manufacturers, operating systems and user
-preferences to somehow come to a scaling factor that pleases. Usually
-backwards from there, *if we know some real world measurement of the
-screen like PPI, its measurements or the `--unit-scale-physical` factor*,
-we can [calculate](#calculate-device-typical-viewing-distance) what the
-typical viewing distance is i.e. **the viewing distance at which the device
-matches the CSS-Reference-Pixel**. In the context of this article, this
-is how the term is used. *Note:* calculation from PPI screen measurements
+#### Typical Viewing Distance
+
+… is tricky: it's not explicitly set anywhere
+in the device, nor does the spec document it or explain how to determine
+it. Instead, it is left to device manufacturers, operating systems and user
+preferences to somehow come to a scaling factor that pleases or is good
+enough, *there's no precision*. Usually backwards from there, *if we know
+some real world measurement of the screen like PPI, its measurements or
+the `--unit-scale-physical` factor*, we can [calculate](#calculate-device-typical-viewing-distance)
+what the typical viewing distance is i.e. **the viewing distance at which
+the device matches the CSS-Reference-Pixel**. In the context of this article,
+this is how the term is used. *Note:* calculation from PPI or screen measurements
 would require additional information like `window.devicePixelRatio` or from
 `window.screen`.
+
+#### The Golden Hammer
 
 The big question is: **If the CSS-Reference-Pixel is the golden hammer
 that fixes all of our problems, why would anyone ever want to anchor to
@@ -235,7 +239,9 @@ become unreadable small when scaled down to flyer size. But also the
 differences between font-sizes in the hierarchy overall will be lesser
 in the design for the smaller flyer. It's not a linear scaling at all.
 
-**Fixed Media**, defined for the purpose of this article, is a superset
+#### Fixed Media
+
+… defined for the purpose of this article, is a superset
 of print media, it also includes other media when it has similar properties
 to print. Fixed media is not primarily interactive, meaning that it can't
 be zoomed, scrolled or clicked by the viewer, it may be paged or animated
@@ -296,70 +302,9 @@ fixed media**. The results that are permissible must be oriented at
 whatever works at a distance of an arm’s length. This is actively harmful
 for general design quality. Like clipping in signals, it's limiting the
 range of expression and the precision that good design offers, in German
-we have a word for what is left: **"Einheitsbrei"** (like uniformity-mash/porridge).
+we have a word for what is left: **"Einheitsbrei"** (~ uniformity-mush).
 
-
-
----
-
-
-CSS is becoming ubiquitous, no matter how little the ratio of a specialized
-use case like fixed media is compared to traditional web site usage, in absolute
-numbers it will still be vast.
-
-
-Design for fixed media in CSS with physical units would be powerful, because
-we could use the parametric power of CSS to target different output
-media formats and still wouldn't have to sacrifice on precision. This of
-course would ideally be supported by media queries.
-
-
-> You mention low sighted readers as an example of why you need to know
-> how large something physically is, but that wouldn't not work. Making
-> each letter 2cm tall, which would seem gigantic if you're thinking of
-> text on a phone, would result in small and unreadable text when seen
-> on the projector of a large conference room. The CSS pixel already
-> accounts for that.
-> [… responding to a pizza analogy …] if you had all the parameters, you'd
-> need to boil them down to the same result a we already gave you.
-> [[source](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-254403012)]
-
-There are many ways to handle the intricacies of reality, in this case
-a `font-size: max(calc(12pt * var(--unit-scale-physical), 12pt));` would
-make sure we don't print text smaller than acceptable in a fixed media
-situation.
-
-
-
-
-> What is particularly useful about the angular definition of the pixel
-> and other length units is that they enable robust designs. By that I
-> mean that it enables authors to write a web page that works in environments
-> they know about, **and be confident that it will do the right thing even
-> in environments they haven't tested in or are not even aware of.**
-> [[source](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-254679777)]
-
-
-
-
-Besides, nobody wants to display text in unreadable sizes and everybody
-understands the size and distance implications of phones versus projectors.
-The conference room is also a good example how the CSS-pixel does not
-compensate viewing distances and display size very well: the first row
-versus the last row will have tremendously different viewing angles and
-witness different sizes of the screen. Good design choices based on environment
-data, such as absolute screen size and also the general situation can improve
-the presentation.
-
-The idea that one would come up with the same result when given all the
-parameters as when just scaling everything, despite of a more complicated
-path, sounds to me like an overassessment. It boldly disregards the work
-designers do, the decision making process. Engineers tend to simplify
-issues, and that’s often required in their work, but when it comes to human
-perception, visual language, written language and so on, this simplification
-often tends to yield naive and wrong results.
-
-### "Absolute Physical Measurements Would Mess with Zooming."
+### Absolute Physical Measurements Would Mess with Zooming.
 
 Where zooming is possible we must not take it away, it simply has higher
 priority. If there's an important reason why something must be displayed
@@ -372,33 +317,9 @@ it's not a blocker.
 There are however also [situations where zooming is not possible](#excursion-the-tale-of-fixed-media),
 the UA may not be controllable by the viewer, in those cases, informed
 design with physical sizes will likely help to improve the situation,
-rather than having the CSS-Reference-Pixel dictate a solution.
+rather than having the CSS-Reference-Pixel impose a not ideal solution.
 
-#### TODO: critique of the CSS-Reference-Pixel approach
-
-Yes and no: designers know that size and distance are important, but the
-current approach is insufficient for some use cases.
-
-We can also show the web platform/CSS traditionally is multi-conceptual.
-
-Note: viewing distance is not well defined or specified it’s a joker in
-the CSS-pixel visual angle argument, but the concept is sloppy, we can work with that!
-
-
-### The CSS pixel is fundamentally designed so that if you know the size
-of something in pixels, you know how big it looks.
-
-
-Note: True, but what you think you know is very vague: rounding is rough,
-there’s no fidelity at all. Not each device scales appropriately,
-phones/tablets/closed systems probably better than laptops/desktops,
-generally no one ever asks the user how far they are away from their screen,
-it’s often just an assumption or educated guess. We can calculate the
-nominal reading distance of devices, and it is generally somewhere in the
-ballpark, but then again, heads move, nod and wiggle, if it’s to small
-they will come closer etc.
-
-### Browsers are bad at reliably and accurate knowing the actual size and resolution of your display.
+### Browsers are bad at reliably and accurately knowing the actual size and resolution of your display.
 
 *Paraphrased from the [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths).*
 
@@ -412,7 +333,7 @@ could provide this service. In my opinion, the user agent would be the sweet
 spot to implement this. The page or app would provide its own widget as
 a polyfill.
 
-If the hardware reports display sizes, it would in any case be necessary
+If the hardware/system reports display sizes, it would in any case be necessary
 that the user can control and, where required, override that information
 with own measurements, using a calibration widget.
 
@@ -420,30 +341,39 @@ with own measurements, using a calibration widget.
 
 *Paraphrased from the [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths).*
 
-We should not protect authors from themselves, instead teach them how to
-use these tools to achieve the best for their users. Also that the
+We should not protect authors from their own inability, instead teach them
+how to use these tools to achieve the best for their users. Also that the
 CSS-Reference-Pixel should be their default choice.
 
 The argument could also be turned around, identifying cases where the
 automatism provided by the CSS-Reference-Pixel gives users a bad or
 worse than ideal experience, and since CSS has no escape mechanism yet,
-this could be identified as a form of violence, a good moment to think:
-fuck the algorithm.
+this could be identified as a form of violence.
 
 It's OK that working with real physical measurements would make some
 things harder, the gist is that it would enable other things that are
-impossible to achieve under the CSS-Reference-Pixel. Despite that, concepts
-could be used side by side, there's no need to root for one model only.
+impossible to achieve under the CSS-Reference-Pixel. Despite, models
+would be **complementary**, there's no need to pick a side.
+
+### We would break interoperability/the internet in some way.
+
+...
+
+TODO: CSS-techniques that don't just stop working: like media queries, relative units, min/max css-functions etc.
+
+
+especiallly with media queries we could deliver hybrid pages
+
 
 ## Use Cases
 
 ### Calculate Device Typical Viewing Distance
 
-The viewing distance for which a screen is set up to, according to the
-CSS-Reference-Pixel, is usually opaque to the user as well as to the CSS-author.
-One result of that is, that it is hard to asses whether a device
-displays contents too big or too small, or **how far away from a device one
-should be to enjoy that standard.**
+The typical viewing distance for which a screen is set up, to match the
+CSS-Reference-Pixel, is usually opaque to the user as well as to the
+CSS-author. One result of that is, that it is hard to asses whether a
+device displays contents too big or too small, or **how far away from
+a device one should be to enjoy that standard.**
 
 From the [spec](https://www.w3.org/TR/css-values-3/#absolute-lengths):
 
@@ -522,6 +452,10 @@ TODO
   requirements? "legible" is one of them, but fonts becoming regularly
   smaller than e.g. 12 pt because the device defaults to 20 inches
   viewing distance instead of 28 inches may be unfortunate.
+* CSS is becoming ubiquitous, no matter how little the ratio of a specialized
+  use case like fixed media is compared to traditional web site usage, in absolute
+  numbers it will still be vast.
+
 
 ## Browser Support Roadmap
 
