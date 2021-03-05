@@ -26,6 +26,10 @@
 }
 
 
+body {
+    max-width: 50rem;
+}
+
 /* Compensate the adjustment of main element in relation to the
    footer element.
 
@@ -42,13 +46,18 @@ body {
     width: 100%;
 }
 
+
+.anchor-calibrated-units,
+.sample-physical {
+    /* css units are scaled to match real world values */
+    transform: scale(var(--unit-scale-physical));
+    transform-origin: top left;
+}
+
 .anchor-calibrated-units {
     /* the visual default font-size of the user is preserved */
     font-size: calc(100% / var(--unit-scale-physical));
 
-    /* css units are scaled to match real world values */
-    transform: scale(var(--unit-scale-physical));
-    transform-origin: top left;
     /* reset page width to un transformed values */
     width: calc(100% / var(--unit-scale-physical));
 }
@@ -56,8 +65,6 @@ body {
 .sample-physical{
     display: inline-block;
     background: black;
-    transform: scale(var(--unit-scale-physical));
-    transform-origin: top left;
     width: var(--sample-size);
     height: var(--sample-size);
     /* transform does not change the element flow, but when we know

@@ -13,20 +13,21 @@ class: calibrate-css
 
 # Calibrate CSS
 
-An important but often overlooked property of the CSS-unit system is that
-its absolute length units don't describe what their names imply.The reasons
-are historical and the current status quo allows authors to design without
-thinking about the deeper nature of their target devices, which is a good
-thing. However, the consequences are that a CSS-Pixel is likely not a
-hardware pixel on the display and that a CSS-Inch is likely not a real
-world physical Inch. Regarding the latter, two categories of use cases are
-made infeasible or hard to implement:
+An important but often overlooked property of the CSS-unit system is that,
+on screens, its absolute length units don't describe what their names
+imply. The reasons are historical and the current status quo allows authors
+to design without thinking about the deeper nature of their target devices,
+like size and viewer distance, which is a good thing. However, the
+consequences are that a CSS-Pixel is likely not a hardware pixel on the
+display and that a CSS-Inch is likely not a real world physical Inch.
+Regarding the latter, two categories of use cases are made infeasible or
+hard to implement:
 
  * measuring or proofing
  * accurate design, especially for [fixed media](#excursion-the-tale-of-fixed-media)
 
 This article is about enabling CSS-authors to work with real world physical
-units and to make it easier to do so.
+measurements and to make it easier to do so.
 
 ## "A robust and minimal calibration scheme"
 
@@ -37,7 +38,7 @@ that it is *quickly done* and *not a big deal*.
 
 <div class="insert_calibration_widget"></div>
 
-If the widget was used correctly, we can now use real-world sizes.
+If the widget was used correctly, we can now use real-world sizes:
 
 One real centimeter: <span class="sample-physical" style="--sample-size: 1cm"></span>
 One real inch: <span class="sample-physical" style="--sample-size: 1in"></span>
@@ -77,7 +78,7 @@ where @tabatkins describes a calibration page workaround:
 
 ## About this Document
 
-This article is answering an "work order" in the form of a
+This article is answering a "work order" in the form of a
 [comment by @frivoal on w3c/csswg-drafts#614](https://github.com/w3c/csswg-drafts/issues/614">)
 , a discussion on the Topic **"[css-values] Ability to address actual physical size #614"**:
 
@@ -123,17 +124,18 @@ by without having to dispute each of the low quality ones in here.
 ### Critique of the CSS-Reference-Pixel
 
 Examples where the CSS-Reference-Pixel model solves issues, that seem to
-be harder to tackle in the physical-sizes model, are often used as
-counterpoints to having access to physical sizes in CSS at all. Despite
-that this kind of argumentation could be considered bad style, rather than
-disputing these points, I'm going to explain where I see the shortcomings
-of the CSS-Reference-Pixel. I hope this will show why **a complementary model**
-with some sort of access to physical units is necessary. I do believe the
-CSS-Reference-Pixel is in general a very good idea.
+be harder to tackle in the physical-measurements model, are often used as
+counterpoints to having access to physical measurements in CSS at all. This
+kind of argumentation should be considered bad style, rather than disputing
+that, I'm going to explain where I see the shortcomings of the
+CSS-Reference-Pixel. I hope this will show why **a complementary model**
+with some sort of access to physical measurements is necessary. I do believe
+the CSS-Reference-Pixel is in general a very good idea.
 
 The way the CSS-Reference-Pixel *"just works"* is, irrespective of its fancy
 definition via the visual angle and viewing distance, a simple *"just
-scale everything”*.
+scale everything”*, so that it looks to be the same size, regardless of
+the viewing distance.
 
 While this has proven to work in many cases, it breaks down when it comes
 to situations where **precision and fidelity are required**, either by the
@@ -142,7 +144,7 @@ who wants to create the best possible design.
 
 ### Excursion: The Tale of Fixed Media
 
-In spite of all the reasons, why physical sizes are said to fail or not,
+In spite of all the reasons, why physical measurements are said to fail or not,
 we do already [have](https://www.w3.org/TR/css-values-3/#absolute-lengths)
 the concept of *"anchoring"* especially for *"print media"* to physical
 measurements:
@@ -162,24 +164,24 @@ measurements:
 
 #### Typical Viewing Distance
 
-… is tricky: it's not explicitly set anywhere
-in the device, nor does the spec document it or explain how to determine
-it. Instead, it is left to device manufacturers, operating systems and user
-preferences to somehow come to a scaling factor that pleases or is good
-enough, *there's no precision*. Usually backwards from there, *if we know
-some real world measurement of the screen like PPI, its measurements or
-the `--unit-scale-physical` factor*, we can [calculate](#calculate-device-typical-viewing-distance)
+… is tricky: it's not explicitly set anywhere in the device, nor does the
+spec document it or explain how to determine it. Instead, it is left to
+device manufacturers, operating systems and user preferences to somehow
+come to a scaling factor that pleases or is good enough, *there's no
+precision*. Usually backwards from there, *if we know some real world
+measurement of the screen like PPI, its measurements or the `--unit-scale-physical`
+factor*, we can [calculate](#calculate-device-typical-viewing-distance)
 what the typical viewing distance is i.e. **the viewing distance at which
 the device matches the CSS-Reference-Pixel**. In the context of this article,
 this is how the term is used. *Note:* calculation from PPI or screen measurements
-would require additional information like `window.devicePixelRatio` or from
-`window.screen`.
+would require additional information, like `window.devicePixelRatio` or
+`window.screen.width`.
 
 #### The Golden Hammer
 
 The big question is: **If the CSS-Reference-Pixel is the golden hammer
 that fixes all of our problems, why would anyone ever want to anchor to
-physical units?**
+physical measurements, even in print?**
 
 Although I've seen claims that printers do not produce accurate output,
 in my tests with my home printer the measurements are *highly accurate*.
@@ -195,15 +197,15 @@ example we designed a flyer for an A6 postcard format. The design is set
 in absolute units and the printer (A) anchors to physical measurements.
 We know that at `28 inches` distance, "nominal arm’s length", our flyer design
 matches the CSS-Refernce-Pixel. A1 is `~ 5.65` (= <code>(√2)<sup>5</sup></code>)
-times larger than A6, that (naively) puts its typical viewing distance
-to match the CSS-Reference-Pixel at `158.2 inches` (`5.65 × 28`, `~ 4.02 meter`).
+times larger than A6, that puts its typical viewing distance to match
+the CSS-Reference-Pixel at `158.2 inches` (`5.65 × 28`, `~ 4.02 meter`).
 If we send our flyer to a printer (B) to print at A1, the printer in
-this case anchors to the CSS-Refernce-Pixel and also has determined,
-naively(!), that the typical viewing distance of a A1 Poster is at
-`158.2 inches`, we get a perfectly scaled version of our flyer. However, in
-fact, printers do not anchor to the CSS-Reference-Pixel. Hence, to get the
-same result, in our print dialog we must chose the option "*Scale: Fit to
-page width*" in other words *"just scale everything”*.
+this case anchors to the CSS-Refernce-Pixel and has determined, that the
+typical viewing distance of a A1 Poster is at `158.2 inches`, we get a
+perfectly scaled version of our flyer. However, in fact, printers do not
+anchor to the CSS-Reference-Pixel. Hence, to get the same result, in our
+print dialog we must chose the option "*Scale: Fit to page width*" in other
+words *"just scale everything”*.
 
 *Note:* if the typical viewing distance would be a different value in B,
 the design would not fit the page exactly and end up either larger or smaller
@@ -218,11 +220,11 @@ The answer is simple: design for print doesn't work that way. In fact it
 is discredited to take a flyer and just print it as a poster or vice versa.
 One would analyze the anticipated viewing conditions and then find a layout
 that matches these conditions best. Classically, a poster doesn't
-have a single typical viewing distance. Instead, since the size of the
-poster is fixed and interaction is limited (no zoom, no scroll), viewing
+have a single typical viewing distance. Instead, since the size and location
+of the poster are fixed and interaction is limited (no zoom, no scroll), viewing
 distance becomes an *instrument of design* and *it is not fixed*. One could
-say, viewing distance is the interaction model of a poster, and it could
-work something like this:
+say, viewing distance is the primary interaction model of a poster, and it
+could work something like this:
 
  * **viewer is farther** (~ 20 – 10 meters) The poster must capture attention.
  * **viewer is far** (~ 8 – 5 meters) Most important information is revealed (who, what).
@@ -290,9 +292,12 @@ media query it would look in every aspect the same. Thus the resulting
 image would have to be the same as on the small screen, just scaled.
 Fortunately, we set it differently, that screen in media queries would
 appear to be smaller in CSS-units and also have to receive the styles of
-the larger design. **This is not only counter intuitive, it is also arbitrary**.
-If we design like this, we are going to have the same result for an A0
-sized screen, also when viewing on a mobile phone.
+the larger design. **This heuristic is not only counter intuitive, it is
+also arbitrary**. If we design like this, we are going to have the same
+result for the A0 sized screen also when viewing on a mobile phone, because
+to us they appear to be the same.
+
+#### The Lesson Learned
 
 At this moment we can end this excursion. From looking at screen sizes
 that are normalized with the CSS-Reference-Pixel model, we can't possibly
@@ -316,22 +321,22 @@ it's not a blocker.
 
 There are however also [situations where zooming is not possible](#excursion-the-tale-of-fixed-media),
 the UA may not be controllable by the viewer, in those cases, informed
-design with physical sizes will likely help to improve the situation,
+design with physical measurements will likely help to improve the situation,
 rather than having the CSS-Reference-Pixel impose a not ideal solution.
 
 ### Browsers are bad at reliably and accurately knowing the actual size and resolution of your display.
 
 *Paraphrased from the [CSS-WG FAQ](https://wiki.csswg.org/faq#real-physical-lengths).*
 
-That's why [the proposal](#browser-support-roadmap) is to have a progressively
-enhancing model. Some devices can be very reliable, like phones and tablets,
+That's why [the proposal](#browser-support-roadmap) is to have **a progressively
+enhancing model**. Some devices can be very reliable, like phones and tablets,
 where the display is integrated, these devices could just work. In other
 cases the best solution is to ask the user for calibration via a widget,
 similar to the one that is demonstrated here. The calibration could happen
 on the page directly, but it would be ideal if the user agent or the OS
 could provide this service. In my opinion, the user agent would be the sweet
-spot to implement this. The page or app would provide its own widget as
-a polyfill.
+spot to implement this. The page or app could provide its own widget as
+a polyfill until it has stabilized.
 
 If the hardware/system reports display sizes, it would in any case be necessary
 that the user can control and, where required, override that information
@@ -357,13 +362,27 @@ would be **complementary**, there's no need to pick a side.
 
 ### We would break interoperability/the internet in some way.
 
-...
+If we can't break anything, it will also be hard to do any good. We got
+to think of authors to act in good faith, that they want to create working
+designs, that they work hard to achieve that and that they will find elegant
+solutions to difficult problems.
 
-TODO: CSS-techniques that don't just stop working: like media queries, relative units, min/max css-functions etc.
+Let's instead focus on *the tools that we already have in CSS* to make
+robust designs and that will stay available. Because, without these tools,
+even the CSS-Reference-Pixel would fail to deliver on its promise.
 
+There are:
 
-especiallly with media queries we could deliver hybrid pages
+ * Relative length units, like `em`, `rem`, `vh`, `vw` etc.
+ * Percentages `%`
+ * CSS functions, like `min()`, `max()`, `calc()`, `clamp()` and `var()`
+ * overflow controls
+ * Media Queries, although, these would have to beef up a bit.
 
+And not to forget, the CSS-Reference-Pixel model will also stay
+available at all time, either to complement or — especially with media
+query support — we could create e.g. hybrid pages that leverage the best
+of both models.
 
 ## Use Cases
 
