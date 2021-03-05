@@ -20,6 +20,9 @@
     */
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
+
+    /* we have rather long lines in this piece*/
+    line-height: 1.5;
 }
 
 
@@ -231,4 +234,34 @@ blockquote{
     background: #fafafa;
     padding: .5em;
     border-left: .2em solid var(--text-color);
+}
+
+table{
+    border-collapse: collapse;
+    --border-style: 2px solid darkgray;
+}
+
+table thead {
+    border-bottom: var(--border-style);
+}
+table tr > * {
+    border-right: var(--border-style);
+    border-collapse: collapse;
+    padding: 0 .5em;
+}
+table tr > *:last-child {
+    border-right: none;
+}
+
+code, pre{
+    border: 1px solid lightgrey;
+    padding: 0 0.15em;
+    border-radius: .2em;
+    background: white;
+}
+
+pre code{
+    border: none;
+    padding: unset;
+    background: transparent;
 }

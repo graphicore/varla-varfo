@@ -29,6 +29,12 @@ html{
     background: #f6f5f4;
 }
 
+@media print {
+    html{
+        background: white;
+    }
+}
+
 body {
     max-width: 60rem;
     padding: 1em;
