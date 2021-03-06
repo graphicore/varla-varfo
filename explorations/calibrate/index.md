@@ -439,6 +439,7 @@ TODO
 
 * print proofing/designer preview. We can help reducing paper
   wastage!
+* proofing for optical size font designs on screens will be very much welcome.
 * Effective web proofing by correctly scaling to actual
   e.g. phone-screen sizes.
 * optical size proofing for type design
@@ -485,27 +486,31 @@ in four milestones.
 
 Now. The workaround [calibration widget](#css-calibration-widget) exists
 and it is proven to work. Authors can start to use physical measurements,
-to experiment and to lead by example. We can get out the word and search
-for allies and create momentum.
+to experiment, find solutions and usage patterns and to lead by example.
+We can get the word out, search for allies and create momentum.
+
 
 TODO: Call to action -> send links to pages that implement the
 calibration scheme and we are going to it to this document.
 
 TODO: start a list of links at the end of this document.
 
-The user experience of a website or app that uses physical measurements
-can be improved around the calibration process. We should notify  the user,
+We can **improve the user experience around the calibration process** of a
+website or app that uses physical measurements. The user should be notified
 that a page uses calibration, ask the user to check from time to time if
-calibration values are correct, detect zoom and find ways to handle it
-gracefully  etc. This effort would aim to make the user experience good
-but also to show a way how UAs could implement calibration directly.
+calibration values are correct. Maybe we can try to make educated guesses
+when calibration is off (e.g. a `window.screen` and `window.devicePixelRatio`
+finger print could be saved along with the calibration value. Detect zoom
+and find ways to handle it gracefully  etc. This effort would aim to make
+the user experience good and solid but also to **show a way how UAs could
+implement calibration directly.**
 
 The way browsers handle user permissions e.g. "Send Notifications" or
 "Open Pop-up Windows" has potential. If permissions are set there's an
 icon in the address bar that toggles a "Site information" widget that can
 be used to make settings. The same thing is also used to inform about the
-connection security status. I think a calibration tool could piggyback on
-that if a page uses calibration features.
+connection security status. Maybe, in the future, a native UA calibration
+tool could piggyback on that if a page uses calibration features.
 
 ![Browser permissions handling in address bar](./assets/browser-permissions-handling.png)
 
@@ -514,69 +519,65 @@ TODO: add a call to action to collaborate on the calibration widget UX!
 
 ### Level 1
 
+A CSS `env(unit-scale-physical)` property is the main goal. At the same
+time, this is the hardest one to convince the CSS Working Group of, some
+minds are already made up because similar attempts were made in the past
+and because it would involve some effort on the browser vendor site.
 
-In the first place an `env(unit-scale-adjust)` property would be the
-ultimate goal. Yet I see this as the hardest one to convince the CSSWG of.
-Especially hard, because it would involve some effort on the browser vendor
-site. One big contra argument is that the calibration information would
-involve getting reliable information from the hardware via the OS to the
-browser and that this can’t be done 100% reliably all the time. Especially,
-if devices are not coming with an integrated screen. I believe that’s true,
-but it does not have to be a game changer. The calibration widget demonstrates
-that calibration can be done by the user with reasonable effort. Now there are
-several places where such a widget could be implemented: The website, the User
-Agent/Browser, the Operating System. The website works already, but could hinder
-the adoption of calibrated content, because it would require users to do the
-calibration often, on each website that requires calibration once, having
-calibration integrated into the browser would improve this a lot. Also, where
-reliable, browsers could just use the calibration information that is provided
-by the OS/hardware, hence, on phones, tablets, and many laptops users would
-not have to be bothered at all. Now, if calibration fails for any reason,
-the website would still work under the CSS-unit-system, `env(unit-scale-adjust)`
-would default to 1, but the user/website would need to be made aware of this.
-Some Ideas how calibration could be integrated into the browsers need to be
-worked out. My thinking is that there are good places to integrate this,
-like the  “Site information” in the address bar, that already has encryption
-and permission management included. Needs outlining ...
+One big contra argument always was that the calibration information would
+involve getting reliable information from the hardware and that this can’t
+be done 100 % reliably all the time. As described in [Level 0](#level-0),
+we can lead the way and show how to do this with user calibration as fallback.
+On the positive side, *it's not 100 % of devices either that **can't** report
+reliable information.*
 
-This is the fundamental step, and we need to produce use cases for it. It
-would also really help if we could start using/inspire the use of calibration
-in the wild. With my background, I’m sure proofing for optical size font
-designs on screens will be very much welcome.
+UA/Browser support for `env(unit-scale-physical)` would improve the user
+experience a lot, and make the usage of physical measurements feasible
+for many more pages. **Much less** calibration would have to be performed,
+it would work across pages and also UAs could maybe also decide better if
+a calibration must be invalidated and renewed, e.g. when the screen has
+changed.
 
-
+The calibration widget could act as a polyfill until UAs catch up.
 
 ### Level 2
 
-Media-query support would be incredibly useful. I’m not proposing how exactly
-these media-queries would have to look, as I’m not well enough read in currently,
-some work still needs to be done here. I believe we'd need to be able to
-media-query physical sizes, physical DPI etc. Viewing-distance is a related
-topic and should probably also be discussed.  Authors could design sites, or
-parts of sites, that anchor to CSS-pixel in some cases and to physical units
-in other cases. Cross device Interoperability and future proofness could be
-established at all times.
+**Media-query support** would be incredibly useful. I’m not proposing how
+exactly these media-queries will have to look. With the experience coming
+from Level 0 and Level 1, we'll be able to describe precisely what kind
+of media-queries are required. This would enable authors to improve cross
+device interoperability a lot.
 
 
 ### Level 3
 
-Once we have access to the scale factor, we can do all kinds of things. A
-general css `transform: scale(env(unit-scale-adjust))` on the `:root` element,
-and some adjustments of the resulting viewport (I can demo that), will anchor
-the entire website to physical units, this css transformation could also be
-done on any element on the page. Consequently, as already suggested by
-@patrickhlauke (who was rather contra about #614) we could establish a
-property to do the anchoring:
+A new CSS property `unit-anchoring: physical|pixel|author`
+With access to the scale factor, would be a logical consequence.
 
-> random idea: similar to box-sizing, create a new value-anchor-unit or
-similar (open to bikeshedding), with values physical|pixel (where pixel would be the default)
+Technically it is already possible to anchor a document to physical
+measurements instead of the CSS-Reference-Pixel, but it is complicated:
 
-I think this is a great idea. And we see in the spec and often in similar
-discussions, that the UA can already decide to anchor to physical units.
-Here CSS would ask the UA to do a specific anchoring. It would also flesh
-out this existing mechanism to be more versatile. In this case, it would
-be useful to also have a property that is the inverse of `env(unit-scale-adjust)`
-i.e. `1/env(unit-scale-adjust)`:
-env(unit-scale-adjust-physical): scale factor from pixel to physical, if anchored to physical 1
-env(unit-scale-adjust-pixel): scale factor from physical to pixel, if anchored to pixel 1
-That way, we can have access to the other unit system while anchored to one, on an per element basis.
+```css
+/* Applied on :root this will anchor the entire website to
+ * physical units.
+ */
+.physical-unit-anchoring {
+    /* Scale everything. */
+    `transform: scale(env(unit-scale-adjust))`;
+    /* The visual default font-size of the user can be preserved. */
+    font-size: calc(100% / env(unit-scale-adjust));
+    /* Reset page width to pre-transform size. */
+    width: calc(100% / env(unit-scale-adjust));
+}
+```
+
+*Note:* on `:root` this works better than on any generic element,
+especially because the `transform` size changes of the element are not
+compensated well in this example, i.e. element height in block direction
+would need adaptions, but these differ on a case by case basis.
+
+According to the CSS spec, a UA can already decide to anchor to physical
+measurements. With this, there would be a way from within CSS to ask the
+UA to do a specific anchoring. Together with Level 2 media query support
+it would be entirely possible to use this safely without having to compromise
+on interoperability or future proofness.
