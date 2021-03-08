@@ -499,7 +499,7 @@ We can **improve the user experience around the calibration process** of a
 website or app that uses physical measurements. The user should be notified
 that a page uses calibration, ask the user to check from time to time if
 calibration values are correct. Maybe we can try to make educated guesses
-when calibration is off (e.g. a `window.screen` and `window.devicePixelRatio`
+when calibration is invalid e.g. a `window.screen` and `window.devicePixelRatio`
 finger print could be saved along with the calibration value. Detect zoom
 and find ways to handle it gracefully  etc. This effort would aim to make
 the user experience good and solid but also to **show a way how UAs could
@@ -551,11 +551,11 @@ device interoperability a lot.
 
 ### Level 3
 
-A new CSS property `unit-anchoring: physical|pixel|author`
-With access to the scale factor, would be a logical consequence.
+A new CSS property `unit-anchoring: physical|pixel|author`, would be a logical consequence.
 
 Technically it is already possible to anchor a document to physical
-measurements instead of the CSS-Reference-Pixel, but it is complicated:
+measurements instead of the CSS-Reference-Pixel, but it is a bit
+complicated:
 
 ```css
 /* Applied on :root this will anchor the entire website to
@@ -578,7 +578,7 @@ direction would need adaptions to fit the transformed element into the
 document flow, but these adaptions differ on a case by case basis.
 
 According to the CSS spec, a UA can already decide to anchor to physical
-measurements. With this, there would be a way from within CSS to ask the
-UA to do a specific anchoring. Together with Level 2 media query support
-it would be entirely possible to use this safely without having to compromise
+measurements. This would add a way from within CSS to ask the UA to do a
+specific anchoring. Together with Level 2 media query support it would be
+entirely possible to use this safely without having to compromise
 on interoperability or future proofness.
