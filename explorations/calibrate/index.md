@@ -11,6 +11,9 @@ class: calibrate-css
 
 *This is a draft.*
 
+*March 2021 by Lasse Fister • [GitHub @graphicore](https://github.com/graphicore)
+• [contact](http://graphicore.de/en/page/lasse)*
+
 # Calibrate CSS
 
 An important but often overlooked property of the CSS-unit system is that,
@@ -475,6 +478,7 @@ TODO
 * CSS is becoming ubiquitous, no matter how little the ratio of a specialized
   use case like fixed media is compared to traditional web site usage, in absolute
   numbers it will still be vast.
+* Optimize readability. See BBC-subtitle example in #614
 
 
 ## Browser Support Roadmap
@@ -573,8 +577,9 @@ measurements instead of the CSS-Reference-Pixel, but it is complicated:
 
 *Note:* on `:root` this works better than on any generic element,
 especially because the `transform` size changes of the element are not
-compensated well in this example, i.e. element height in block direction
-would need adaptions, but these differ on a case by case basis.
+compensated well in this example, i.e. element height or margin in block
+direction would need adaptions to fit the transformed element into the
+document flow, but these adaptions differ on a case by case basis.
 
 According to the CSS spec, a UA can already decide to anchor to physical
 measurements. With this, there would be a way from within CSS to ask the
