@@ -23,7 +23,7 @@ to design without thinking about the deeper nature of their target devices,
 like size and viewer distance, which is a good thing. However, the
 consequences are that a CSS-Pixel is likely not a hardware pixel on the
 display and that a CSS-Inch is likely not a real world physical Inch.
-Regarding the latter, two categories of use cases are made infeasible or
+Regarding the latter, two categories of [use cases](#use-cases) are made infeasible or
 hard to implement:
 
  * measuring or proofing
@@ -385,13 +385,17 @@ of both models.
 
 ## Use Cases
 
+
+* measuring or proofing
+ * accurate design, especially for [fixed media](#excursion-the-tale-of-fixed-media)
+
 ### Calculate Device Typical Viewing Distance
 
-The typical viewing distance for which a screen is set up, to match the
-CSS-Reference-Pixel, is usually opaque to the user as well as to the
-CSS-author. One result of that is, that it is hard to asses whether a
-device displays contents too big or too small, or **how far away from
-a device one should be to enjoy that standard.**
+The [typical viewing distance](#typical-viewing-distance) for which a screen
+is set up, to match the CSS-Reference-Pixel, is usually opaque to the user
+as well as to the CSS-author. One result of that is, that it is hard to asses
+whether a device displays contents too big or too small, or **how far away
+from a device one should be to enjoy that standard.**
 
 From the [spec](https://www.w3.org/TR/css-values-3/#absolute-lengths):
 
@@ -431,7 +435,60 @@ inch appears when viewed from a distance of 28 inches.
 
 #### Other Useful Calculations
 
-TODO
+* real device PPI `96 * unitScalePhysical * window.devicePixelRatio`
+* real device width and height `window.screen.width / 96 / unitScalePhysical`
+
+*CAVEATS:*/ Some browser APIs need fixing:
+
+* [There's a bug with Firefox on Wayland](https://bugzilla.mozilla.org/show_bug.cgi?id=1661540)
+I get odd values from `window.screen`, it reports `widht` and `height` in
+device pixels, while the combination with Gnome on Xorg is fine and reporting
+values in CSS-Pixels.
+* Firefox changes `window.screen` according to browser-zoom, which
+also is expressed in `window.devicePixelRatio`, but [Chromium/Chrome does
+not make the necessary adaptions to `window.screen` when using browser
+zoom.](https://bugs.chromium.org/p/chromium/issues/detail?id=923686).
+Media-queries with e.g. `max-width` seem to get it right.
+
+Looks like it's better to use `window.innerWidth` and `window.innerHeigth`,
+could also generally be more robust for usability.
+
+### Accurate Design
+
+* The section about [fixed media](#excursion-the-tale-of-fixed-media) section
+  describes this concept extensively.
+
+
+### Proofing and Measuring
+
+* For research e.g. of archive material, it's  helping when reproduction on
+screen can be faithful to the original.
+* E-commerce (!!). People always want to know the physical size of the book/phone/watch/postcard/shoe/pen/whatever they are ordering. What better way than to just show it on the website?
+  * Make size matching simple. E.g. for online shopping, decide the correct size of gloves by matching the users hand on the screen directly.
+* Proofing type design when drawing, e.g. for optical sizes designers use
+printed on paper samples to assess design quality. We can safe trees when
+we help designers to print print less!
+* Assessment of type design, e.g. when choosing type it's good to see it
+in its intended size.
+* Proofing print design, Typographic Design etc. get an accurate impression how big a design will be.
+  Get an accurate impression how big a design will appear from different distances.
+* Photo development apps? For instance, you could match the sizing of 4"x6" prints, or 35mm film negatives
+* A roller coaster entry sign "You must be at least this tall to ride." (1.30m)
+with  a measurement bar. It would also be a good reason to display a warning
+when the screen is too small to display the full sign.
+* A geographers workplace where paper maps from the archive and digital gis
+scaled accurately could be compared directly.
+* An engineers workplace that combines analogue and digital tools into a
+seamless expreience.
+* Ruler webapp for smartphones. Kids would use this.
+* Kids education, e.g. the size of the sun, how big we perceive it
+* Kids education, it's nice when they can use actual rulers to do e.g. math things on screen
+* Drawing / tracing apps for the iPad or other tablets (artists need to control the pysical sizing of drawings)
+* Post-It note templates – imagine a wall of monitors with columns for Post-It notes. This could very much be a thing at companies like IBM who do "Design Thinking" corporate workshops, along with hundreds of Post-It notes.
+* Give designers a correct preview impression of a website at a specific
+  screen size. E.g. for a specific phone model. In other words, proof
+  the CSS-Reference-Pixel, so that you actually know truthfully how big
+  something is going to appear.
 
 ### more
 
@@ -442,12 +499,10 @@ TODO
 * Effective web proofing by correctly scaling to actual
   e.g. phone-screen sizes.
 * optical size proofing for type design
-* getting an impression what the default viewing distance is
-  supposed to be on certain devices, as it is not easy to to
-  do on the spot.
 
 * touch device UI must be touched with physical fingers,
   hence controls designed with physical sizes are best practice.
+  But, we can also proof for those devices using calibrated CSS.
 * the web platform usage diversifies as it is becoming more ubiquitous.
 * the web platform is becoming more ubiquitous, not all use cases
   fit well into the "reference pixel" approach. Sometimes
