@@ -98,7 +98,7 @@ trying to move the discussion forward.
 
 ### Disclosure
 
-As of beginning this, I don't know if a good case can be build, but
+As of beginning this, I don't know if a good case can be built, but
 I'm instinctively biased towards having the ability to use real world
 physical sizes in CSS. I found out about the bigger discussion right after
 collecting my observations in [Real World Absolute Length Units Evaluation](../techniques/absolute_units_evaluation.html).
@@ -196,7 +196,7 @@ the print dialog. Consider the ISO 216 (DIN 476) A-paper-format, in this
 example we designed a flyer for an A6 postcard format. The design is set
 in absolute units and the printer (A) anchors to physical measurements.
 We know that at `28 inches` distance, "nominal arm’s length", our flyer design
-matches the CSS-Refernce-Pixel. A1 is `~ 5.65` (= <code>(√2)<sup>5</sup></code>)
+matches the CSS-Reference-Pixel. A1 is `~ 5.65` (= <code>(√2)<sup>5</sup></code>)
 times larger than A6, that puts its typical viewing distance to match
 the CSS-Reference-Pixel at `158.2 inches` (`5.65 × 28`, `~ 4.02 meter`).
 If we send our flyer to a printer (B) to print at A1, the printer in
