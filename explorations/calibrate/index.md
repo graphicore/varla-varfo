@@ -118,11 +118,7 @@ of the repository HEAD commit:
 [`{{ site.github.build_revision | slice: 0, 10 }}`]({{site.github.repository_url}}/commit/{{site.github.build_revision}}).
 
 
-## Debunking
-
-Sometimes arguments are made that are not adding value to the discussion.
-There are similar badly shaped arguments on both sides and I hope to get
-by without having to dispute each of the low quality ones in here.
+## Debate
 
 ### Critique of the CSS-Reference-Pixel
 
