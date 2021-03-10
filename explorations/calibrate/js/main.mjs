@@ -9,12 +9,17 @@ function makePageOutline(elem, attr) {
     var domTool = new DOMTool(elem.ownerDocument)
       , containerTag = 'ol'
       , result = domTool.createElement(containerTag, attr)
-      , current = [1, result]
+      , headings = [2,3,4,5,6] // not using h1!
+      , headingsSelector = headings.map(i=>`h${i}`).join(',') // 'h2,h3,h4,h5,h6'
+      , skipIds = new Set(['contents'])
+      , current = [headings[0], result]
       , depthContainers = [current]
       ;
-    for(let heading of elem.querySelectorAll('h1,h2,h3,h4,h5,h6')){
-        let depth = parseInt(heading.tagName[1], 10);
 
+    for(let heading of elem.querySelectorAll(headingsSelector)){
+        let depth = parseInt(heading.tagName[1], 10);
+        if(skipIds.has(heading.id))
+            continue;
         while(depth > current[0]){
             let [d, parentContaier] = current
               , newDepth = d + 1
@@ -121,7 +126,7 @@ function main() {
         documentSetUnitScalePhysical(e.detail);
     });
 
-    DOMTool.insert(document.body, 'prepend',
+    document.querySelector('.page_insert_outline').appendChild(
         makePageOutline(document.querySelector('main'), {'class': 'page_outline'}));
 
 }

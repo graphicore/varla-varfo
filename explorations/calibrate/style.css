@@ -223,6 +223,21 @@ html.show-modal body > .modal {
 }
 
 
+.page_outline {
+    padding: 0;
+}
+
+details.contents > summary h2{
+    display: inline;
+}
+details.contents > summary::after{
+    content: " (click to show)";
+}
+details.contents[open] > summary::after{
+    content: " (click to hide)";
+}
+
+
 .page_outline,
 .page_outline-container {
     list-style: none;

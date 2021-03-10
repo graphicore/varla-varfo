@@ -11,10 +11,15 @@ class: calibrate-css
 
 *This is a draft.*
 
+# Calibrate CSS
+
 *March 2021 by Lasse Fister • [GitHub @graphicore](https://github.com/graphicore)
 • [contact](http://graphicore.de/en/page/lasse)*
 
-# Calibrate CSS
+<details class="contents" open>
+  <summary><h2 id="contents">Contents</h2></summary>
+  <div class="page_insert_outline"></div>
+</details>
 
 An important but often overlooked property of the CSS-unit system is that,
 on screens, its absolute length units don't describe what their names
