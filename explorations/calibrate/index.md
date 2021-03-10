@@ -385,10 +385,6 @@ of both models.
 
 ## Use Cases
 
-
-* measuring or proofing
- * accurate design, especially for [fixed media](#excursion-the-tale-of-fixed-media)
-
 ### Calculate Device Typical Viewing Distance
 
 The [typical viewing distance](#typical-viewing-distance) for which a screen
@@ -413,7 +409,6 @@ implied viewing distance for this screen:
 JavaScript, calculating `normalReadingDistance` in inches:
 
 ```js
-
 /* It's sufficient to just scale the nominal arm's length: */
 
 let normalReadingDistance = 28 / unitScalePhysical;
@@ -435,101 +430,122 @@ inch appears when viewed from a distance of 28 inches.
 
 #### Other Useful Calculations
 
-* real device PPI `96 * unitScalePhysical * window.devicePixelRatio`
-* real device width and height `window.screen.width / 96 / unitScalePhysical`
-
-*CAVEATS:*/ Some browser APIs need fixing:
-
-* [There's a bug with Firefox on Wayland](https://bugzilla.mozilla.org/show_bug.cgi?id=1661540)
-I get odd values from `window.screen`, it reports `widht` and `height` in
-device pixels, while the combination with Gnome on Xorg is fine and reporting
-values in CSS-Pixels.
-* Firefox changes `window.screen` according to browser-zoom, which
-also is expressed in `window.devicePixelRatio`, but [Chromium/Chrome does
-not make the necessary adaptions to `window.screen` when using browser
-zoom.](https://bugs.chromium.org/p/chromium/issues/detail?id=923686).
-Media-queries with e.g. `max-width` seem to get it right.
-
-Looks like it's better to use `window.innerWidth` and `window.innerHeigth`,
-could also generally be more robust for usability.
+* real device PPI `96 * unitScalePhysical * window.devicePixelRatio`<br />
+  <strong> = <span class="insert insert-device-ppi"></span> PPI</strong>
+* real window width `window.innerWidth / 96 / unitScalePhysical`<br />
+  and height `window.innerHeight / 96 / unitScalePhysical`<br />
+  <strong> = <span class="insert insert-real-window-width"></span> by <span class="insert insert-real-window-height"></span> inches</strong><br />
+  <strong> = <span class="insert insert-real-window-width-cm"></span> by <span class="insert insert-real-window-height-cm"></span> centimeters</strong>
+* real device width and height `window.screen.width / 96 / unitScalePhysical`<br />
+  *<a name="window-screen-caveat">CAVEAT</a>:* The `window.screen` browser APIs needs  fixing:
+    * [There's a bug with Firefox on Wayland](https://bugzilla.mozilla.org/show_bug.cgi?id=1661540)
+      I get odd values from `window.screen`, it reports `widht` and `height` in
+      device pixels, while the combination with Gnome on Xorg is fine and reporting
+      values in CSS-Pixels.
+    * [Chromium/Chrome does not make the necessary adaptions to `window.screen`
+      when using browser zoom.](https://bugs.chromium.org/p/chromium/issues/detail?id=923686)
+      Media-queries with e.g. `max-width` seem to get it right.
+    * Looks like it's better to use `window.innerWidth` and `window.innerHeigth`,
+      could also generally be more robust for usability.
 
 ### Accurate Design
 
-* The section about [fixed media](#excursion-the-tale-of-fixed-media) section
-  describes this concept extensively.
+* The section about [fixed media](#excursion-the-tale-of-fixed-media)
+  describes this extensively.
+* Actually knowing the screen size will make it possible for designers to
+  make better informed decisions, design quality will improve.
 
+### True to Scale Detail Reproduction, Research, Scientific Surveys
 
-### Proofing and Measuring
+ * For research e.g. of archive material or digital collaboration.
+   Sometimes having an impression of a things true size is really important.
+ * Show the actual scale ratio of an image displayed on screen.
+ * Readability, usability, a-b-testing studies, especially when online, create comparable conditions.
 
-* For research e.g. of archive material, it's  helping when reproduction on
-screen can be faithful to the original.
-* E-commerce (!!). People always want to know the physical size of the book/phone/watch/postcard/shoe/pen/whatever they are ordering. What better way than to just show it on the website?
-  * Make size matching simple. E.g. for online shopping, decide the correct size of gloves by matching the users hand on the screen directly.
-* Proofing type design when drawing, e.g. for optical sizes designers use
-printed on paper samples to assess design quality. We can safe trees when
-we help designers to print print less!
-* Assessment of type design, e.g. when choosing type it's good to see it
-in its intended size.
-* Proofing print design, Typographic Design etc. get an accurate impression how big a design will be.
-  Get an accurate impression how big a design will appear from different distances.
-* Photo development apps? For instance, you could match the sizing of 4"x6" prints, or 35mm film negatives
-* A roller coaster entry sign "You must be at least this tall to ride." (1.30m)
-with  a measurement bar. It would also be a good reason to display a warning
-when the screen is too small to display the full sign.
-* A geographers workplace where paper maps from the archive and digital gis
-scaled accurately could be compared directly.
-* An engineers workplace that combines analogue and digital tools into a
-seamless expreience.
-* Ruler webapp for smartphones. Kids would use this.
-* Kids education, e.g. the size of the sun, how big we perceive it
-* Kids education, it's nice when they can use actual rulers to do e.g. math things on screen
-* Drawing / tracing apps for the iPad or other tablets (artists need to control the pysical sizing of drawings)
-* Post-It note templates – imagine a wall of monitors with columns for Post-It notes. This could very much be a thing at companies like IBM who do "Design Thinking" corporate workshops, along with hundreds of Post-It notes.
-* Give designers a correct preview impression of a website at a specific
-  screen size. E.g. for a specific phone model. In other words, proof
-  the CSS-Reference-Pixel, so that you actually know truthfully how big
-  something is going to appear.
+### E-Commerce
 
-### more
+ * People always want to know the physical size of the book, phone, watch, postcard,
+   shoe, pen, whatever they are ordering. What better way than to just show it in the online shop?
+ * Make size matching simple. E.g. for online shopping, decide the correct
+   size of gloves by matching the user hand and a 1:1 image of the glove
+   directly on the screen.
 
+### Design Proofing
 
-* print proofing/designer preview. We can help reducing paper
-  wastage!
-* proofing for optical size font designs on screens will be very much welcome.
-* Effective web proofing by correctly scaling to actual
-  e.g. phone-screen sizes.
-* optical size proofing for type design
+ * Proofing type design when drawing, e.g. for optical sizes designers use
+   printed on paper samples to assess design quality precisely at the right
+   font size. **We can help to save trees when we help designers to print
+   less!** Proofing optical size font designs on screens will be very
+   much welcome.
+ * Assessment of type design, e.g. when choosing type it's good to see it
+   in its intended size.
+ * Pre-print proofing design, typographic design, layouts etc. get an accurate
+   impression how big a design will be. This is necessary to judge layout
+   and typographic choices like font sizes, margins, line heights etc.
+ * Get an accurate impression how big a design will appear from different
+   distances. E.g. *"If you are 28 inches away from screen the poster will
+   appear as if the original was 15 meters away."* Sounds a lot like the
+   CSS-Reference-Pixel, but in this case it would be accurate and not
+   approximated by a black box.
+ * Photo development apps, for instance, you could match the sizing of 4 in x 6 in
+   prints, or 35 mm film negatives.
 
-* touch device UI must be touched with physical fingers,
-  hence controls designed with physical sizes are best practice.
-  But, we can also proof for those devices using calibrated CSS.
-* the web platform usage diversifies as it is becoming more ubiquitous.
-* the web platform is becoming more ubiquitous, not all use cases
-  fit well into the "reference pixel" approach. Sometimes
-  target screen and viewing distance could be very well known
-  and hence a direct way of designing for these target could be
-  desirable. In web, the flexibility of the CSS-unit approach
-  requires that there's a scroll somewhere. Paged media can't
-  afford this. Where a user can't scroll, e.g. a digital poster
-  on a screen, that is not interactive, pages become important
-  and alse that the designer can control the viewing distance
-  assumptions. <!-- Claims like this need backup! it's also just
-  not a good argument yet and may have false statements, definitely
-  not all strong points.
-  -->
-* We can control for different device sizes even when designing
-  with real world units, though a support in media-queries would
-  help a lot.
-* hi-res screens are so good now, we can anchor to physical units
-  and won't get blurry lines.
-* what about e.g. font-sizes for legal print, are there absolute
-  requirements? "legible" is one of them, but fonts becoming regularly
-  smaller than e.g. 12 pt because the device defaults to 20 inches
-  viewing distance instead of 28 inches may be unfortunate.
-* CSS is becoming ubiquitous, no matter how little the ratio of a specialized
-  use case like fixed media is compared to traditional web site usage, in absolute
-  numbers it will still be vast.
-* Optimize readability. See BBC-subtitle example in #614
+### Web Design Proofing
+
+ * Effective web proofing. Give designers a correctly scaled preview
+   impression of a website on an actual phone-model screen size. In other
+   words, proof the CSS-Reference-Pixel, so that you actually know
+   accurately how big things will appear.
+ * Touch device UI must be touched with physical fingers, hence controls
+   designed with physical sizes are best practice. But, we can also just
+   proof for those devices using calibrated CSS:
+   *"Will a 1 by 1 CSS-centimeter touch target be big enough?"*
+
+### Measuring, Workplace Integration, Research and Development
+
+ * An engineers workplace that combines analogue and digital tools into a
+   seamless experience.
+ * A geographers or architect workplace where paper maps and plans from the
+   archive or plotter and digital GIS/digital mapping and CAD-data are scaled
+   accurately and can be easily compared directly.
+ * Drawing / tracing apps for the iPad or other tablets, artists need to
+   control the physical sizing of drawings and could have correct size data
+   directly attached to their images.
+ * A roller coaster entry sign: **"You must be at least this tall to ride."** 1.30m,
+   with  a measurement bar. It would also be a good case to display a warning
+   when the screen is too small to display the full sign at the right size.
+ * Laboratory templates, [example in #614 ff.](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-606438728) by @spawnia:
+   *"The exact placement is paramount, so we show a template that indicates
+   the points where the reagent has to be pipetted upon. In order for that
+   to work, we need to have the template on the screen match the physical
+   slide 1:1."*
+ * Kitchen staff or barkeeper instructions.
+
+### Implementing Effective Standards for Readability
+
+* Font sizes for legal print, there could be definitions for absolute
+  requirements, if not by law maybe by *corporate compliance policy*.
+  E.g. Fonts may regularly become smaller than e.g. physical 12 pt, because
+  the device defaults to 20 inches typical viewing distance instead of
+  28 inches.
+* Optimize readability, see the [subtitle example
+  example in #614 ff.](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-542110115) by @nigelmegitt:
+  *"If we could set physical sizes, we would have less need to compromise the user experience."*
+
+### Kids and Education
+
+ * Ruler web-app for smartphones and tablets. Kids would use this and sometimes
+   it would be just handy for anyone.
+ * The size of the sun, how big we perceive it from earth as a practical experiment.
+ * It's nice when they can use actual rulers to do e.g. math or physics things on screen.
+
+### Out of the Box
+
+ * Board/tabletop games that integrate e.g. a tablet app could get creative here.
+ * Post-It note templates – imagine a wall of monitors with columns for
+   Post-It notes. This could very much be a thing at companies like IBM
+   who do "Design Thinking" corporate workshops, along with hundreds of
+   Post-It notes.
 
 
 ## Browser Support Roadmap
@@ -584,7 +600,7 @@ involve getting reliable information from the hardware and that this can’t
 be done 100 % reliably all the time. As described in [Level 0](#level-0),
 we can lead the way and show how to do this with user calibration as fallback.
 On the positive side, *it's not 100 % of devices either that **can't** report
-reliable information.*
+reliable information.* There are even projectors that can auto-focus nowadays.
 
 UA/Browser support for `env(unit-scale-physical)` would improve the user
 experience a lot, and make the usage of physical measurements feasible

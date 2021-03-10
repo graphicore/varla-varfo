@@ -63,13 +63,19 @@ function main() {
         // the "nominal arm" directly.
         // However, this scales the pixel and gets the viewing distance
         // from the angle. This was made as a proof!
-        //
-        let normalReadingDistance_ = ((1/96)/unitScalePhysical/2) / Math.tan(alpha_rad) * 2.54;
+        // let normalReadingDistance = ((1/96)/unitScalePhysical/2) / Math.tan(alpha_rad);
+
+
 
         for(let [selector, textContent] of [
                 ['.insert-normal-reading-distance',
                  `${normalReadingDistance} inches or ${normalReadingDistance * 2.54} centimeters`]
               , ['.insert-unit-scale-physical', `${unitScalePhysical}`]
+              , ['.insert-device-ppi', `${96 * unitScalePhysical * window.devicePixelRatio}`]
+              , ['.insert-real-window-width', `${window.innerWidth / 96 / unitScalePhysical}`]
+              , ['.insert-real-window-height', `${window.innerHeight / 96 / unitScalePhysical}`]
+              , ['.insert-real-window-width-cm', `${(window.innerWidth / 96 / unitScalePhysical) * 2.54}`]
+              , ['.insert-real-window-height-cm', `${(window.innerHeight / 96 / unitScalePhysical) * 2.54}`]
             ]){
                 for(let elem of document.querySelectorAll(selector))
                     elem.textContent = textContent;
