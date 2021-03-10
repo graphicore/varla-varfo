@@ -49,10 +49,10 @@ One real inch: <span class="sample-physical" style="--sample-size: 1in"></span>
 The result is set to a custom property in CSS on `:root` as `--unit-scale-physical` its value
 is <code class="insert insert-unit-scale-physical"></code>.
 
-There's a *caveat*: the example expects square pixels. Generally it is possible
-to calibrate width and height separately. However, on the web reasonable
-square pixels can be expected and if they aren't square it should be tackled
-on a different layer, e.g. OS or device driver.
+The example expects square pixels. Generally it is possible to calibrate
+width and height separately. However, on the web reasonable square pixels
+can be expected and if they aren't square it should be tackled on a different
+layer, e.g. OS or device driver.
 
 The calibration widget was inspired by [my own experiment](../techniques/absolute_units_evaluation.html)
 and an [#614 issue comment](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-611217635)
@@ -109,14 +109,17 @@ collecting my observations in [Real World Absolute Length Units Evaluation](../t
 ### Contribute
 
 I understand this as an open document, meaning that contributions
-are welcome via the [GitHub issue tracker](https://github.com/graphicore/varla-varfo/issues)
-and [Pull Requests on the actual document](https://github.com/graphicore/varla-varfo/blob/main/explorations/calibrate/index.html).
-But this openness also means it's possible, even likely, that the article
+are welcome via the GitHub [issue tracker](https://github.com/graphicore/varla-varfo/issues)
+and [discussions board](https://github.com/graphicore/varla-varfo/discussions)
+and Pull Requests on [the actual document and on the calibration widget](https://github.com/graphicore/varla-varfo/blob/main/explorations/calibrate/).
+
+This openness also means it's possible, even likely, that the article
 changes over time. The change history can be examined via git, but when
 quoting, it may still be a good idea to keep the current git commit hash
 of the repository HEAD commit:
 [`{{ site.github.build_revision | slice: 0, 10 }}`]({{site.github.repository_url}}/commit/{{site.github.build_revision}}).
 
+There's a [Changelog](#changelog) at the end of this document.
 
 ## Debate
 
@@ -560,11 +563,8 @@ and it is proven to work. Authors can start to use physical measurements,
 to experiment, find solutions and usage patterns and to lead by example.
 We can get the word out, search for allies and create momentum.
 
-
-TODO: Call to action -> send links to pages that implement the
-calibration scheme and we are going to it to this document.
-
-TODO: start a list of links at the end of this document.
+**If you implemented the calibration scheme:
+[Please send the link!](https://github.com/graphicore/varla-varfo/discussions/9) it will be [added](#implementations).**
 
 We can **improve the user experience around the calibration process** of a
 website or app that uses physical measurements. The user should be notified
@@ -576,6 +576,8 @@ and find ways to handle it gracefully  etc. This effort would aim to make
 the user experience good and solid but also to **show a way how UAs could
 implement calibration directly.**
 
+[Contribute to the calibration widget UX!](#contribute)
+
 The way browsers handle user permissions e.g. "Send Notifications" or
 "Open Pop-up Windows" has potential. If permissions are set there's an
 icon in the address bar that toggles a "Site information" widget that can
@@ -584,9 +586,6 @@ connection security status. Maybe, in the future, a native UA calibration
 tool could piggyback on that if a page uses calibration features.
 
 ![Browser permissions handling in address bar](./assets/browser-permissions-handling.png)
-
-TODO: add a call to action to collaborate on the calibration widget UX!
-
 
 ### Level 1
 
@@ -618,7 +617,6 @@ exactly these media-queries will have to look. With the experience coming
 from Level 0 and Level 1, we'll be able to describe precisely what kind
 of media-queries are required. This would enable authors to improve cross
 device interoperability a lot.
-
 
 ### Level 3
 
@@ -653,3 +651,21 @@ measurements. This would add a way from within CSS to ask the UA to do a
 specific anchoring. Together with Level 2 media query support it would be
 entirely possible to use this safely without having to compromise
 on interoperability or future proofness.
+
+## Links
+
+Please [suggest more links via the discussions board](https://github.com/graphicore/varla-varfo/discussions/9).
+
+### Implementations
+
+* [this Article](https://graphicore.github.io/varla-varfo/explorations/calibrate/)
+* (nothing else here yet)
+
+### Further Reading
+
+* [Nick Sherman on A List Apart: Responsive Typography is a Physical Discipline, But Your Computer Doesn’t Know It (Yet)](https://alistapart.com/column/responsive-typography-is-a-physical-discipline/)
+* [The infamous issue #614 on CSS-WG](https://github.com/w3c/csswg-drafts/issues/614)
+
+## Changelog
+
+ * initial version
