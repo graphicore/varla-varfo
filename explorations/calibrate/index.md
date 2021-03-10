@@ -393,6 +393,8 @@ of both models.
 
 ## Use Cases
 
+**[Add more Use Cases!](https://github.com/graphicore/varla-varfo/discussions/9)**
+
 ### Calculate Device Typical Viewing Distance
 
 The [typical viewing distance](#typical-viewing-distance) for which a screen
