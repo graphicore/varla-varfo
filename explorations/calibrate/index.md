@@ -248,6 +248,87 @@ become unreadable small when scaled down to flyer size. But also the
 differences between font-sizes in the hierarchy overall will be lesser
 in the design for the smaller flyer. It's not a linear scaling at all.
 
+
+<div>
+<strong>Compare the Designs:</strong>
+<input class="fixed_media-scale" id="fixed_media-scale-fit_two" checked
+      name="fixed_media-scale" type="radio" value="fit-two"
+      />&nbsp;<label for="fixed_media-scale-fit_two">Scale to same Size.</label>
+<input class="fixed_media-scaler" id="fixed_media-scale-css_units"
+      name="fixed_media-scale" type="radio" value="css-units"
+      />&nbsp;<label for="fixed_media-scale-css_units">Scale to CSS-Unit Size.</label>
+<input class="fixed_media-scaler" id="fixed_media-scale-physical_units"
+      name="fixed_media-scale" type="radio" value="physical-units"
+      />&nbsp;<label for="fixed_media-scale-physical_units">Scale to Physical-Unit Size.</label>
+<br />
+<figure class="fixed_media">
+  <!-- let viewBox be A1 in CSS-pixels. I.e. CSS-cm * (96 / 2.54)
+    width = 59.7cm = 2256.3779527559054 px ~ 2256
+    height = 84.1cm = 3178.5826771653537 px ~ 3179
+  -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2256 3179"
+          class="figure-fixed_media figure-poster">
+    <foreignObject x="0" y="0" >
+      <div xmlns="http://www.w3.org/1999/xhtml" class="figure-fixed_media-viewport">
+        <span class="figure-group-live figure-fixed_media-close">Live in Concert</span>
+        <span class="figure-group-bottom-align">
+          <span class="figure-group-band figure-fixed_media-farther">The Band</span>
+          <span class="figure-group-special figure-fixed_media-close">with special guest</span>
+          <span class="figure-group-another figure-fixed_media-far">Another Band</span>
+          <span class="figure-group-place_date">
+            <span class="figure-group-date figure-fixed_media-close">Friday • March 12 • 2021</span>
+            <span class="figure-group-place figure-fixed_media-close">Somewhere Music Hall</span>
+          </span>
+          <span class="figure-group-time figure-fixed_media-closer">Doors 8 P.M.</span>
+          <span class="figure-group-details">
+            <span class="figure-fixed_media-closer">Tickets at tickets.example.com</span>
+            <span class="figure-fixed_media-closer">Presented by Local-Shows Productions</span>
+          </span>
+        </span>
+      </div>
+    </foreignObject>
+    <circle cx="0" cy="0" r="1cm"/>
+  </svg>
+  <figcaption>
+  Fig. 1.1: Example of a Poster designed for A1.
+  </figcaption>
+</figure><!--
+  No white space between elements!
+--><figure class="fixed_media">
+  <!--
+    let viewBox be A6 in CSS-pixels. I.e. CSS-cm * (96 / 2.54)
+    width = 10.5cm = 396.8503937007874 px ~ 397
+    height = 14.8 = 559.3700787401575 px ~ 559
+  -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 397 559"
+          class="figure-fixed_media figure-flyer">
+    <foreignObject x="0" y="0" >
+      <div xmlns="http://www.w3.org/1999/xhtml" class="figure-fixed_media-viewport">
+        <span class="figure-group-live figure-fixed_media-close">Live in Concert</span>
+        <span class="figure-group-bottom-align">
+          <span class="figure-group-band figure-fixed_media-farther">The Band</span>
+          <span class="figure-group-special figure-fixed_media-close">with special guest</span>
+          <span class="figure-group-another figure-fixed_media-far">Another Band</span>
+          <span class="figure-group-place_date">
+            <span class="figure-group-date figure-fixed_media-close">Friday • March 12 • 2021</span>
+            <span class="figure-group-place figure-fixed_media-close">Somewhere Music Hall</span>
+          </span>
+          <span class="figure-group-time figure-fixed_media-closer">Doors 8 P.M.</span>
+          <span class="figure-group-details">
+            <span class="figure-fixed_media-closer">Tickets at tickets.example.com</span>
+            <span class="figure-fixed_media-closer">Presented by Local-Shows Productions</span>
+          </span>
+        </span>
+      </div>
+    </foreignObject>
+    <circle cx="0" cy="0" r="1cm"/>
+  </svg>
+  <figcaption>
+  Fig. 1.2: Example of a Flyer designed for A6.
+  </figcaption>
+</figure>
+</div>
+
 #### Fixed Media
 
 … defined for the purpose of this article, is a superset
