@@ -19,7 +19,24 @@ const CALIBRATION_OBJECTS = [
   , {label: 'Credit/ATM card', w: 85.60, h: 53.98, unit: 'mm'}  // ≈ 3.370 in × 2.125 in
   , {label: '$1: US One-Dollar Bill', w: 6.14, h: 2.61, unit: 'in'}   // ≈ 156.1 mm × 66.3 mm
   , {label: '€10: Ten Euro Note', w: 127, h: 67, unit: 'mm'}
-
+  , {label: 'From your desk', optgroup: true}
+    // are these actually rather exactly 76 mm × 76 mm!?
+  , {label: 'Post-it Note', w: 3, h: 3, unit: 'in'}   // ≈ 76.2 mm × 76.2 mm
+  , {label: 'Memo Cube Note', w: 3.5, h: 3.5, unit: 'in'}   // ≈ 8.89 mm × 8.89 mm
+  , {label: 'Paper A6', w: 148,  h:105, unit: 'mm'}
+  , {label: 'Paper A5', w: 210,  h:148, unit: 'mm'}
+  , {label: 'Paper A4', w: 297,  h:210, unit: 'mm'}
+  , {label: 'Paper A3', w: 420,  h:297, unit: 'mm'}
+  , {label: 'Paper A2', w: 597,  h:420, unit: 'mm'}
+  , {label: 'Paper A1', w: 841,  h:597, unit: 'mm'}
+  , {label: 'Paper A0', w: 1189, h:841, unit: 'mm'}
+  , {label: 'Generic Squares', optgroup: true}
+  , {label: '3 cm', w: 3, h:3, unit: 'cm'}
+  , {label: '5 cm', w: 5, h:5, unit: 'cm'}
+  , {label: '10 cm', w: 10, h:10, unit: 'cm'}
+  , {label: '2 in', w: 2, h:2, unit: 'in'}
+  , {label: '3 in', w: 3, h:3, unit: 'in'}
+  , {label: '5 in', w: 5, h:5, unit: 'in'}
 ];
 
 const CALIBRATE_TEMPLATE = `
