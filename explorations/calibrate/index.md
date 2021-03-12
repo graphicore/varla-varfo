@@ -113,6 +113,9 @@ collecting my observations in [Real World Absolute Length Units Evaluation](../t
 
 ### Contribute
 
+Please visit and follow [issue #5986 \[css-env\] Device Pixel Ratio](https://github.com/w3c/csswg-drafts/issues/5986)
+as it is the place to discuss the general topic.
+
 I understand this as an open document, meaning that contributions
 are welcome via the GitHub [issue tracker](https://github.com/graphicore/varla-varfo/issues)
 and [discussions board](https://github.com/graphicore/varla-varfo/discussions)
@@ -720,11 +723,11 @@ complicated:
  */
 .physical-unit-anchoring {
     /* Scale everything. */
-    `transform: scale(env(unit-scale-adjust))`;
+    `transform: scale(env(unit-scale-physical))`;
     /* The visual default font-size of the user can be preserved. */
-    font-size: calc(100% / env(unit-scale-adjust));
+    font-size: calc(100% / env(unit-scale-physical));
     /* Reset page width to pre-transform size. */
-    width: calc(100% / env(unit-scale-adjust));
+    width: calc(100% / env(unit-scale-physical));
 }
 ```
 
