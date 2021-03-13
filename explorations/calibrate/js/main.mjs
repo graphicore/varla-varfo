@@ -48,9 +48,66 @@ function makePageOutline(elem, attr) {
     return result;
 }
 
+function initCelestialBodiesExperiment(element, initialUnitScalePhysical) {
+    var bodyToggles = element.querySelectorAll('input')
+      , distanceSelect = element.querySelector('select')
+      , unitScalePhysical = initialUnitScalePhysical
+      , distanceDisplays = element.querySelectorAll('.celestial_bodies-insert_viewing_distance')
+      ;
+
+    function _update() {
+        for(let toggle of bodyToggles) {
+            let offClass = `${toggle.value}-off`;
+            element.classList[toggle.checked ? 'remove' : 'add'](offClass);
+        }
+
+        var unit, distance;
+        switch(distanceSelect.value) {
+            case 'typical':
+                unit = 'cm';
+                distance = 28 * 2.54 / unitScalePhysical;
+                break;
+            default:
+                // expecting 'cm' or 'in' NOT e.g. m
+                unit = distanceSelect.value.slice(-2);
+                distance = parseInt(distanceSelect.value.slice(0, -2), 10);
+        }
+        let angleRadians = 2050 / (3,600 * 180 / Math.PI)
+          , diameter = 2 * distance * Math.tan(angleRadians/2)
+          ;
+        element.style.setProperty('--diameter', `${diameter}${unit}`);
+
+        var displayDistance = distance
+          , displayUnit = unit
+          ;
+        if(unit === 'cm' && distance >= 100){
+            displayUnit = 'm';
+            displayDistance = distance / 100;
+        }
+
+        let singular = {'cm': 'Centimeter', 'm': 'Meter', 'in': 'Inch'}
+          , plural = {'cm': 'Centimeters', 'm': 'Meters', 'in': 'Inches'}
+          ;
+        for(let elem of distanceDisplays)
+            elem.textContent = `${displayDistance.toFixed(2)} `
+                + `${(displayDistance === 1 ? singular : plural)[displayUnit]}`
+                ;
+
+    }
+
+    for(let elem of [distanceSelect, ...bodyToggles])
+        elem.addEventListener('change', _update);
+
+    document.body.addEventListener('unitscalephysical', e=>{
+        unitScalePhysical = e.detail;
+        _update();
+    });
+
+    _update();
+}
+
 function main() {
     function documentSetUnitScalePhysical(unitScalePhysical) {
-        console.log('documentSetUnitScalePhysical', unitScalePhysical);
         document.documentElement.style.setProperty('--unit-scale-physical', unitScalePhysical);
         // todo: backup with proper math via the angle etc.
         var normalReadingDistance = 28 / unitScalePhysical;
@@ -95,12 +152,20 @@ function main() {
         // it is NaN now. Defaulting to 1:
         initialUnitScalePhysical = 1;
 
+    document.body.addEventListener('unitscalephysical', e=>{
+        window.localStorage.setItem(UNIT_SCALE_LOCAL_STORAGE_KEY, e.detail);
+        documentSetUnitScalePhysical(e.detail);
+    });
+
+    for(let element of document.querySelectorAll('.celestial_bodies'))
+        initCelestialBodiesExperiment(element, initialUnitScalePhysical);
+
+
     let calibrationWidget = new CalibrationWidget(
                             document.querySelector('.insert_calibration_widget'),
                             initialUnitScalePhysical,
                             false);
 
-    // TODO: do this onLoad
     documentSetUnitScalePhysical(initialUnitScalePhysical);
     calibrationWidget.activate();
 
@@ -119,15 +184,8 @@ function main() {
             indicator.textContent = viewport.scale;
         });
     }
-
-    document.body.addEventListener('unitscalephysical', e=>{
-        console.log(e.type, e.detail);
-        window.localStorage.setItem(UNIT_SCALE_LOCAL_STORAGE_KEY, e.detail);
-        documentSetUnitScalePhysical(e.detail);
-    });
-
     document.querySelector('.page_insert_outline').appendChild(
         makePageOutline(document.querySelector('main'), {'class': 'page_outline'}));
-
 }
-main();
+
+window.onload = main;

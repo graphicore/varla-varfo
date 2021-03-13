@@ -462,3 +462,52 @@ svg.figure-fixed_media {
     font-variation-settings: "opsz" var(--font-size-closer);
 }
 
+.celestial_bodies figcaption span.celestial_bodies-legend {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+}
+.celestial_bodies-moon-max {
+    fill: black;
+    background-color: black;
+}
+.celestial_bodies-sun-max {
+    fill: lightgreen;
+    background-color: lightgreen;
+}
+.celestial_bodies-sun-min {
+    fill: darkgreen;
+    background-color: darkgreen;
+}
+.celestial_bodies-moon-min {
+    fill: grey;
+    background-color: grey;
+}
+
+.celestial_bodies{
+    /* default for 1 meter viewing distance, if JavaScript is active
+     * this will be overridden on init.
+     */
+    --diameter: 5.9649cm;
+}
+
+.celestial_bodies svg {
+    width: calc(var(--diameter) * var(--unit-scale-physical))
+}
+
+.celestial_bodies-moon-max-off svg .celestial_bodies-moon-max{
+    display:none
+}
+
+.celestial_bodies-sun-max-off svg .celestial_bodies-sun-max{
+    display:none
+}
+
+.celestial_bodies-sun-min-off svg .celestial_bodies-sun-min{
+    display:none
+}
+
+.celestial_bodies-moon-min-off svg .celestial_bodies-moon-min{
+    display:none
+}
+

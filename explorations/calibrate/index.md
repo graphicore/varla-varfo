@@ -632,8 +632,79 @@ inch appears when viewed from a distance of 28 inches.
 
  * Ruler web-app for smartphones and tablets. Kids would use this and sometimes
    it would be just handy for anyone.
- * The size of the sun, how big we perceive it from earth as a practical experiment.
- * It's nice when they can use actual rulers to do e.g. math or physics things on screen.
+ * Practical experiments, e.g. Astronomy, the size of the sun, how big we
+   perceive it from the earth. I made an example here:
+   <figure class="celestial_bodies">
+      <!--
+      Numbers from https://en.wikipedia.org/wiki/Angular_diameter#Use_in_astronomy
+                                  only arcsec     radians
+      Sun        31′27″ – 32′32″   1887″ - 1952″
+      Moon       29′20″ – 34′6″    1769″ - 2046″
+      Venus      9.7″ – 1′6″       9.7″ - 66″
+      Jupiter                      29.8″ – 50.1″
+      Saturn                       14.5″ – 20.1″
+      Mars                         3.5″ – 25.1″
+      Mercury                      4.5″ – 13.0″
+      Uranus                       3.3″ – 4.1″
+      Neptune                      2.2″ – 2.4″
+
+      Using 2050″ as a base for the svg-unit size of this svg
+      that way, all circles can be defined directly in their arcseconds
+      size and stay true in relation to each other and it is good to
+      calculate.
+
+      1radian = 3,600 × 180 / PI arcseconds
+
+      angleRadians = 2050″
+      angleRadians = 2050 / (3,600 * 180 / Math.PI)
+      angleRadians = 0.05963208277647293;
+
+      width = 5cm
+      distance = (width / 2) / Math.tan(angleRadians/2)
+      distance = 83.8226340404102 cm
+
+      distance = 100cm
+      width = 2 * distance * Math.tan(angleRadians/2)
+      width = 5.964975996327605cm
+      -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2050 2050">
+        <circle class="celestial_bodies-moon-max" cx="1025" cy="1025" r="1023" />
+        <circle class="celestial_bodies-sun-max" cx="1025" cy="1025" r="976" />
+        <circle class="celestial_bodies-sun-min" cx="1025" cy="1025" r="943.5" />
+        <circle class="celestial_bodies-moon-min" cx="1025" cy="1025" r="854.5" />
+      </svg>
+      <figcaption>
+      <p>Fig. 2: The size of celestial bodies as seen from earth.</p>
+
+      <label> Pick a viewing distance
+      <select class="celestial_bodies-viewing_distance">
+          <option value="50cm">50 Centimeters</option>
+          <option value="28in">Nominal Arm's Length (28 Inches)</option>
+          <option value="typical" selected>(alleged) Typical Viewing Distance</option>
+          <option value="100cm">1 Meter</option>
+          <option value="200cm">2 Meters</option>
+          <option value="300cm">3 Meters</option>
+      </select></label><br />
+      <p>
+      <strong>You must be <span class="celestial_bodies-insert_viewing_distance">1 meter</span>
+      away from your calibrated(!) screen to perceive the sizes true to scale.</strong></p>
+      <p>
+      <input type="checkbox" checked value="celestial_bodies-moon-max" />
+      <span class="celestial_bodies-legend celestial_bodies-moon-max"></span> Moon maximum 34′6″<br />
+
+      <input type="checkbox" checked value="celestial_bodies-sun-max" />
+      <span class="celestial_bodies-legend celestial_bodies-sun-max"></span> Sun maximum 32′32″<br />
+
+      <input type="checkbox" checked value="celestial_bodies-sun-min" />
+      <span class="celestial_bodies-legend celestial_bodies-sun-min"></span> Sun minimum 31′27″<br />
+
+      <input type="checkbox" checked value="celestial_bodies-moon-min" />
+      <span class="celestial_bodies-legend celestial_bodies-moon-min"></span> Moon minimum 29′20″<br />
+      </p>
+      </figcaption>
+    </figure>
+ * It's nice when they can use actual rulers to do e.g. math or physics
+   things on the screen.
 
 ### Out of the Box
 

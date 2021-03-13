@@ -265,7 +265,6 @@ export default class CalibrationWidget {
                     : this.rulerMeasureBox.clientWidth,
                 this.rulerUnit.value
             ) / this.scale2real;
-        console.log(len, this.scale2real, `${len.toFixed(3)}`);
         this.rulerVal.value = `${len.toFixed(3)}`;
 
         for(let elem of this.rulerShowUnitAll)
@@ -316,8 +315,6 @@ export default class CalibrationWidget {
     }
 
     _setup() {
-        console.log('_setup', this.currentMethod);
-
         var addClass = 'widget-calibrate__is_landscape'
           , removeClass = 'widget-calibrate__is_portrait'
           ;
