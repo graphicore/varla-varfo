@@ -72,8 +72,9 @@ function initCelestialBodiesExperiment(element, initialUnitScalePhysical) {
                 unit = distanceSelect.value.slice(-2);
                 distance = parseInt(distanceSelect.value.slice(0, -2), 10);
         }
-        let angleRadians = 2050 / (3,600 * 180 / Math.PI)
-          , diameter = 2 * distance * Math.tan(angleRadians/2)
+        // 2050 is in arcseconds
+        let angleRadians = 2050 / (3600 * 180 / Math.PI)
+          , diameter = distance * Math.tan(angleRadians)
           ;
         element.style.setProperty('--diameter', `${diameter}${unit}`);
 

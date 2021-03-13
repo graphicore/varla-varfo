@@ -274,7 +274,7 @@ in the design for the smaller flyer. It's not a linear scaling at all.
           class="figure-fixed_media figure-poster">
     <foreignObject x="0" y="0" >
       <div xmlns="http://www.w3.org/1999/xhtml" class="figure-fixed_media-viewport">
-        <span class="figure-group-live figure-fixed_media-close">Live in Concert</span>
+        <span class="figure-group-live figure-fixed_media-close">Maximum Moon Tour</span>
         <span class="figure-group-bottom-align">
           <span class="figure-group-band figure-fixed_media-farther">The Band</span>
           <span class="figure-group-special figure-fixed_media-close">with special guest</span>
@@ -308,7 +308,7 @@ in the design for the smaller flyer. It's not a linear scaling at all.
           class="figure-fixed_media figure-flyer">
     <foreignObject x="0" y="0" >
       <div xmlns="http://www.w3.org/1999/xhtml" class="figure-fixed_media-viewport">
-        <span class="figure-group-live figure-fixed_media-close">Live in Concert</span>
+        <span class="figure-group-live figure-fixed_media-close">Maximum Moon Tour</span>
         <span class="figure-group-bottom-align">
           <span class="figure-group-band figure-fixed_media-farther">The Band</span>
           <span class="figure-group-special figure-fixed_media-close">with special guest</span>
@@ -639,7 +639,7 @@ inch appears when viewed from a distance of 28 inches.
       Numbers from https://en.wikipedia.org/wiki/Angular_diameter#Use_in_astronomy
                                   only arcsec     radians
       Sun        31′27″ – 32′32″   1887″ - 1952″
-      Moon       29′20″ – 34′6″    1769″ - 2046″
+      Moon       29′20″ – 34′6″    1760″ - 2046″
       Venus      9.7″ – 1′6″       9.7″ - 66″
       Jupiter                      29.8″ – 50.1″
       Saturn                       14.5″ – 20.1″
@@ -655,23 +655,23 @@ inch appears when viewed from a distance of 28 inches.
 
       1radian = 3,600 × 180 / PI arcseconds
 
-      angleRadians = 2050″
-      angleRadians = 2050 / (3,600 * 180 / Math.PI)
-      angleRadians = 0.05963208277647293;
+      angleArcSec = 2050″
+      angleRadians = angleArcSec / (3600 * 180 / Math.PI))
+      angleRadians = 0.5694444444444444;
 
       width = 5cm
-      distance = (width / 2) / Math.tan(angleRadians/2)
-      distance = 83.8226340404102 cm
+      distance = width / Math.tan(angleRadians)
+      distance = 503.0807521619239 cm
 
       distance = 100cm
-      width = 2 * distance * Math.tan(angleRadians/2)
-      width = 5.964975996327605cm
+      width = distance * Math.tan(angleRadians)
+      width = 0.9938762273279493 cm
       -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2050 2050">
         <circle class="celestial_bodies-moon-max" cx="1025" cy="1025" r="1023" />
         <circle class="celestial_bodies-sun-max" cx="1025" cy="1025" r="976" />
         <circle class="celestial_bodies-sun-min" cx="1025" cy="1025" r="943.5" />
-        <circle class="celestial_bodies-moon-min" cx="1025" cy="1025" r="854.5" />
+        <circle class="celestial_bodies-moon-min" cx="1025" cy="1025" r="880" />
       </svg>
       <figcaption>
       <p>Fig. 2: The size of celestial bodies as seen from earth.</p>
@@ -680,10 +680,12 @@ inch appears when viewed from a distance of 28 inches.
       <select class="celestial_bodies-viewing_distance">
           <option value="50cm">50 Centimeters</option>
           <option value="28in">Nominal Arm's Length (28 Inches)</option>
-          <option value="typical" selected>(alleged) Typical Viewing Distance</option>
+          <option value="typical">(alleged) Typical Viewing Distance</option>
           <option value="100cm">1 Meter</option>
-          <option value="200cm">2 Meters</option>
+          <option value="200cm" selected>2 Meters</option>
           <option value="300cm">3 Meters</option>
+          <option value="400cm">4 Meters</option>
+          <option value="500cm">5 Meters</option>
       </select></label><br />
       <p>
       <strong>You must be <span class="celestial_bodies-insert_viewing_distance">1 meter</span>
