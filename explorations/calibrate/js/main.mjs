@@ -132,13 +132,13 @@ function main() {
 
         for(let [selector, textContent] of [
                 ['.insert-normal-reading-distance',
-                 `${normalReadingDistance} inches or ${normalReadingDistance * 2.54} centimeters`]
+                 `${normalReadingDistance.toFixed(2)} inches or ${(normalReadingDistance * 2.54).toFixed(2)} centimeters`]
               , ['.insert-unit-scale-physical', `${unitScalePhysical}`]
-              , ['.insert-device-ppi', `${96 * unitScalePhysical * window.devicePixelRatio}`]
-              , ['.insert-real-window-width', `${window.innerWidth / 96 / unitScalePhysical}`]
-              , ['.insert-real-window-height', `${window.innerHeight / 96 / unitScalePhysical}`]
-              , ['.insert-real-window-width-cm', `${(window.innerWidth / 96 / unitScalePhysical) * 2.54}`]
-              , ['.insert-real-window-height-cm', `${(window.innerHeight / 96 / unitScalePhysical) * 2.54}`]
+              , ['.insert-device-ppi', `${(96 * unitScalePhysical * window.devicePixelRatio).toFixed(2)}`]
+              , ['.insert-real-window-width', `${(window.innerWidth / 96 / unitScalePhysical).toFixed(2)}`]
+              , ['.insert-real-window-height', `${(window.innerHeight / 96 / unitScalePhysical).toFixed(2)}`]
+              , ['.insert-real-window-width-cm', `${((window.innerWidth / 96 / unitScalePhysical) * 2.54).toFixed(2)}`]
+              , ['.insert-real-window-height-cm', `${((window.innerHeight / 96 / unitScalePhysical) * 2.54).toFixed(2)}`]
             ]){
                 for(let elem of document.querySelectorAll(selector))
                     elem.textContent = textContent;

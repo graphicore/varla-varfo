@@ -23,11 +23,11 @@ class: calibrate-css
 
 An important but often overlooked property of the CSS-unit system is that,
 on screens, its absolute length units don't describe what their names
-imply. The reasons are historical and the current status quo allows authors
+imply they do. The reasons are historical, and the current status quo allows authors
 to design without thinking about the deeper nature of their target devices,
-like size and viewer distance, which is a good thing. However, the
+like size and viewer distance—which is a good thing. However, the
 consequences are that a CSS-Pixel is likely not a hardware pixel on the
-display and that a CSS-Inch is likely not a real-world physical Inch.
+display, and that a CSS-Inch is likely not a real-world physical Inch.
 Regarding the latter, two categories of [use cases](#use-cases) are made infeasible or
 hard to implement:
 
@@ -35,13 +35,13 @@ hard to implement:
  * accurate design, especially for [fixed media](#excursion-the-tale-of-fixed-media)
 
 This article is about enabling CSS-authors to work with real-world physical
-measurements and to make it easier to do so.
+measurements, and to make it easier to do so.
 
 ## "A robust and minimal calibration scheme"
 
 This is a demo of a simple widget that lets you, the user, calibrate your
 screen so that it can confidently display real-world distance units.
-Calibration is a big word, I hope the widget demonstrates sufficiently,
+Calibration is a big word; I hope the widget demonstrates sufficiently
 that it is *quickly done* and *not a big deal*.
 
 <div class="insert_calibration_widget"></div>
@@ -56,7 +56,7 @@ is <code class="insert insert-unit-scale-physical"></code>.
 
 The example expects square pixels. Generally, it is possible to calibrate
 width and height separately. However, on the web, reasonable square pixels
-can be expected and if they aren't square, it should be tackled on a different
+can be expected—and if they aren't square, it should be tackled on a different
 layer, e.g. OS or device driver.
 
 The calibration widget was inspired by [my own experiment](../techniques/absolute_units_evaluation.html)
@@ -87,7 +87,7 @@ where @tabatkins describes a calibration page workaround:
 ## About this Document
 
 This article is answering a "work order" in the form of a
-[comment by @frivoal on w3c/csswg-drafts#614](https://github.com/w3c/csswg-drafts/issues/614">)
+[comment by @frivoal on w3c/csswg-drafts#614](https://github.com/w3c/csswg-drafts/issues/614)
 , a discussion on the Topic **"[css-values] Ability to address actual physical size #614"**:
 
 > […]
@@ -178,7 +178,7 @@ measurements:
 … is tricky: it's not explicitly set anywhere in the device, nor does the
 spec document it or explain how to determine it. Instead, it is left to
 device manufacturers, operating systems, and user preferences to somehow
-come to a scaling factor that pleases or is good enough, *there's no
+come to a scaling factor that pleases or is good enough; *there's no
 precision*. Usually backward from there, *if we know some real-world
 measurement of the screen like PPI, its measurements, or the `--unit-scale-physical`
 factor*, we can [calculate](#calculate-device-typical-viewing-distance)
@@ -196,9 +196,9 @@ physical measurements, even in print?**
 
 Although I've seen claims that printers do not produce accurate output,
 in my tests with my home printer the measurements are *highly accurate*.
-The scale option in the print dialog is however an easy to trigger source
-of error, always set it to 100 % and don't allow to "fit to page width" or
-similar. (If that doesn't fix it, the calibration scheme as described here
+The scale option in the print dialog is however an easy-to-trigger source
+of error: always set it to 100 %, and don't allow "fit to page width" or
+similar options. (If that doesn't fix it, the calibration scheme as described here
 works for print as well!)
 
 The claim I made, that the CSS-Reference-Pixel is a simple
@@ -336,17 +336,17 @@ in the design for the smaller flyer. It's not a linear scaling at all.
 #### Fixed Media
 
 … defined for the purpose of this article, is a superset
-of print media, it also includes other media when it has similar properties
+of print media; it also includes other media, when they have similar properties
 to print. Fixed media is not primarily interactive, meaning that it can't
-be zoomed, scrolled, or clicked by the viewer, it may be paged or animated
+be zoomed, scrolled, or clicked by the viewer; it may be paged or animated
 though, it may even have interactive aspects, but those are secondary. An
-example is digital signage or digital advertisement in public space etc.
-The media is "fixed" because it does not appear on the device of the viewer,
+example is digital signage or digital advertisements in public space, etc.
+The medium is "fixed" because it does not appear on the device of the viewer,
 rather, the viewer appears and the media is already there, as in fixed
 to a wall.
 
-Suppose we have a poster like fixed media advertisement, targeted at poster
-like digital signage screens. The screen sizes may still differ across the
+Suppose we have a poster-like fixed media advertisement, targeted at
+poster-like digital signage screens. The screen sizes may still differ across the
 deployment. Of course, we design it using the CSS-Reference-Pixel model,
 *because that's the golden hammer*, everything gets scaled to fit the
 screens according to their typical viewing distance. Of course, we want to
@@ -358,10 +358,10 @@ and `xx-small` can be expressed relative to the default `medium`  `font-size`.
 
 In the fixed media example two differently sized screens are:
 
-|                 | aspect ratio | device pixels   | PPI    | physical measurements                   | the width of … |
-|---------------- | :----------: | --------------- | ------:| :-------------------------------------- |:--------------:|
-|**small screen** | 9:16         | 2160:3840 (UHD) | 184.62 | 11.7:20.8&nbsp;in (29.7:52.8&nbsp;cm)   | A3             |
-|**large screen** | 9:16         | 2160:3840 (UHD) |  65.26 | 33.1:58.8&nbsp;in (84.1:149.5&nbsp;cm ) | A0             |
+|                 | aspect ratio | device pixels   | PPI    | physical measurements                  | the width of … |
+|---------------- | :----------: | --------------- | ------:| :------------------------------------- |:--------------:|
+|**small screen** | 9:16         | 2160:3840 (UHD) | 184.62 | 11.7:20.8&nbsp;in (29.7:52.8&nbsp;cm)  | A3             |
+|**large screen** | 9:16         | 2160:3840 (UHD) |  65.26 | 33.1:58.8&nbsp;in (84.1:149.5&nbsp;cm) | A0             |
 
 We could set them up so that they are calibrated to physical units, this
 would require setting the `device-pixel-ratio [browser zoom]` (**d-p-r**) for the
@@ -393,8 +393,8 @@ to us they appear to be the same.
 
 At this moment we can end this excursion. From looking at screen sizes
 that are normalized with the CSS-Reference-Pixel model, we can't possibly
-make conclusions about the physical sizes, that's, by the way, the whole
-point of the model, and **therefore we can't optimize our design for
+make conclusions about the physical sizes—which is, by the way, the whole
+point of the model—and **therefore we can't optimize our design for
 fixed media**. Permissible results must be oriented at whatever works at a
 distance of an arm’s length. This is actively harmful for general design
 quality. Like clipping in signals, it's limiting the
@@ -449,17 +449,17 @@ this could be identified as a form of violence.
 
 It's OK that working with real physical measurements would make some
 things harder, the gist is that it would enable other things that are
-impossible to achieve under the CSS-Reference-Pixel. Despite, models
-would be **complementary**, there's no need to pick side.
+impossible to achieve under the CSS-Reference-Pixel. This is OK because the models
+are **complementary**, there's no need to pick a side.
 
 ### We would break interoperability/the internet.
 
-If we can't break anything, it will also be hard to do any good. We got
-to think of authors to act in good faith, that they want to create working
+If we can't break anything, it will also be hard to do any good. We should
+assume that authors act in good faith, that they want to create working
 designs, that they work hard to achieve that, and that they will find elegant
 solutions to difficult problems.
 
-Lets instead focus on *the tools that we already have in CSS* to make
+Let's instead focus on *the tools that we already have in CSS* to make
 robust designs and that will stay available. Because, without these tools,
 even the CSS-Reference-Pixel would fail to deliver on its promise.
 
@@ -535,13 +535,13 @@ inch appears when viewed from a distance of 28 inches.
 * real device width and height `window.screen.width / 96 / unitScalePhysical`<br />
   *<a name="window-screen-caveat">CAVEAT</a>:* The `window.screen` browser APIs needs  fixing:
     * [There's a bug with Firefox on Wayland](https://bugzilla.mozilla.org/show_bug.cgi?id=1661540)
-      I get odd values from `window.screen`, it reports `widht` and `height` in
+      I get odd values from `window.screen`, it reports `width` and `height` in
       device pixels, while the combination with Gnome on Xorg is fine and reporting
       values in CSS-Pixels.
     * [Chromium/Chrome does not make the necessary adaptions to `window.screen`
       when using browser zoom.](https://bugs.chromium.org/p/chromium/issues/detail?id=923686)
       Media-queries with e.g. `max-width` seem to get it right.
-    * Looks like it's better to use `window.innerWidth` and `window.innerHeigth`,
+    * Looks like it's better to use `window.innerWidth` and `window.innerHeight`,
       could also generally be more robust for usability.
 
 ### Accurate Design
@@ -549,19 +549,19 @@ inch appears when viewed from a distance of 28 inches.
 * The section about [fixed media](#excursion-the-tale-of-fixed-media)
   describes this extensively.
 * Knowing the real screen size will make it possible for designers to
-  make better-informed decisions, design quality will improve.
+  make better-informed decisions: design quality will improve.
 
 ### True to Scale Detail Reproduction, Research, Scientific Surveys
 
- * For research e.g. of archive material or digital collaboration.
-   Sometimes having an impression of a things true size is really important.
+ * For research e.g. of archive material or digital collaboration, sometimes
+   having an impression of a thing's true size is really important.
  * Show the actual scale ratio of an image displayed on the screen.
  * Readability, usability, a-b-testing studies, especially when online, create comparable conditions.
 
 ### E-Commerce
 
  * People always want to know the physical size of the book, phone, watch, postcard,
-   shoe, pen, whatever they are ordering. What better way than to just show it in the online shop?
+   shoe, pen… whatever they are ordering. What better way than to just show it in the online shop?
  * Make size matching simple. E.g. for online shopping, decide the correct
    size of gloves by matching the user's hand and a 1:1 image of the glove
    directly on the screen.
@@ -577,7 +577,7 @@ inch appears when viewed from a distance of 28 inches.
    in its intended size.
  * Pre-print proofing design, typographic design, layouts, etc. get an accurate
    impression of how big a design will be. This is necessary to judge layout
-   and typographic choices like font sizes, margins, line heights, etc.
+   and typographic choices such as font sizes, margins, line heights, etc.
  * Get an accurate impression of how big a design will appear from different
    distances. E.g. *"If you are 28 inches away from the screen the poster will
    appear as if the original was 15 meters away."* Sounds a lot like the
@@ -620,10 +620,10 @@ inch appears when viewed from a distance of 28 inches.
 ### Implementing Effective Standards for Readability
 
 * Font sizes for legal print, there could be definitions for absolute
-  requirements, if not by law maybe by *corporate compliance policy*.
-  E.g. Fonts may regularly become smaller than e.g. physical 12 pt because
-  the device defaults to 20 inches typical viewing distance instead of
-  28 inches.
+  requirements, often by law, and sometimes by *corporate compliance policy*.
+  E.g. Fonts may regularly become smaller than 12 pt because the device
+  is set up to be viewed from closer than 28 Inches, like a typical phone
+  or tablet.
 * Optimize readability, see the [subtitle example
   in #614 ff.](https://github.com/w3c/csswg-drafts/issues/614#issuecomment-542110115) by @nigelmegitt:
   *"If we could set physical sizes, we would have less need to compromise the user experience."*
@@ -688,7 +688,7 @@ inch appears when viewed from a distance of 28 inches.
           <option value="500cm">5 Meters</option>
       </select></label><br />
       <p>
-      <strong>You must be <span class="celestial_bodies-insert_viewing_distance">1 meter</span>
+      <strong>You must be <span class="celestial_bodies-insert_viewing_distance">1 Meter</span>
       away from your calibrated(!) screen to perceive the sizes true to scale.</strong></p>
       <p>
       <input type="checkbox" checked value="celestial_bodies-moon-max" />
@@ -710,7 +710,10 @@ inch appears when viewed from a distance of 28 inches.
 
 ### Out of the Box
 
- * Board/tabletop games that integrate e.g. a tablet app could get creative here.
+ * Board/tabletop games that integrate e.g. a tablet app could get creative
+   here, sometimes showing physical game elements (board, pieces) at actual
+   size, or showing screen contents that relate to the physical sizes of
+   those game elements.
  * Post-It note templates – imagine a wall of monitors with columns for
    Post-It notes. This could very much be a thing at companies like IBM
    who do "Design Thinking" corporate workshops, along with hundreds of
@@ -756,12 +759,12 @@ tool could piggyback on that if a page uses calibration features.
 ### Level 1
 
 A CSS `env(unit-scale-physical)` property is the main goal. At the same
-time, this is the hardest one to convince the CSS Working Group of, some
+time, this is the hardest one to convince the CSS Working Group of; some
 minds are already made up because similar attempts were made in the past
 and because it would involve some effort on the browser vendor site.
 
 One big contra argument always was that the calibration information would
-involve getting reliable information from the hardware and that this can’t
+involve getting reliable information from the hardware, and that this can’t
 be done 100 % reliably all the time. As described in [Level 0](#level-0),
 we can lead the way and show how to do this with user calibration as a fallback.
 On the positive side, *it's not 100 % of devices either that **can't** report
