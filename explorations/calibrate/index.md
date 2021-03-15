@@ -270,9 +270,9 @@ in the design for the smaller flyer. It's not a linear scaling at all.
     width = 59.7cm = 2256.3779527559054 px ~ 2256
     height = 84.1cm = 3178.5826771653537 px ~ 3179
   -->
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2256 3179"
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 2256 3179"
           class="figure-fixed_media figure-poster">
-    <foreignObject x="0" y="0" >
+    <foreignObject x="0" y="0" width="59.7cm" height="84.1cm">
       <div xmlns="http://www.w3.org/1999/xhtml" class="figure-fixed_media-viewport">
         <span class="figure-group-live figure-fixed_media-close">Maximum Moon Tour</span>
         <span class="figure-group-bottom-align">
@@ -304,9 +304,9 @@ in the design for the smaller flyer. It's not a linear scaling at all.
     width = 10.5cm = 396.8503937007874 px ~ 397
     height = 14.8 = 559.3700787401575 px ~ 559
   -->
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 397 559"
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 397 559"
           class="figure-fixed_media figure-flyer">
-    <foreignObject x="0" y="0" >
+    <foreignObject x="0" y="0" width="10.5cm" height="14.8cm">
       <div xmlns="http://www.w3.org/1999/xhtml" class="figure-fixed_media-viewport">
         <span class="figure-group-live figure-fixed_media-close">Maximum Moon Tour</span>
         <span class="figure-group-bottom-align">
@@ -667,7 +667,7 @@ inch appears when viewed from a distance of 28 inches.
       width = distance * Math.tan(angleRadians)
       width = 0.9938762273279493 cm
       -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2050 2050">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 2050 2050">
         <circle class="celestial_bodies-moon-max" cx="1025" cy="1025" r="1023" />
         <circle class="celestial_bodies-sun-max" cx="1025" cy="1025" r="976" />
         <circle class="celestial_bodies-sun-min" cx="1025" cy="1025" r="943.5" />

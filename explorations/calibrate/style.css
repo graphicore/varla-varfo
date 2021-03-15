@@ -282,6 +282,9 @@ code, pre{
     border-radius: .2em;
     background: white;
 }
+pre {
+    overflow-x: auto;
+}
 
 pre code{
     border: none;
@@ -329,6 +332,7 @@ figure.fixed_media:first-of-type {
 svg.figure-fixed_media {
     width: calc(100% - 2px);
     border: 1px solid black;
+    background: white;
 }
 
 .fixed_media-scaler[value="css-units"]:checked ~ figure.fixed_media,
@@ -345,7 +349,6 @@ svg.figure-fixed_media {
     width: calc(var(--width) * var(--unit-scale-physical));
 }
 
-
 .figure-fixed_media foreignObject,
 .figure-fixed_media .figure-fixed_media-viewport
  {
@@ -354,8 +357,8 @@ svg.figure-fixed_media {
 }
 
 .figure-fixed_media .figure-fixed_media-viewport {
-    background: white;
-    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .figure-group-live,
@@ -373,8 +376,8 @@ svg.figure-fixed_media {
 }
 
 .figure-group-live {
-    position: relative;
-    top: 2%;
+    margin-top: 2%;
+    flex-grow: 1;
 }
 
 .figure-poster .figure-group-band {
@@ -433,8 +436,7 @@ svg.figure-fixed_media {
 
 /* let it grow from bottom up*/
 .figure-group-bottom-align {
-    bottom: 2%;
-    position: absolute;
+    margin-bottom: 2%;
     display: block;
     width: 100%;
 }
