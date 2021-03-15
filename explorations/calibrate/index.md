@@ -9,11 +9,9 @@ styles:
 class: calibrate-css
 ---
 
-*This is a draft.*
-
 # Calibrate CSS
 
-*March 2021 by Lasse Fister • [GitHub @graphicore](https://github.com/graphicore)
+*March 15, 2021 by Lasse Fister • [GitHub @graphicore](https://github.com/graphicore)
 • [contact](http://graphicore.de/en/page/lasse)*
 
 <details class="contents" open>
@@ -116,6 +114,8 @@ collecting my observations in [Real World Absolute Length Units Evaluation](../t
 Please visit and follow [issue #614 \[css-values\] Ability to address actual
 physical size](https://github.com/w3c/csswg-drafts/issues/614) as it is
 the place to discuss the general topic.
+
+**Help to realize [Browser Support Roadmap: Level 0](#level-0)!**
 
 I understand this as an open document, meaning that contributions
 are welcome via the GitHub [issue tracker](https://github.com/graphicore/varla-varfo/issues)
@@ -837,4 +837,4 @@ Please [suggest more links via the discussions board](https://github.com/graphic
 
 ## Changelog
 
- * initial version
+ * initial version *2021-03-15*
