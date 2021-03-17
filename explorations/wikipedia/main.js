@@ -1,4 +1,4 @@
-window.addEventListener('DOMContentLoaded', (event) => {
+window.addEventListener('load', (event) => {
     function setAnimationPosition(){
         document.documentElement.style.setProperty('--animation-position',
                                          document.documentElement.offsetWidth);

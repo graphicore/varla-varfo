@@ -67,7 +67,7 @@
  * to use it in other calculations) :-(
  */
 
-#body_override h1, #body_override h2, #body_override h3 {
+h1, h2, h3 {
     font-family: "AmstelVar", monospace;
     font-size: 5rem;
     font-variation-settings: 'wght' var(--display-wght),
@@ -118,10 +118,6 @@
     calc(-1s * var(--animation-progression)) /*animation-delay*/
     both /*animation-fill-mode*/
     paused /*animation-play-state*/;
-}
-
-* {
- background: red;
 }
 
 
