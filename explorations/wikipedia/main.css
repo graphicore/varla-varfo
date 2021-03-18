@@ -1,18 +1,4 @@
-
 :root{
-    --text-wght: 375;
-    --text-wdth: 100;
-    --text-opsz: 16;
-    --text-GRAD: 88;
-
-    --display-wght: 900;
-    --display-wdth: 100;
-    --display-opsz: 16;
-    --display-GRAD: 88;
-
-    --display-wgth-start: 100;
-    --display-wgth-end: 900;
-
     /* can't use this per @font-face rule */
     font-synthesis: none;
 }
@@ -22,7 +8,6 @@
     src: url('../fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
-
 }
 
 @font-face {
@@ -30,7 +15,6 @@
     src: url('../fonts/Amstelvar/Amstelvar-Roman[wdth,wght,opsz].ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
-
 }
 
 @font-face {
@@ -40,90 +24,137 @@
     font-style: italic;
 }
 
-
-
-@keyframes animation-00-testing {
-  from {
-    font-variation-settings: 'wght' var(--display-wgth-start),
-                             'wdth' var(--display-wdth),
-                             'opsz' var(--display-opsz),
-                             'GRAD' var(--display-GRAD);
-  }
-  to {
-    font-variation-settings: 'wght' var(--display-wgth-end),
-                             'wdth' var(--display-wdth),
-                             'opsz' var(--display-opsz),
-                             'GRAD' var(--display-GRAD);
-
-  }
-}
-
-
-/**
- * vw 	1% of the viewport's width.
- * We can calculate with different widht/dimension units!
- * But we are not be able to remove the unit from a calculation
- * (e.g. by dividing by 1px). But we'd need a unitless number
- * to use it in other calculations) :-(
- */
-
 h1, h2, h3 {
     font-family: "AmstelVar", monospace;
-    font-size: 5rem;
-    font-variation-settings: 'wght' var(--display-wght),
-                             'wdth' var(--display-wdth),
-                             'opsz' var(--display-opsz),
-                             'GRAD' var(--display-GRAD);
-
-
-    animation-name: animation-00-testing;
-    animation-duration: 1s;
-    /* this is one way to do it, moustly equivalent with the typetura "--tt-key": */
-    /* window.addEventListener('resize',
-        evt=>document.documentElement.style.setProperty('--animation-position',
-                                         document.documentElement.offsetWidth))
-     */
-    /* full viewport width: 100vh*/
-    --absolute-min-animation-pos: 440 ; /* offset */
-    --absolute-max-animation-pos: 1400; /* actual max screen width that is considered */
-    --relative-max-animation-pos: calc(var(--absolute-max-animation-pos) - var(--absolute-min-animation-pos));
-    --relative-animation-pos: calc(var(--animation-position) - var(--absolute-min-animation-pos));
-    --animation-progression: calc(var(--relative-animation-pos) / var(--relative-max-animation-pos));
-    /* typetura does: calc(-1s * var(--tt-bind) / var(--tt-max))
-     * --tt-max, default: 1600 (pixes screen width)
-     * --tt-bind: element.style.setProperty('--tt-bind', element.offsetWidth);
-     *
-     * NOTE: the -1s part does two things:
-     *       * use a negative delay to jump to the right position in the animation
-     *       * add a unit (s, second) to the unitless --animation-progression
-     */
-    animation-delay: calc(-1s * var(--animation-progression));
-    animation-play-state: paused;
-    /*needed to apply --animation-position at 0 and 1
-     I.e. the values of @keyframes "to" and "from" apply as styles
-     before and after the animation duration.
-     */
-    animation-fill-mode: both;
-
-    animation-timing-function: cubic-bezier(0.2,-2,2,2);
-    animation-timing-function: linear;
 }
-
-.short-form-example {
-  animation:
-    var(--animation-name) /*animation-name*/
-    1s /*animation-duration*/
-    var(--animation-timing-function) /*animation-timing-function*/
-    1 /* animation-iteration-count */
-    calc(-1s * var(--animation-progression)) /*animation-delay*/
-    both /*animation-fill-mode*/
-    paused /*animation-play-state*/;
-}
-
 
 html, body {
     font-family: "RobotoFlex", monospace;
-    xx-font-variation-settings: 'wght' var(--text-wght), 'wdth' var(--text-wdth), 'opsz' var(--text-opsz), 'GRAD' var(--text-GRAD);
 }
 
 
+/* essential layout rules copied from original wikipedia css*/
+div.tright, div.floatright, table.floatright {
+    clear: right;
+    float: right;
+}
+div.tleft, div.floatleft, table.floatleft {
+    float: left;
+    clear: left;
+}
+
+html body.mediawiki .mbox-small {
+    clear: right;
+    float: right;
+    margin: 4px 0 4px 1em;
+    box-sizing: border-box;
+    width: 238px;
+    font-size: 88%;
+    line-height: 1.25em;
+}
+
+
+/* navigation */
+#mw-navigation h2 {
+    position: absolute;
+    top: -9999px;
+}
+#mw-head {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+}
+#mw-panel {
+    padding-left: 0.5em;
+    font-size: inherit;
+    position: absolute;
+    top: 0;
+    width: 10em;
+    left: 0;
+}
+
+
+/* keep body out of the way of navigation */
+.mw-body {
+    padding: 1.25em 1.5em 1.5em 1.5em;
+}
+.mw-body, #mw-head-base, #left-navigation, #mw-data-after-content, .mw-footer {
+    margin-left: 11em;
+}
+.mw-body {
+    margin-top: -1px;
+    border: 1px solid #a7d7f9;
+        border-right-width: 1px;
+    border-right-width: 0;
+}
+.mw-body, #mw-data-after-content {
+    margin-left: 10em;
+}
+.mw-body, .parsoid-body {
+    background-color: #ffffff;
+    color: #202122;
+    direction: ltr;
+    padding: 1em;
+}
+
+.emptyPortlet {
+    display: none;
+}
+
+#right-navigation {
+    float: right;
+    margin-top: 2.5em;
+}
+
+.vector-menu-tabs, .vector-menu-tabs a, #mw-head .vector-menu-dropdown h3 {
+    background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-separator.png?09d4b);
+    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,#a7d7f9 100%);
+    background-repeat: no-repeat;
+    background-size: 1px 100%;
+}
+.vector-menu-tabs {
+    background-position: left bottom;
+    float: left;
+    height: 2.5em;
+    padding-left: 1px;
+}
+
+vector-menu-tabs h3 {
+    display: none;
+}
+
+#p-personal {
+    right: 1em;
+    position: absolute;
+    top: 6px;
+    z-index: 100;
+}
+
+#mw-head-base {
+    margin-top: -5em;
+    height: 5em;
+}
+
+#mw-page-base {
+    background-color: #fbfbfb;
+    background-image: -webkit-gradient(linear,right top,right bottom,color-stop(50%,#ffffff),color-stop(100%,#f6f6f6));
+    background-image: -webkit-linear-gradient(top,#ffffff 50%,#f6f6f6 100%);
+    background-image: -moz-linear-gradient(top,#ffffff 50%,#f6f6f6 100%);
+    background-image: linear-gradient(to bottom,#ffffff 50%,#f6f6f6 100%);
+    background-position: bottom left;
+    height: 5em;
+}
+
+#p-logo a {
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: block;
+    width: 10em;
+    height: 160px;
+    text-decoration: none;
+}
+.mw-wiki-logo {
+    background-image: url(./static/images/enwiki-2x.png);
+    background-size: 135px auto;
+}
