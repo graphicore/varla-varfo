@@ -102,6 +102,10 @@ html body.mediawiki .mbox-small {
     display: none;
 }
 
+.mw-portlet h3 {
+    display: none;
+}
+
 #right-navigation {
     float: right;
     margin-top: 2.5em;
@@ -157,4 +161,53 @@ vector-menu-tabs h3 {
 .mw-wiki-logo {
     background-image: url(./static/images/enwiki-2x.png);
     background-size: 135px auto;
+}
+
+.vector-menu-portal .body ul, .vector-menu-portal .vector-menu-content ul {
+    list-style: none none;
+    margin: 0;
+    padding-top: 0.3em;
+}
+
+.vector-menu-tabs ul {
+    float: left;
+    height: 100%;
+    list-style: none none;
+    margin: 0;
+    padding: 0;
+}
+
+#p-personal .vector-menu-content-list {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    justify-content: flex-end;
+    align-items: baseline;
+}
+#p-personal ul {
+    padding-left: 10em;
+}
+.mw-portlet ul {
+    list-style: none none;
+    margin: 0;
+}
+ul {
+    margin: 0.3em 0 0 1.6em;
+    padding: 0;
+        padding-left: 0px;
+}
+
+a {
+    text-decoration: none;
+    color: #0645ad;
+    background: none;
+}
+
+/* LOL, nobody should use <b>, <i> tags anymore. */
+b, strong {
+    font-weight: bolder;
+}
+i, cite, em, var, dfn {
+    font-style: oblique -10deg;
+    font-variation-settings: "slnt" -10;
 }
