@@ -6,8 +6,9 @@
 @font-face {
     font-family: 'RobotoFlex';
     src: url('../fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+    font-weight: 100 900;
+    -xx-font-style: normal;
+    font-style: oblique 0deg -10deg;
 }
 
 @font-face {
@@ -210,4 +211,23 @@ b, strong {
 i, cite, em, var, dfn {
     font-style: oblique -10deg;
     font-variation-settings: "slnt" -10;
+}
+
+
+
+
+
+
+
+/* widgets */
+
+.widgets_container{
+    width: 20em;
+    margin: auto;
+    z-index: 1;
+    position: relative;
+}
+
+.user_preferences label::after {
+    content: attr(data-value) 'pt';
 }
