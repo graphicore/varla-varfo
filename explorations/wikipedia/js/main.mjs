@@ -1,5 +1,5 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import DOMTool from '../calibrate/js/domTool.mjs';
+import DOMTool from '../../calibrate/js/domTool.mjs';
 
 /* We may not use this now */
 class PortalAugmentationWidget{
