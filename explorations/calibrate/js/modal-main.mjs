@@ -77,8 +77,5 @@ function main() {
         window.localStorage.setItem(UNIT_SCALE_LOCAL_STORAGE_KEY, e.detail);
         documentSetUnitScalePhysical(e.detail);
     });
-
-
-
 }
 main();
