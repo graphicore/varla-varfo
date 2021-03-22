@@ -1,6 +1,10 @@
 :root{
     /* can't use this per @font-face rule */
     font-synthesis: none;
+    --fine-user-zoom: 0;
+}
+body {
+    font-size: calc(100% + 1pt * var(--fine-user-zoom, 0));
 }
 
 @font-face {
@@ -221,13 +225,41 @@ i, cite, em, var, dfn {
 
 /* widgets */
 
-.widgets_container{
-    width: 20em;
-    margin: auto;
+button.toggle-user_settings{
     z-index: 1;
     position: relative;
 }
 
+.widgets_container{
+    width: 25rem;
+    z-index: 1;
+    position: absolute;
+    border: 1px solid lightgray;
+    background: #ffffdef0;
+    padding: .5em 1em;
+    margin: 1em 0;
+    border-radius: 0.4em;
+}
+
+.widgets_container > * {
+    margin: .5em 0;
+    display: block;
+}
+
+.widgets_container button.close{
+    margin-left: auto;
+    font-weight: 600;
+}
+
+.widgets_container legend{
+    font-family: AmstelVar;
+    font-weight: 600;
+}
+
 .user_preferences label::after {
     content: attr(data-value) 'pt';
+}
+
+.widgets_container input[type="range"] {
+    vertical-align: middle;
 }
