@@ -67,7 +67,7 @@ function main() {
     let userSettingsWidget = new WidgetsContainerWidget(
                     document.querySelector('.insert_user_settings'),
                     [
-                    //  PortalAugmentationWidget,
+                        PortalAugmentationWidget,
                         UserPreferencesWidget
                     ]);
     for(let elem of document.querySelectorAll('.toggle-user_settings'))

@@ -3,7 +3,7 @@ import DOMTool from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
 
 const PORTAL_PROPERTIES_TEMPLATE = `
-
+<em>Will navigate through portal space.</em>
 <datalist id="portal_properties-px-sizes">
     <option value="1920" />
     <option value="1680" />
