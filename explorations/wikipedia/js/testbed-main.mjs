@@ -52,6 +52,14 @@ const PORTAL_PROPERTIES_TEMPLATE = `
                value="true" "/><span></span></label>
     </p>
 </fieldset>
+
+<fieldset>
+    <legend>Select Page</legend>
+    <select class="testbed_subject-select_pages">
+        <option value="./Typography%20-%20Wikipedia.html" selected>Typography - Wikipedia</option>
+        <option value="../../../techniques/variations.html">CSS-Animation Variations</option>
+    </select>
+</fieldset>
 `;
 /* We may not use this now */
 class PortalPropertiesWidget {
@@ -69,8 +77,13 @@ class PortalPropertiesWidget {
 
         this._uiWidth = this.container.querySelector('input[name="width"]');
         this._uiHeight = this.container.querySelector('input[name="height"]');
-        this._uiUnit = this.container.querySelector('input[name="unit"]');
+        this._uiUnit = this.container.querySelector('input[name="unit"]')
 
+
+        this._uiSelectPage = this.container.querySelector('.testbed_subject-select_pages')
+        this._uiSelectPage.addEventListener('change',()=>{
+            this._portalElement.src = this._uiSelectPage.value;
+        })
 
         this._uiAllOrientation = this.container.querySelectorAll('input.portal_properties-set_orientation');
 
