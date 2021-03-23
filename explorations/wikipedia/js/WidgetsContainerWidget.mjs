@@ -1,19 +1,25 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
 import DOMTool from '../../calibrate/js/domTool.mjs';
 
-const WIDGETS_CONTAINER_TEMPLATE = `
+const WIDGETS_CONTAINER_NO_CLOSE_TEMPLATE = `
 <!-- insert: child widgets -->
+`;
+
+const WIDGETS_CONTAINER_TEMPLATE = `
+${WIDGETS_CONTAINER_NO_CLOSE_TEMPLATE}
 <button class="close">done</button>
 `;
 
 export default class WidgetsContainerWidget {
-    constructor(baseElement, widgets) {
+    constructor(baseElement, widgets, noClose=false) {
         this._baseElement = baseElement;
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
         this._isActive = false;
+        this._noClose = noClose;
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': 'widgets_container'},
-            WIDGETS_CONTAINER_TEMPLATE
+            this._noClose ? WIDGETS_CONTAINER_NO_CLOSE_TEMPLATE
+                          : WIDGETS_CONTAINER_TEMPLATE
         );
         this.container = dom;
         this._isActive = false;
@@ -28,7 +34,12 @@ export default class WidgetsContainerWidget {
             let child = this._domTool.createElement('div',
                             {'class': 'widgets_container-child_widget'});
             children.appendChild(child);
-            this._widgets.push(new Widget(child));
+
+            let widget = Array.isArray(Widget)
+                            ? new Widget[0](child, ...Widget.slice(1))
+                            : new Widget(child)
+                            ;
+            this._widgets.push(widget);
         }
         this._domTool.insertAtMarkerComment(
                         this.container, 'insert: child widgets', children);
@@ -45,7 +56,7 @@ export default class WidgetsContainerWidget {
         this._isActive = true;
     }
     close() {
-        if(!this._isActive)
+        if(!this._isActive || this._noClose)
             return;
         // event listeners are preserved
         this._domTool.removeNode(this.container);

@@ -226,19 +226,26 @@ i, cite, em, var, dfn {
 /* widgets */
 
 button.toggle-user_settings{
-    z-index: 1;
+    z-index: 999;
     position: relative;
 }
 
-.widgets_container{
+.widgets_container {
     width: 25rem;
-    z-index: 1;
-    position: absolute;
     border: 1px solid lightgray;
     background: #ffffdef0;
     padding: .5em 1em;
     margin: 1em 0;
     border-radius: 0.4em;
+}
+
+.page_content-item .widgets_container{
+    z-index: 1;
+    position: absolute;
+}
+
+.page_portal-testbed .widgets_container{
+
 }
 
 .widgets_container > * {
@@ -262,4 +269,46 @@ button.toggle-user_settings{
 
 .widgets_container input[type="range"] {
     vertical-align: middle;
+}
+
+.page_content-item {
+
+}
+
+.page_portal-testbed {
+
+}
+
+#testbed-subject {
+    width: 1024px;
+    height: 768px;
+}
+
+.portal_properties-set_orientation{
+  visibility: hidden;
+  position: absolute;
+  cursor: pointer;
+}
+
+.portal_properties-set_orientation ~ span:after {
+  content: " Landscape";
+}
+
+.portal_properties-set_orientation ~ span:before {
+  display: inline-block;
+  content: " ";
+  background: lightgrey;
+  border: 1px solid black;
+  border-radius: .1em;
+  vertical-align:middle;
+  width: 1em;
+  height: .5em;
+}
+
+.portal_properties-set_orientation:checked ~ span:after {
+  content: " Portrait";
+}
+.portal_properties-set_orientation:checked ~ span:before {
+  width: .5em;
+  height: 1em;
 }
