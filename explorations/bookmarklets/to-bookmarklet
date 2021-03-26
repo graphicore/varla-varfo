@@ -1,0 +1,12 @@
+#! /usr/bin/env bash
+
+
+code=$(node - <<-EOT
+var fs = require('fs');\
+var code = fs.readFileSync("$1");\
+console.log("javascript:void(" + encodeURI(code) + ");");
+EOT
+);
+
+echo $code | xsel -b;
+echo 'copied to clipboard.'
