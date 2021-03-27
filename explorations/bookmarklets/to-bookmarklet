@@ -2,11 +2,12 @@
 
 
 code=$(node - <<-EOT
-var fs = require('fs');\
-var code = fs.readFileSync("$1");\
-console.log("javascript:void(" + encodeURI(code) + ");");
+var fs = require('fs');
+var code = fs.readFileSync("$1", "utf8");
+console.log("javascript:void(" + encodeURI(code.replace(/\n/g, '').replace(/  /g, '')) + ");");
 EOT
 );
 
 echo $code | xsel -b;
 echo 'copied to clipboard.'
+echo $code

@@ -5,14 +5,14 @@
       , size = Symbol('size')
       ;
     for(elem of document.getElementsByTagName("*")) {
-        let computed = window.getComputedStyle(elem,null)
+        let computed = window.getComputedStyle(elem,null);
 
         if (computed.display === 'none')
             continue;
         if(!Array.from(elem.childNodes).some(node=>
-                // is a text Node
+                /* is a text Node */
                 node.nodeType === Node.TEXT_NODE &&
-                                    // only whitespace
+                                    /* only whitespace*/
                                     node.wholeText.trim() !== ''))
             continue;
 
@@ -28,7 +28,7 @@
           ;
 
         if(!value) {
-            value = {fontSize, fontFamily, fontVariationSettings, fontWeight, fontStyle}
+            value = {fontSize, fontFamily, fontVariationSettings, fontWeight, fontStyle};
             value[tags] = new Set();
             value[size] = parseInt(fontSize, 10);
             unique.set(id, value);
@@ -46,7 +46,7 @@
         heading.textContent = key;
         body.appendChild(heading);
         body.appendChild(samples);
-        bucket.sort((a,b)=> a[size] < b[size]);
+        bucket.sort((a,b)=>b[size] - a[size]);
         for(let item of bucket) {
             let li = document.createElement('li')
               , size = document.createElement('small')
@@ -58,7 +58,7 @@
 
             for(let [prop, value] of Object.entries(item))
                 sample.style[prop] = value;
-            sample.textContent = 'Hello World';
+            sample.textContent = 'The quick brown fox jumps over the lazy dog.';
             sample.setAttribute('data-tags', Array.from(item[tags]).map(t=>`<${t}>`).join(', '));
             samples.appendChild(li);
         }
