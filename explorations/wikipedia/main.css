@@ -506,8 +506,13 @@ label.user_preferences-fine_user_zoom::after {
     content: attr(data-value) 'pt';
 }
 
+label.user_preferences-user_distance::after {
+    content: attr(data-value) 'cm';
+}
+
 .widgets_container input[type="range"] {
     vertical-align: middle;
+    width: 9em;
 }
 
 .page_content-item {
@@ -596,6 +601,7 @@ label.user_preferences-fine_user_zoom::after {
  * because we can't yet calculate it
  * https://github.com/w3c/csswg-drafts/issues/6149
  */
+--font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
 --font-size: 12; /* --opsz */
 
 font-variation-settings:
@@ -624,13 +630,14 @@ widows
 font-family: var(--font-family);
 font-size: calc(1pt * var(--x-font-size));
 letter-spacing: calc(1pt * var(--letter-space));
-line-height: var(--line-height);
+line-height: var(--x-line-height);
 word-spacing: calc(1em * var(--word-space));
 /* This case is better set on each element, seems to be calculated in the
  * wrong place otherwise. I.e. not using the --font-size from sub{--font-size: 8;}
  * but from :root{--font-size: 12;}
  */
---x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0));
+--x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
+--x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
 --x-font-grade: calc(var(--font-grade) + var(--font-grade-color-scheme-adjust, 0));
 }
 

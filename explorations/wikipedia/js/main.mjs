@@ -140,6 +140,7 @@ class ColorSchemeWidget {
 
 
 const FINE_USER_ZOOM_LOCAL_STORAGE_KEY = 'varla-varfo-fine-user-zoom';
+const USER_DISTANCE_LOCAL_STORAGE_KEY = 'varla-varfo-user-distance';
 const COLOR_SCHEME_LOCAL_STORAGE_KEY = 'varla-varfo-explicit-color-scheme';
 const USER_PREFERENCES_TEMPLATE = `
 <fieldset>
@@ -181,7 +182,23 @@ class UserPreferencesWidget{
                     , label: 'Color&nbsp;Scheme'
                 },
                 COLOR_SCHEME_LOCAL_STORAGE_KEY, 'explicit-{schemeName}-mode'
-            ]
+            ],
+            /* SLIDER +- 4PT  in 0.01 steps
+             * 10 inch -> 1pt change
+             * I'll use 25cm -> 1pt change as metric units suit me better
+             * we may have to localize this!
+             */
+            [   SliderWidget, {
+                      klass: `${klass}-user_distance`
+                    , label: 'Relative&nbsp;Distance'
+                    , min: '-200'  // - 2 meters
+                    , max: '500' // + 5 meters
+                    , value: '0'
+                    , step: '25'
+                },
+                USER_DISTANCE_LOCAL_STORAGE_KEY, '--user-distance-cm'
+            ],
+
         ];
 
         this._widgets = [];
