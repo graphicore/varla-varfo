@@ -98,8 +98,6 @@ html body.mediawiki .mbox-small {
     margin-left: 10em;
 }
 .mw-body, .parsoid-body {
-    background-color: #ffffff;
-    color: #202122;
     direction: ltr;
     padding: 1em;
 }
@@ -504,7 +502,7 @@ button.toggle-user_settings{
     font-weight: 600;
 }
 
-.user_preferences label::after {
+label.user_preferences-fine_user_zoom::after {
     content: attr(data-value) 'pt';
 }
 
@@ -552,4 +550,54 @@ button.toggle-user_settings{
 .portal_properties-set_orientation:checked ~ span:before {
   width: .5em;
   height: 1em;
+}
+
+
+
+
+/* LIGHT/DARK MODE CHOLOR-SCHEME */
+
+:root {
+    --dark-background: #202122;
+    --dark-color: #fff;
+    --light-background: #fff;
+    --light-color: #202122;
+
+    /* default */
+    --background: var(--light-background);
+    --color: var(--light-color);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root{
+        --background: var(--dark-background);
+        --color: var(--dark-color);
+    }
+    .user_preferences-color_scheme-default:after{
+        content: " (dark)";
+    }
+}
+:root.explicit-dark-mode{
+    --background: var(--dark-background);
+    --color: var(--dark-color);
+}
+
+@media (prefers-color-scheme: light){
+    :root{
+        --background: var(--light-background);
+        --color: var(--light-color);
+    }
+    .user_preferences-color_scheme-default:after{
+        content: " (light)";
+    }
+}
+
+:root.explicit-light-mode{
+    --background: var(--light-background);
+    --color: var(--light-color);
+}
+
+:root{
+    background: var(--background);
+    color: var(--color);
 }
