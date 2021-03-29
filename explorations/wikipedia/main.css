@@ -586,8 +586,8 @@ label.user_preferences-fine_user_zoom::after {
 --font-family: AmstelVar;
 --font-style: normal; /* oblique is basically broken */
 --font-slant: 0;
---font-weight: 400; /* depending on font/font-family this can go anywhere */
---font-grade: .4;
+--font-weight: 440; /* depending on font/font-family this can go anywhere */
+--font-grade: 0;
 --font-stretch: 520;/* by (xtra, wdth) */
 
 
@@ -601,7 +601,7 @@ label.user_preferences-fine_user_zoom::after {
 font-variation-settings:
             "slnt" var(--font-slant),
             "wght" var(--font-weight),
-            "GRAD" var(--font-grade),
+            "GRAD" var(--x-font-grade),
             "XTRA" var(--font-stretch),
             "opsz" var(--x-font-size)
             ;
@@ -630,7 +630,8 @@ word-spacing: calc(1em * var(--word-space));
  * wrong place otherwise. I.e. not using the --font-size from sub{--font-size: 8;}
  * but from :root{--font-size: 12;}
  */
---x-font-size: calc(var(--font-size) + var(--fine-user-zoom));
+--x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0));
+--x-font-grade: calc(var(--font-grade) + var(--font-grade-color-scheme-adjust, 0));
 }
 
 b, strong {
@@ -646,6 +647,7 @@ sup {
 :root {
     --dark-background: #202122;
     --dark-color: #fff;
+    --font-grade-color-scheme-adjust-dark: .5;
     --light-background: #fff;
     --light-color: #202122;
 
@@ -658,6 +660,7 @@ sup {
     :root{
         --background: var(--dark-background);
         --color: var(--dark-color);
+        --font-grade-color-scheme-adjust: var(--font-grade-color-scheme-adjust-dark, 0);
     }
     .user_preferences-color_scheme-default:after{
         content: " (dark)";
@@ -666,6 +669,7 @@ sup {
 :root.explicit-dark-mode{
     --background: var(--dark-background);
     --color: var(--dark-color);
+    --font-grade-color-scheme-adjust: var(--font-grade-color-scheme-adjust-dark, 0);
 }
 
 @media (prefers-color-scheme: light){
