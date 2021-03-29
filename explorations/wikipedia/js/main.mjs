@@ -43,21 +43,26 @@ class SliderWidget {
         this._localStorageKey = localStorageKey;
         this._customProperty = customProperty;
         {
-            let change = evt=>{
-                evt.target.parentNode.setAttribute('data-value', evt.target.value);
-                evt.target.ownerDocument.documentElement.style.setProperty(
-                                            customProperty, evt.target.value);
-                this._domTool.window.localStorage.setItem(localStorageKey, evt.target.value);
-            };
+            let onInput = evt=>{
+                    evt.target.parentNode.setAttribute('data-value', evt.target.value);
+                }
+              , onChange = evt=> {
+                    evt.target.ownerDocument.documentElement.style.setProperty(
+                                                customProperty, evt.target.value);
+                    this._domTool.window.localStorage.setItem(localStorageKey, evt.target.value);
+                    onInput(evt);
+                }
+              ;
 
-            console.log(`.${templateVars.klass} input[type="range"]`);
             let elem = this.container.querySelector(`.${templateVars.klass} input[type="range"]`);
             var storedValue = this._domTool.window.localStorage.getItem(localStorageKey);
             if(storedValue !== null)
                 elem.value = storedValue;
 
-            elem.addEventListener('input', change);
-            change({target: elem});
+
+            elem.addEventListener('input', onInput);
+            elem.addEventListener('change', onChange);
+            onChange({target: elem});
         }
     }
 }
