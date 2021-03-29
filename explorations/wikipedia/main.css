@@ -553,6 +553,92 @@ label.user_preferences-fine_user_zoom::after {
 }
 
 
+/* use :root for custom properties
+ * "*" destroys inheritance!
+ *
+ * We should set all necessary font-styles per element that defines
+ * font-styles.
+ * */
+:root {
+/* beginnings of the CSS framework */
+
+/* I think the plan is to set high level variables, and depending
+ * on the font **generate** css that uses them the best way.
+ * So, a font/font-family can have  capabilities, we detect them, and
+ * according to that, wire up these variables.
+ */
+
+/*
+ * Uh, another thing is that not all of the standard properties below
+ * do inherit. so we need to specify them explicitly for some elements!
+ * e.g. columns, column-width, column-count (but column-width ismore or less
+ * useless when column count is 1 anyways.)
+ * width
+ */
+
+
+/* page/portal info */
+/*--column-width: 32.5; /* in em */
+/*--column-count: 1; /* maybe use actual container width to determine this? */
+
+
+/* --font choice/variation settings*/
+--font-family: AmstelVar;
+--font-style: normal; /* oblique is basically broken */
+--font-slant: 0;
+--font-weight: 400; /* depending on font/font-family this can go anywhere */
+--font-grade: .4;
+--font-stretch: 520;/* by (xtra, wdth) */
+
+
+
+/* in pt! We need JS to get the document default font-size in pt,
+ * because we can't yet calculate it
+ * https://github.com/w3c/csswg-drafts/issues/6149
+ */
+--font-size: 12; /* --opsz */
+
+font-variation-settings:
+            "slnt" var(--font-slant),
+            "wght" var(--font-weight),
+            "GRAD" var(--font-grade),
+            "XTRA" var(--font-stretch),
+            "opsz" var(--x-font-size)
+            ;
+--line-height: 1.5;
+--letter-space: 0.1;
+--word-space: 0.1;/*in fractions of em*/
+
+}
+
+/**
+columns /* caution: e.g. firefox has bad support for break-after * /
+ orphans
+widows
+**/
+
+*{
+/*column-width: calc(1pt * var(--x-font-size) * var(--column-width));
+/*column-count: var(--column-count);*/
+/*width: calc(1em * var(--column-width));*/
+font-family: var(--font-family);
+font-size: calc(1pt * var(--x-font-size));
+letter-spacing: calc(1pt * var(--letter-space));
+line-height: var(--line-height);
+word-spacing: calc(1em * var(--word-space));
+/* This case is better set on each element, seems to be calculated in the
+ * wrong place otherwise. I.e. not using the --font-size from sub{--font-size: 8;}
+ * but from :root{--font-size: 12;}
+ */
+--x-font-size: calc(var(--font-size) + var(--fine-user-zoom));
+}
+
+b, strong {
+  --font-weight: 700;
+}
+sup {
+  --font-size: 8;
+}
 
 
 /* LIGHT/DARK MODE CHOLOR-SCHEME */
