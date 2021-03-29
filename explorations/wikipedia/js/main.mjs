@@ -36,11 +36,9 @@ class SliderWidget {
 
         for(let [k,v] of Object.entries(templateVars))
             template = template.replaceAll('{' + k + '}', v);
-        console.log(template);
         {
             let frag = this._domTool.createFragmentFromHTML(template);
             this.container.appendChild(frag);
-            console.log(this.container.innerHTML);
         }
         this._localStorageKey = localStorageKey;
         this._customProperty = customProperty;
@@ -85,7 +83,6 @@ class ColorSchemeWidget {
         var template = COLOR_SCHEME_SWITCH_TEMPLATE;
         for(let [k,v] of Object.entries(templateVars))
             template = template.replaceAll('{' + k + '}', v);
-        console.log(template);
 
         {
             let frag = this._domTool.createFragmentFromHTML(template);
@@ -101,7 +98,6 @@ class ColorSchemeWidget {
             // set initial selection from local storage ...
             let storedColorScheme = this._domTool.window.localStorage.getItem(this._localStorageKey);
             let checkedItem = null;
-            console.log(this._root.outerHTML)
             if(storedColorScheme)
                 checkedItem = this._root.querySelector(`input[value="${storedColorScheme}"]`);
             if(!checkedItem)
