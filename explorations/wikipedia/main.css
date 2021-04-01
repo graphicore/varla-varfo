@@ -29,18 +29,11 @@ body {
     font-style: italic;
 }
 
-h1, h2, h3, h4, h5 {
-    font-family: "RobotoFlex", monospace;
-}
-
-html, body {
-    font-family: "AmstelVar", monospace;
-}
-
 
 /* essential layout rules copied from original wikipedia css*/
 body {
     margin: 0;
+    background-color: #f6f6f6;
 }
 
 div.tright, div.floatright, table.floatright {
@@ -83,6 +76,12 @@ html body.mediawiki .mbox-small {
     left: 0;
 }
 
+#p-logo {
+    width: 10em;
+    height: 160px;
+    margin-bottom: 1em;
+}
+
 /* keep body out of the way of navigation */
 .mw-body {
     padding: 1.25em 1.5em 1.5em 1.5em;
@@ -91,8 +90,9 @@ html body.mediawiki .mbox-small {
 .mw-body {
     margin-top: -1px;
     border: 1px solid #a7d7f9;
-        border-right-width: 1px;
+    border-right-width: 1px;
     border-right-width: 0;
+    background-color: #ffffff;
 }
 .mw-body, #mw-data-after-content {
     margin-left: 10em;
@@ -173,6 +173,12 @@ vector-menu-tabs h3 {
     padding-top: 0.3em;
 }
 
+.vector-menu-portal {
+    margin: 0 0.6em 0 1.3em;
+    padding: 0.25em 0;
+    direction: ltr;
+}
+
 .vector-menu-tabs ul {
     float: left;
     height: 100%;
@@ -207,18 +213,6 @@ a {
     background: none;
 }
 
-/* LOL, nobody should use <b>, <i> tags anymore. */
-b, strong {
-    font-weight: bolder;
-}
-i, cite, em, var, dfn {
-    font-style: oblique -10deg;
-    font-variation-settings: "slnt" -10;
-}
-
-#p-personal li {
-    font-size: 0.75em;
-}
 #p-personal li {
     float: left;
 }
@@ -240,6 +234,12 @@ i, cite, em, var, dfn {
     line-height: 1.16666667;
 }
 
+
+.vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
+    margin: 0;
+    padding: 0.25em 0;
+    word-wrap: break-word;
+}
 
 #left-navigation {
     float: left;
@@ -406,20 +406,23 @@ i, cite, em, var, dfn {
 
 .vector-menu-portal h3 {
     display: block;
+
+    background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/portal-separator.png?4ab04);
+    background-image: linear-gradient(to right,rgba(200,204,209,0) 0,#c8ccd1 33%,#c8ccd1 66%,rgba(200,204,209,0) 100%);
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: 100% 1px;
+
     color: #54595d;
     margin: 0.5em 0 0 0.66666667em;
     border: 0;
     padding: 0.25em 0;
-    font-size: 0.75em;
     cursor: default;
 }
 
 .mw-editsection, .mw-editsection-like {
-    font-size: small;
-    font-weight: normal;
     margin-left: 1em;
     vertical-align: baseline;
-    line-height: 1em;
 }
 
 .mw-references-columns {
@@ -457,6 +460,61 @@ i, cite, em, var, dfn {
     text-align: right;
 }
 
+div.hatnote {
+    padding-left: 1.6em;
+}
+
+#contentSub, #contentSub2 {
+    margin: 0 0 1.4em 1em;
+    width: auto;
+}
+
+#contentSub2:empty {
+    display: none;
+}
+
+element {
+
+}
+
+.mw-jump-link:not(:focus) {
+    display: block;
+    position: absolute !important;
+    clip: rect(1px,1px,1px,1px);
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+
+}
+
+.mw-body h1, .mw-body-content h1, .mw-body-content h2 {
+    margin-bottom: 0.25em;
+    padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding-top: 0.5em;
+    padding-bottom: 0.17em;
+    overflow: hidden;
+}
+
+h1, h2 {
+    border-bottom: 1px solid #a2a9b1;
+}
+
+.mw-body-content h3, .mw-body-content h4, .mw-body-content h5, .mw-body-content h6 {
+    margin-top: 0.3em;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+#p-logo + .mw-portlet h3 {
+    display: none;
+}
 
 /* widgets */
 
@@ -481,10 +539,6 @@ button.toggle-user_settings{
 .page_content-item .widgets_container{
     z-index: 1;
     position: absolute;
-}
-
-.page_portal-testbed .widgets_container{
-
 }
 
 .widgets_container > * {
@@ -591,7 +645,7 @@ label.user_preferences-user_distance::after {
 --font-family: AmstelVar;
 --font-style: normal; /* oblique is basically broken */
 --font-slant: 0;
---font-weight: 440; /* depending on font/font-family this can go anywhere */
+--font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
 --font-stretch: 520;/* by (xtra, wdth) */
 
@@ -601,16 +655,11 @@ label.user_preferences-user_distance::after {
  * because we can't yet calculate it
  * https://github.com/w3c/csswg-drafts/issues/6149
  */
---font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
---font-size: 12; /* --opsz */
+--default-font-size: 12;
+--font-size: var(--default-font-size); /* --opsz */
 
-font-variation-settings:
-            "slnt" var(--font-slant),
-            "wght" var(--font-weight),
-            "GRAD" var(--x-font-grade),
-            "XTRA" var(--font-stretch),
-            "opsz" var(--x-font-size)
-            ;
+--font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
+
 --line-height: 1.5;
 --letter-space: 0.1;
 --word-space: 0.1;/*in fractions of em*/
@@ -628,6 +677,7 @@ widows
 /*column-count: var(--column-count);*/
 /*width: calc(1em * var(--column-width));*/
 font-family: var(--font-family);
+font-style: var(--font-style);
 font-size: calc(1pt * var(--x-font-size));
 letter-spacing: calc(1pt * var(--letter-space));
 line-height: var(--x-line-height);
@@ -639,15 +689,19 @@ word-spacing: calc(1em * var(--word-space));
 --x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
 --x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
 --x-font-grade: calc(var(--font-grade) + var(--font-grade-color-scheme-adjust, 0));
+
+font-variation-settings:
+            "slnt" var(--font-slant),
+            "wght" var(--font-weight),
+            "GRAD" var(--x-font-grade),
+            "XTRA" var(--font-stretch),
+            "opsz" var(--x-font-size)
+            ;
 }
 
 b, strong {
   --font-weight: 700;
 }
-sup {
-  --font-size: 8;
-}
-
 
 /* LIGHT/DARK MODE CHOLOR-SCHEME */
 
@@ -698,3 +752,73 @@ sup {
     background: var(--background);
     color: var(--color);
 }
+
+/* Attempts to use the framework to reproduce the original font-settings. */
+#mw-head,
+#mw-panel {
+    --font-family: RobotoFlex;
+    --font-stretch: 400;
+}
+.vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
+    --font-size:  calc(3/4 * var(--default-font-size));
+    --line-height: 1.125;
+    word-wrap: break-word;
+}
+
+h1, h2 {
+    --font-family: RobotoFlex;
+    --font-stretch: 400;
+}
+h1 {
+    --font-size: calc(9/5 * var(--default-font-size));
+    --font-weight: 600;
+}
+h2 {
+    --font-size: calc(3/2 * var(--default-font-size));
+    --font-weight: 400;
+}
+
+.mw-body-content h3, .mw-body-content h4 {
+    --font-family: Amstelvar;
+    --font-stretch: 400;
+    --font-size: calc(6/5 * var(--default-font-size));
+    --font-weight: 600;
+}
+
+.vector-menu-portal h3 {
+    --font-family: RobotoFlex;
+    --font-size: calc(3/4 * var(--default-font-size));
+    --font-weight: 400;
+}
+
+.mw-editsection, .mw-editsection-like {
+    --font-size: calc(13/16 * var(--default-font-size));
+    --font-weight: 400;
+    --line-height: 1;
+}
+
+
+sup {
+  --font-size:  calc(2/3 * var(--default-font-size)); /* 2/3 pt * 12 *  = 8pt */
+}
+#p-personal li {
+    --font-size:  calc(3/4 * var(--default-font-size));
+}
+
+/* LOL, nobody should use <b>, <i> tags anymore. */
+b, strong {
+    --font-weight: 600;
+}
+
+i, cite, em, var, dfn {
+    --font-style: italic;
+}
+.hatnote {
+    --font-style: italic;
+}
+.mw-body h1, .mw-body-content h1, .mw-body-content h2 {
+    /* Positioning the headline underline (border-bottom) closely to the box.
+     * Too this from original markup, I'm not sure this is the best way.*/
+    --line-height:1.3;
+}
+
