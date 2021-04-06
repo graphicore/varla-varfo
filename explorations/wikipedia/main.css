@@ -36,6 +36,13 @@ body {
     background-color: #f6f6f6;
 }
 
+
+div.thumb {
+    margin-bottom: 0.5em;
+    width: auto;
+    background-color: transparent;
+}
+
 div.tright, div.floatright, table.floatright {
     clear: right;
     float: right;
@@ -44,6 +51,32 @@ div.tleft, div.floatleft, table.floatleft {
     float: left;
     clear: left;
 }
+
+div.tright {
+    margin: 0.5em 0 1.3em 1.4em;
+}
+div.tleft {
+    margin: 0.5em 1.4em 1.3em 0;
+}
+
+div.thumbinner {
+    border: 1px solid #c8ccd1;
+    padding: 3px;
+    background-color: #f8f9fa;
+    text-align: center;
+    overflow: hidden;
+}
+.thumbinner {
+    min-width: 100px;
+}
+
+.thumbcaption {
+    border: 0;
+    padding: 3px;
+    text-align: left;
+}
+
+
 
 html body.mediawiki .mbox-small {
     clear: right;
@@ -500,6 +533,9 @@ h1, h2, h3, h4, h5, h6 {
     padding-top: 0.5em;
     padding-bottom: 0.17em;
     overflow: hidden;
+}
+.mw-body .firstHeading {
+    overflow: visible;
 }
 
 h1, h2 {
