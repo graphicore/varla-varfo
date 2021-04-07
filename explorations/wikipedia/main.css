@@ -698,7 +698,7 @@ label.user_preferences-user_distance::after {
 --font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
 
 /* FIXME: depending on line-length these should change
- * with runion-00 we have always shorter lines, hence these are not of use
+ * with runion-01 we have always shorter lines, hence these are not of use
  * anymore:
  *       --line-height: 1.5;
  *       --letter-space: 0.1;
@@ -843,7 +843,6 @@ h2 {
     --line-height: 1;
 }
 
-
 sup {
   --font-size:  calc(2/3 * var(--default-font-size)); /* 2/3 pt * 12 *  = 8pt */
 }
@@ -851,7 +850,6 @@ sup {
     --font-size:  calc(3/4 * var(--default-font-size));
 }
 
-/* LOL, nobody should use <b>, <i> tags anymore. */
 b, strong {
     --font-weight: 600;
 }
@@ -869,7 +867,7 @@ i, cite, em, var, dfn {
 }
 
 
-.runion-00, .mw-parser-output{
+.runion-01 {
     /*
     --column-count: columns;
     --column-width-en: lineLengthEn;
@@ -883,14 +881,21 @@ i, cite, em, var, dfn {
     padding-right: calc(.5em * var(--padding-right-en, 0));
     column-gap: calc(.5em * var(--column-gap-en, 0));
 
-    /* FIXME/TODO: what about H&J, especially in Chrome and Safari
-     * ALSO: how to detect and change the setup when hyphens are not available
+    /* FIXME/TODO: what about H&J, especially in Chrome and Safari?
+     * ALSO: how to detect and change the setup when hyphens are not available?
+     *
+     * As of now confirmed working with the current testing page as it is,
+     * in English:
+     *      Firefox for openSuse - Tumbleweed Version 86.0.1 (64-bit)
+     *      Chromium Version 89.0.4389.90 (openSUSE Build) (64-bit)
      *
      * https://css-tricks.com/almanac/properties/h/hyphenate/
      *
      * There are it seem related properties to configure hyphenation
      * hyphenate-limit-last, hyphenate-limit-zone etc.
      * Safari 5+ requires -webkit-, Firefox 6+ requires -moz-, IE 10+ requires -ms-, iOS 4.2+ requires -webkit-.
+     *
+     *
      */
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -902,21 +907,15 @@ i, cite, em, var, dfn {
     text-align: justify;
 }
 
-.runion-00 h1,
-.runion-00 h2,
-.runion-00 h3,
-.mw-parser-output h1,
-.mw-parser-output h2,
-.mw-parser-output h3
+.runion-01 h1,
+.runion-01 h2,
+.runion-01 h3
 {
     column-span: all;
 }
 
-.runion-00 div.tright,
-.mw-parser-output div.tright,
-.runion-00 div.tleft,
-.mw-parser-output div.left
-{
+.runion-01 div.tright,
+.runion-01 div.tleft {
     float:none;
     margin-left:0;
     margin-right: 0;

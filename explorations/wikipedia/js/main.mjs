@@ -233,7 +233,7 @@ function getElementSizesInPx(elem, ...properties) {
         let vStr = style[p];
         if(vStr.slice(-2) !== 'px')
             throw new Error(`Computed style of "${p}" did not yield a "px" value: ${vStr}`);
-        let val = parseInt(vStr.slice(0, -2)  ,10);
+        let val = parseFloat(vStr.slice(0, -2));
         if(val !== val)
             throw new Error(`Computed style of "${p}" did not parse to an integer: ${vStr}`);
         result.push(val);
@@ -255,43 +255,37 @@ function setDefaultFontSize(document) {
     root.style.setProperty('--default-font-size', fontSizePT);
 }
 
-function getELementLineWidthEN(elem) {
+function getELementLineWidthAndEmInPx(elem) {
     var widthPx = elem.clientWidth // this includes padding left and right
-      // I believe we want to control the padding left and right for the
-      // runion algorithm. So, we will override these values eventually,
-      // but for calculating the available vertical space for text setting,
-      // these have to be included!
-      //, [emInPx, paddingLeft, paddingRight] = getElementSizesInPx(elem,
-      //                      'font-size', 'padding-left', 'padding-right')
       , [emInPx] = getElementSizesInPx(elem, 'font-size')
-      , enInPx = emInPx / 2
-      //, actualLineWidthEn = (widthPx-paddingLeft-paddingRight) / enInPx
-      , availableWidthEn = widthPx / enInPx
       ;
-    return [widthPx, availableWidthEn, emInPx, enInPx]; //, actualLineWidthEn];
+    return [widthPx, emInPx];
 }
 
-function _runion_00_columns(availableWidthEn) {
-
-    // index 0 == columns 1
-    // [minLineLength, maxLineLength, columnGap] in en
-    // NOTE: for columnGap, it could be just 1em (2en, default in CSS),
-    // but also for wider columns it can (and probably should) be wider.
-    // Since 2 columns are more likely to be wider, I added a bit.
-    // Otherwise, it would be good to have a better informed rule for that
-    // as well, but it will be hard to calculate within this algorithm as
-    // it is.
+function _runion_01_columns(availableWidthEn) {
+    /*
+     * columnConfig:
+     *    This will likely be dependent on the locale!
+     *    index 0 == columns 1
+     *    [minLineLength, maxLineLength, columnGap] in en
+     *    NOTE: for columnGap, it could be just 1em (2en, default in CSS),
+     *    but also for wider columns it can (and probably should) be wider.
+     *    Since 2 columns are more likely to be wider, I added a bit.
+     *    Otherwise, it would be good to have a better informed rule for that
+     *    as well, but it will be hard to calculate within this algorithm as
+     *    it is.
+     */
     var columnConfig = [
         [ 0, 65, 0]  // 1
       , [33, 65, 3] // 2
       , [33, 50, 2.5] // 3
       , [33, 40, 2] // 4
     ];
-    for(let columns=1,max=4; columns<=max; columns++) {
-            // This will likely be dependent on the locale!
+    for(let columns=1,max=columnConfig.length; columns<=max; columns++) {
         let [minLineLength, maxLineLength, columnGapEn] = columnConfig[columns-1]
             // NOTE: there's (yet?) no default left/right padding, but the
-            // compose function expects these.
+            // compose function expects these. If there's such a thing in
+            // the future, also look at the padding case below!
           , paddingLeftEn = 0
           , paddingRightEn = 0
           , gaps = columns - 1
@@ -303,7 +297,7 @@ function _runion_00_columns(availableWidthEn) {
     }
 
     // Add padding, we don’t use more than the configured columns.
-    for(let columns=4, min=1; columns>=min; columns--) {
+    for(let columns=columnConfig.length, min=1; columns>=min; columns--) {
         let [minLineLength, maxLineLength, columnGapEn] = columnConfig[columns-1];
 
         let gaps = columns - 1
@@ -327,13 +321,12 @@ function _runion_00_columns(availableWidthEn) {
         // compose
         return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
     }
-    // FIXME: is this possible? Can we test for it?
-    //      (All cases should be caught by 1 column + padding)
-    // FIXME: if this is possible, what would be a helpful error message?
+    // With a proper config this should not be possible (1 column min-width = 0),
+    // thus, if this happens we must look at the case and figure out what to do.
     throw new Error(`Can\'t compose column setup for availableWidthEn: ${availableWidthEn}!`);
 }
 
-function runion_00 (elem) {
+function runion_01 (elem) {
     // FIXME:
     // not sure where this applies actually, so I'll make this variable.
     //
@@ -372,21 +365,34 @@ function runion_00 (elem) {
     // however, this is not meant to be a end-user-facing setting, just a
     // tool to get the algorithm dialed in.
 
-    let [widthPx, availableWidthEn, emInPx, enInPx] = getELementLineWidthEN(elem);
-
-    let [columns, lineLengthEn, columnGapEn, paddingLeftEn,
-            paddingRightEn] = _runion_00_columns(availableWidthEn);
+    var [widthPx, emInPx] = getELementLineWidthAndEmInPx(elem)
+        // NOTE: rounding errors made e.g. 4-column layouts appear as
+        // 3-columns. The CSS-columns property can't be forced to a definite
+        // column-count, it's rather a recommendation for a max-column-count.
+        // This creates "room for error", 5px was determined by trying out.
+        // A fail is when _runion_01_columns returns e.g. a 4 columns setting
+        // but the browser shows 3 columns.
+      , enInPx = emInPx / 2
+      , compensateForError = 5
+      , availableWidthEn = (widthPx - compensateForError) / enInPx
+      , [columns, lineLengthEn, columnGapEn, paddingLeftEn,
+                    paddingRightEn] = _runion_01_columns(availableWidthEn);
 
     elem.style.setProperty('--column-count', `${columns}`);
-    elem.style.setProperty('--column-width-en', `${lineLengthEn}`);
     elem.style.setProperty('--column-gap-en', `${columnGapEn}`);
+    elem.style.setProperty('--column-width-en', `${lineLengthEn}`);
     elem.style.setProperty('--padding-left-en', `${paddingLeftEn}`);
     elem.style.setProperty('--padding-right-en', `${paddingRightEn}`);
+    // Debugging stuff:
+    // elem.style.setProperty('--available-width-en', `${availableWidthEn}`);
+    // elem.style.setProperty('--mesured-width-px', `${widthPx}`);
+    // elem.style.setProperty('--em-in-px', `${emInPx}`);
+    // elem.style.setProperty('--en-in-px', `${enInPx}`);
+    // let totalEn = columns * lineLengthEn + (columns-1) * columnGapEn + paddingLeftEn + paddingRightEn;
+    // elem.style.setProperty('--result-totals', `${totalEn}en ${totalEn * enInPx}px`);
 
-    // FIXME: set smarter
-    //      --line-height: 1.5;
-    //      --letter-space: 0.1;
-    //      --word-space: 0.1;
+    // NOTE: classes may need to be removed if a runion changes its type!
+    elem.classList.add('runion-01');
 
 }
 
@@ -406,13 +412,14 @@ function main() {
     // Must be executed on viewport changes as well as on userSettings
     // changes. User-Zoom changes should also trigger resize, so our own
     // user settings are most important here!
-    var updateViewport = ()=>{
-        // NOTE: '.mw-parser-output' is a very specialized guess here!
-        for(let elem of document.querySelectorAll('.runion-00, .mw-parser-output'))
-            runion_00(elem);
+    var updateViewport = (e)=>{
+        //console.log('updateViewport', e && e.type || e + '', e && e.detail);
+        // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
+        for(let elem of document.querySelectorAll('.runify-01, .mw-parser-output'))
+            runion_01(elem);
     };
     updateViewport();
     window.addEventListener('resize', updateViewport);
-    window.addEventListener('user-setting', updateViewport);
+    window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
 }
 window.onload = main;
