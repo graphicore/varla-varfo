@@ -23,6 +23,15 @@ class PortalAugmentationWidget{
     }
 }
 
+const USER_SETTINGS_EVENT = 'user-settings';
+
+function _dispatchAsync(elem, name, value=null) {
+    var event = new CustomEvent(name, { detail: value, bubbles: true });
+    // dispatch async
+    Promise.resolve(event)
+        .then(event=>elem.dispatchEvent(event));
+}
+
 const SLIDER_TEMPLATE = `
     <label class="{klass}">{label}:
         <input type="range" min="{min}" max="{max}" value="{value}" step="{step}" />
@@ -50,6 +59,8 @@ class SliderWidget {
                     evt.target.ownerDocument.documentElement.style.setProperty(
                                                 customProperty, evt.target.value);
                     this._domTool.window.localStorage.setItem(localStorageKey, evt.target.value);
+                    // FIXME: should be configured, maybe even dispatched from parent!
+                    _dispatchAsync(this._domTool.window, USER_SETTINGS_EVENT, customProperty);
                     onInput(evt);
                 }
               ;
@@ -134,6 +145,8 @@ class ColorSchemeWidget {
         }
         // "default" will delete the entry
         this._domTool.window.localStorage.setItem(this._localStorageKey, localStorageValue);
+        // FIXME: should be configured, maybe even dispatched from parent!
+        _dispatchAsync(this._domTool.window, USER_SETTINGS_EVENT, '--color-scheme');
     }
 }
 
@@ -242,6 +255,141 @@ function setDefaultFontSize(document) {
     root.style.setProperty('--default-font-size', fontSizePT);
 }
 
+function getELementLineWidthEN(elem) {
+    var widthPx = elem.clientWidth // this includes padding left and right
+      // I believe we want to control the padding left and right for the
+      // runion algorithm. So, we will override these values eventually,
+      // but for calculating the available vertical space for text setting,
+      // these have to be included!
+      //, [emInPx, paddingLeft, paddingRight] = getElementSizesInPx(elem,
+      //                      'font-size', 'padding-left', 'padding-right')
+      , [emInPx] = getElementSizesInPx(elem, 'font-size')
+      , enInPx = emInPx / 2
+      //, actualLineWidthEn = (widthPx-paddingLeft-paddingRight) / enInPx
+      , availableWidthEn = widthPx / enInPx
+      ;
+    return [widthPx, availableWidthEn, emInPx, enInPx]; //, actualLineWidthEn];
+}
+
+function _runion_00_columns(availableWidthEn) {
+
+    // index 0 == columns 1
+    // [minLineLength, maxLineLength, columnGap] in en
+    // NOTE: for columnGap, it could be just 1em (2en, default in CSS),
+    // but also for wider columns it can (and probably should) be wider.
+    // Since 2 columns are more likely to be wider, I added a bit.
+    // Otherwise, it would be good to have a better informed rule for that
+    // as well, but it will be hard to calculate within this algorithm as
+    // it is.
+    var columnConfig = [
+        [ 0, 65, 0]  // 1
+      , [33, 65, 3] // 2
+      , [33, 50, 2.5] // 3
+      , [33, 40, 2] // 4
+    ];
+    for(let columns=1,max=4; columns<=max; columns++) {
+            // This will likely be dependent on the locale!
+        let [minLineLength, maxLineLength, columnGapEn] = columnConfig[columns-1]
+            // NOTE: there's (yet?) no default left/right padding, but the
+            // compose function expects these.
+          , paddingLeftEn = 0
+          , paddingRightEn = 0
+          , gaps = columns - 1
+          , lineLengthEn = (availableWidthEn - (gaps * columnGapEn)) / columns
+          ;
+        if(lineLengthEn > minLineLength && lineLengthEn <= maxLineLength)
+            // compose
+            return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
+    }
+
+    // Add padding, we don’t use more than the configured columns.
+    for(let columns=4, min=1; columns>=min; columns--) {
+        let [minLineLength, maxLineLength, columnGapEn] = columnConfig[columns-1];
+
+        let gaps = columns - 1
+          , lineLengthEn = (availableWidthEn - (gaps * columnGapEn)) / columns
+          ;
+
+        if(lineLengthEn <= minLineLength)
+            continue; // use less columns
+        // line length is > maxLineLength because we already figured in
+        // the first run that it is *NOT*: lineLengthEn > minLineLength && lineLengthEn <= maxLineLength
+        lineLengthEn = maxLineLength;
+
+        // CAUTION, if at some point there's a default left/right padding for a column
+        // setup, it must be included in the respective paddingLeftEn/paddingRightEn
+        // value before distributing the rest.
+        let paddingEn = availableWidthEn - (lineLengthEn * columns) - (gaps * columnGapEn)
+            // Another strategy could be e.g. to distribute the padding to the right only.
+          , paddingLeftEn = paddingEn * 3/5
+          , paddingRightEn = paddingEn * 2/5
+          ;
+        // compose
+        return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
+    }
+    // FIXME: is this possible? Can we test for it?
+    //      (All cases should be caught by 1 column + padding)
+    // FIXME: if this is possible, what would be a helpful error message?
+    throw new Error(`Can\'t compose column setup for availableWidthEn: ${availableWidthEn}!`);
+}
+
+function runion_00 (elem) {
+    // FIXME:
+    // not sure where this applies actually, so I'll make this variable.
+    //
+    // When layout changes, this will re-run, hence a good start would
+    // be to undo all changes that have been applied before.
+    //
+    // Could apply to:
+    //
+    //      all of the text:
+    //              h1,h2,h3 markup (anything else likely as well)would be kept alive
+    //              we could make some of these column-span h1, or h1+h2, or h1+h2+h3
+    //              so, we'd need to select col-spanning elements and mark them up
+    //              could be done in pure css or by js
+    //
+    // I'm not sure to which amount of text a "runion" aplies, or what it
+    // is exactly. It's a "run of text" but i don't know how to determine
+    // its start or end, so this would have to be configurable, too.
+    //
+    // A col-span element obviously ends a runion. Hence, a runion could
+    // be all elements between col-span elements.
+    // A runion could also be bigger than the screen, requiring scrolling
+    // up and down, hence, a runion could end somewhere in between. We
+    // could insert an empty/no-headline-just-margin col-span element in
+    // between OR we could insert it within the runion and make the CSS
+    // apply to to more than one screen of the same runion.
+    //
+    //
+    // additionally, whatever counts as a runion, if its textContent length
+    // is lower than 365, we'll mark it with a special, alarming, background
+    // color, because it is not specified how to handle in the Runion 1 case:
+    //      #shorter text strings later#
+    //
+    // Would be cool to configure the unknowns via the testing rig ...
+    // would need to reach into the window.
+    // Could, for that matter, also be done by the user-settings dialogue
+    // however, this is not meant to be a end-user-facing setting, just a
+    // tool to get the algorithm dialed in.
+
+    let [widthPx, availableWidthEn, emInPx, enInPx] = getELementLineWidthEN(elem);
+
+    let [columns, lineLengthEn, columnGapEn, paddingLeftEn,
+            paddingRightEn] = _runion_00_columns(availableWidthEn);
+
+    elem.style.setProperty('--column-count', `${columns}`);
+    elem.style.setProperty('--column-width-en', `${lineLengthEn}`);
+    elem.style.setProperty('--column-gap-en', `${columnGapEn}`);
+    elem.style.setProperty('--padding-left-en', `${paddingLeftEn}`);
+    elem.style.setProperty('--padding-right-en', `${paddingRightEn}`);
+
+    // FIXME: set smarter
+    //      --line-height: 1.5;
+    //      --letter-space: 0.1;
+    //      --word-space: 0.1;
+
+}
+
 function main() {
     setDefaultFontSize(document);
 
@@ -254,5 +402,17 @@ function main() {
     let toggle = ()=>userSettingsWidget.toggle();
     for(let elem of document.querySelectorAll('.toggle-user_settings'))
         elem.addEventListener('click', toggle);
+
+    // Must be executed on viewport changes as well as on userSettings
+    // changes. User-Zoom changes should also trigger resize, so our own
+    // user settings are most important here!
+    var updateViewport = ()=>{
+        // NOTE: '.mw-parser-output' is a very specialized guess here!
+        for(let elem of document.querySelectorAll('.runion-00, .mw-parser-output'))
+            runion_00(elem);
+    };
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('user-setting', updateViewport);
 }
 window.onload = main;

@@ -697,9 +697,18 @@ label.user_preferences-user_distance::after {
 
 --font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
 
---line-height: 1.5;
---letter-space: 0.1;
---word-space: 0.1;/*in fractions of em*/
+/* FIXME: depending on line-length these should change
+ * with runion-00 we have always shorter lines, hence these are not of use
+ * anymore:
+ *       --line-height: 1.5;
+ *       --letter-space: 0.1;
+ *       --word-space: 0.1;/*in fractions of em
+ * HOWEVER, in a long-line situation, the tool should do something like
+ * the above, and also the below is likely too static.
+ */
+--line-height: 1.3;
+--letter-space: 0;
+--word-space: 0;/*in fractions of em*/
 
 }
 
@@ -859,3 +868,58 @@ i, cite, em, var, dfn {
     --line-height:1.3;
 }
 
+
+.runion-00, .mw-parser-output{
+    /*
+    --column-count: columns;
+    --column-width-en: lineLengthEn;
+    --column-gap-en: columnGapEn;
+    --padding-left-en: paddingLeftEn;
+    --padding-right-en: paddingRightEn;
+    */
+
+    columns: calc(.5em * var(--column-width-en, 0)) var(--column-count, 1);
+    padding-left: calc(.5em * var(--padding-left-en, 0));
+    padding-right: calc(.5em * var(--padding-right-en, 0));
+    column-gap: calc(.5em * var(--column-gap-en, 0));
+
+    /* FIXME/TODO: what about H&J, especially in Chrome and Safari
+     * ALSO: how to detect and change the setup when hyphens are not available
+     *
+     * https://css-tricks.com/almanac/properties/h/hyphenate/
+     *
+     * There are it seem related properties to configure hyphenation
+     * hyphenate-limit-last, hyphenate-limit-zone etc.
+     * Safari 5+ requires -webkit-, Firefox 6+ requires -moz-, IE 10+ requires -ms-, iOS 4.2+ requires -webkit-.
+     */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+      -moz-hyphens: auto;
+      -ms-hyphens: auto;
+           hyphens: auto;
+
+    text-align: justify;
+}
+
+.runion-00 h1,
+.runion-00 h2,
+.runion-00 h3,
+.mw-parser-output h1,
+.mw-parser-output h2,
+.mw-parser-output h3
+{
+    column-span: all;
+}
+
+.runion-00 div.tright,
+.mw-parser-output div.tright,
+.runion-00 div.tleft,
+.mw-parser-output div.left
+{
+    float:none;
+    margin-left:0;
+    margin-right: 0;
+    /* FIXME: this stuff distracts from the column layout, needs resolution. */
+    display: none;
+}
