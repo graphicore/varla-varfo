@@ -263,6 +263,12 @@ function getELementLineWidthAndEmInPx(elem) {
 }
 
 function _runion_01_columns(availableWidthEn) {
+    // TODO: Could be cool to configure the unknowns via the testing rig.
+    // Would need to reach into the window, could, for that matter, also
+    // be done by the user-settings dialogue however, this is not meant
+    // to be an end-user-facing setting, just a tool to get the algorithm
+    // dialed in.
+
     /*
      * columnConfig:
      *    This will likely be dependent on the locale!
@@ -326,45 +332,8 @@ function _runion_01_columns(availableWidthEn) {
     throw new Error(`Can\'t compose column setup for availableWidthEn: ${availableWidthEn}!`);
 }
 
+// Characters per line runion
 function runion_01 (elem) {
-    // FIXME:
-    // not sure where this applies actually, so I'll make this variable.
-    //
-    // When layout changes, this will re-run, hence a good start would
-    // be to undo all changes that have been applied before.
-    //
-    // Could apply to:
-    //
-    //      all of the text:
-    //              h1,h2,h3 markup (anything else likely as well)would be kept alive
-    //              we could make some of these column-span h1, or h1+h2, or h1+h2+h3
-    //              so, we'd need to select col-spanning elements and mark them up
-    //              could be done in pure css or by js
-    //
-    // I'm not sure to which amount of text a "runion" aplies, or what it
-    // is exactly. It's a "run of text" but i don't know how to determine
-    // its start or end, so this would have to be configurable, too.
-    //
-    // A col-span element obviously ends a runion. Hence, a runion could
-    // be all elements between col-span elements.
-    // A runion could also be bigger than the screen, requiring scrolling
-    // up and down, hence, a runion could end somewhere in between. We
-    // could insert an empty/no-headline-just-margin col-span element in
-    // between OR we could insert it within the runion and make the CSS
-    // apply to to more than one screen of the same runion.
-    //
-    //
-    // additionally, whatever counts as a runion, if its textContent length
-    // is lower than 365, we'll mark it with a special, alarming, background
-    // color, because it is not specified how to handle in the Runion 1 case:
-    //      #shorter text strings later#
-    //
-    // Would be cool to configure the unknowns via the testing rig ...
-    // would need to reach into the window.
-    // Could, for that matter, also be done by the user-settings dialogue
-    // however, this is not meant to be a end-user-facing setting, just a
-    // tool to get the algorithm dialed in.
-
     var [widthPx, emInPx] = getELementLineWidthAndEmInPx(elem)
         // NOTE: rounding errors made e.g. 4-column layouts appear as
         // 3-columns. The CSS-columns property can't be forced to a definite
