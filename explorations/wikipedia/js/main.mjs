@@ -25,20 +25,14 @@ class PortalAugmentationWidget{
 
 const USER_SETTINGS_EVENT = 'user-settings';
 
-function _dispatchAsync(elem, name, value=null) {
-    var event = new CustomEvent(name, { detail: value, bubbles: true });
-    // dispatch async
-    Promise.resolve(event)
-        .then(event=>elem.dispatchEvent(event));
-}
-
 const SLIDER_TEMPLATE = `
     <label class="{klass}">{label}:
         <input type="range" min="{min}" max="{max}" value="{value}" step="{step}" />
     </label>
 `;
 class SliderWidget {
-    constructor(domTool, container, templateVars, localStorageKey, customProperty) {
+    constructor(domTool, container, templateVars, localStorageKey,
+                                            customProperty, onChange) {
         this._domTool = domTool;
         this.container = container;
         var template = SLIDER_TEMPLATE;
@@ -51,6 +45,7 @@ class SliderWidget {
         }
         this._localStorageKey = localStorageKey;
         this._customProperty = customProperty;
+        this._onChange = onChange;
         {
             let onInput = evt=>{
                     evt.target.parentNode.setAttribute('data-value', evt.target.value);
@@ -59,8 +54,7 @@ class SliderWidget {
                     evt.target.ownerDocument.documentElement.style.setProperty(
                                                 customProperty, evt.target.value);
                     this._domTool.window.localStorage.setItem(localStorageKey, evt.target.value);
-                    // FIXME: should be configured, maybe even dispatched from parent!
-                    _dispatchAsync(this._domTool.window, USER_SETTINGS_EVENT, customProperty);
+                    this._onChange(evt.target.value);
                     onInput(evt);
                 }
               ;
@@ -93,7 +87,8 @@ const COLOR_SCHEME_SWITCH_TEMPLATE = `
 </form>
 `;
 class ColorSchemeWidget {
-    constructor(domTool, container, templateVars, localStorageKey, rootNodeClassTemplate) {
+    constructor(domTool, container, templateVars, localStorageKey,
+                                    rootNodeClassTemplate, onChange) {
         this._domTool = domTool;
         this.container = container;
         var template = COLOR_SCHEME_SWITCH_TEMPLATE;
@@ -106,6 +101,7 @@ class ColorSchemeWidget {
         }
         this._localStorageKey = localStorageKey;
         this._rootNodeClassTemplate = rootNodeClassTemplate;
+        this._onChange = onChange;
 
         ///////////
         this._root = this.container.querySelector(`.${templateVars.klass}`);
@@ -145,12 +141,9 @@ class ColorSchemeWidget {
         }
         // "default" will delete the entry
         this._domTool.window.localStorage.setItem(this._localStorageKey, localStorageValue);
-        // FIXME: should be configured, maybe even dispatched from parent!
-        _dispatchAsync(this._domTool.window, USER_SETTINGS_EVENT, '--color-scheme');
+        this._onChange(localStorageValue);
     }
 }
-
-
 
 const FINE_USER_ZOOM_LOCAL_STORAGE_KEY = 'varla-varfo-fine-user-zoom';
 const USER_DISTANCE_LOCAL_STORAGE_KEY = 'varla-varfo-user-distance';
@@ -168,6 +161,7 @@ class UserPreferencesWidget{
     constructor(baseElement) {
         this._baseElement = baseElement;
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
+        this._collectedChanges = null;
         var klass = 'user_preferences';
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': klass},
@@ -188,13 +182,15 @@ class UserPreferencesWidget{
                     , value: '0.00'
                     , step: '.01'
                 },
-                FINE_USER_ZOOM_LOCAL_STORAGE_KEY, '--fine-user-zoom'
+                FINE_USER_ZOOM_LOCAL_STORAGE_KEY, '--fine-user-zoom',
+                (v)=>this._handleUserSettingsChange('fine-user-zoom', v)
             ],
             [   ColorSchemeWidget, {
                       klass: `${klass}-color_scheme`
                     , label: 'Color&nbsp;Scheme'
                 },
-                COLOR_SCHEME_LOCAL_STORAGE_KEY, 'explicit-{schemeName}-mode'
+                COLOR_SCHEME_LOCAL_STORAGE_KEY, 'explicit-{schemeName}-mode',
+                (v)=>this._handleUserSettingsChange('color-scheme', v)
             ],
             /* SLIDER +- 4PT  in 0.01 steps
              * 10 inch -> 1pt change
@@ -209,7 +205,8 @@ class UserPreferencesWidget{
                     , value: '0'
                     , step: '25'
                 },
-                USER_DISTANCE_LOCAL_STORAGE_KEY, '--user-distance-cm'
+                USER_DISTANCE_LOCAL_STORAGE_KEY, '--user-distance-cm',
+                (v)=>this._handleUserSettingsChange('user-distance', v)
             ],
 
         ];
@@ -220,6 +217,26 @@ class UserPreferencesWidget{
             // could do activate/close with these, but it's not yet necessary
             this._widgets.push(widget);
         }
+    }
+
+    _handleUserSettingsChange(type, value) {
+        // A simple debouncing scheme: This collects all events that
+        // come in synchronously, usually right after initialization,
+        // then dispatches all together asynchronously, using a generic
+        // promise for the delay.
+        if(this._collectedChanges === null) {
+            this._collectedChanges = [];
+            // dispatch async
+            Promise.resolve(true)
+            .then(()=>{
+                var event = new CustomEvent(USER_SETTINGS_EVENT,
+                        { detail: this._collectedChanges, bubbles: true });
+                // reset
+                this._collectedChanges = null;
+                this._domTool.window.dispatchEvent(event);
+            });
+        }
+        this._collectedChanges.push([type, value]);
     }
 }
 
@@ -381,13 +398,20 @@ function main() {
     // Must be executed on viewport changes as well as on userSettings
     // changes. User-Zoom changes should also trigger resize, so our own
     // user settings are most important here!
-    var updateViewport = (e)=>{
-        //console.log('updateViewport', e && e.type || e + '', e && e.detail);
-        // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
-        for(let elem of document.querySelectorAll('.runify-01, .mw-parser-output'))
-            runion_01(elem);
-    };
-    updateViewport();
+    var updateViewportScheduled
+      , updateViewport = (e)=>{
+            if(updateViewportScheduled !== null) {
+                clearTimeout(updateViewportScheduled);
+                updateViewportScheduled = null;
+            }
+            // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
+            for(let elem of document.querySelectorAll('.runify-01, .mw-parser-output'))
+                runion_01(elem);
+        }
+      ;
+    // This will most likely be executed by the USER_SETTINGS_EVENT handler
+    // so here's a way to cancel this fail-safe initial call.
+    updateViewportScheduled = setTimeout(updateViewport, 0);
     window.addEventListener('resize', updateViewport);
     window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
 }
