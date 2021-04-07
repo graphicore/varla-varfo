@@ -210,7 +210,41 @@ class UserPreferencesWidget{
     }
 }
 
+function getElementSizesInPx(elem, ...properties) {
+    // At the moment asserting expecting all queried properties
+    // to return "px" values.
+    var style = elem.ownerDocument.defaultView.getComputedStyle(elem)
+      , result = []
+      ;
+    for(let p of properties) {
+        let vStr = style[p];
+        if(vStr.slice(-2) !== 'px')
+            throw new Error(`Computed style of "${p}" did not yield a "px" value: ${vStr}`);
+        let val = parseInt(vStr.slice(0, -2)  ,10);
+        if(val !== val)
+            throw new Error(`Computed style of "${p}" did not parse to an integer: ${vStr}`);
+        result.push(val);
+    }
+    return result;
+}
+
+function getElementFontSizePt(elem) {
+    var [fontSizePx] = getElementSizesInPx(elem, 'font-size')
+      , fontSizePT = fontSizePx * (3/4)
+      ;
+    return fontSizePT;
+}
+
+function setDefaultFontSize(document) {
+    var root = document.querySelector(':root')
+      , fontSizePT = getElementFontSizePt(root)
+      ;
+    root.style.setProperty('--default-font-size', fontSizePT);
+}
+
 function main() {
+    setDefaultFontSize(document);
+
     let userSettingsWidget = new WidgetsContainerWidget(
                     document.querySelector('.insert_user_settings'),
                     [

@@ -691,7 +691,8 @@ label.user_preferences-user_distance::after {
  * because we can't yet calculate it
  * https://github.com/w3c/csswg-drafts/issues/6149
  */
---default-font-size: 12;
+ /* Must be invalid initially or it will influence the javascript-determined value.*/
+--default-font-size: "invalid";
 --font-size: var(--default-font-size); /* --opsz */
 
 --font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
