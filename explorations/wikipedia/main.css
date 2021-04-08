@@ -572,7 +572,6 @@ button.toggle-user_settings{
     z-index: 999;
     position: absolute;
     border: 1px solid lightgray;
-    font-size: 1em;
     background: #ffffff82;
     border-radius: .25em;
 }
