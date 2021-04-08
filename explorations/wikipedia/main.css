@@ -125,7 +125,7 @@ html body.mediawiki .mbox-small {
     border: 1px solid #a7d7f9;
     border-right-width: 1px;
     border-right-width: 0;
-    background-color: #ffffff;
+    background-color: var(--background);
 }
 .mw-body, #mw-data-after-content {
     margin-left: 10em;
@@ -778,15 +778,23 @@ b, strong {
     --light-background: #fff;
     --light-color: #202122;
 
+    --light-mode-invert: 0;
+    --dark-mode-invert: 1;
+
     /* default */
     --background: var(--light-background);
     --color: var(--light-color);
+    --mode-invert: var(--light-mode-invert);
+
 }
 
 @media (prefers-color-scheme: dark) {
     :root{
+        /*
         --background: var(--dark-background);
         --color: var(--dark-color);
+        */
+        --mode-invert: var(--dark-mode-invert);
         --font-grade-color-scheme-adjust: var(--font-grade-color-scheme-adjust-dark, 0);
     }
     .user_preferences-color_scheme-default:after{
@@ -794,8 +802,11 @@ b, strong {
     }
 }
 :root.explicit-dark-mode{
-    --background: var(--dark-background);
-    --color: var(--dark-color);
+    /*
+        --background: var(--dark-background);
+        --color: var(--dark-color);
+    */
+    --mode-invert: var(--dark-mode-invert);
     --font-grade-color-scheme-adjust: var(--font-grade-color-scheme-adjust-dark, 0);
 }
 
@@ -803,6 +814,7 @@ b, strong {
     :root{
         --background: var(--light-background);
         --color: var(--light-color);
+        --mode-invert: var(--light-mode-invert);
     }
     .user_preferences-color_scheme-default:after{
         content: " (light)";
@@ -812,11 +824,17 @@ b, strong {
 :root.explicit-light-mode{
     --background: var(--light-background);
     --color: var(--light-color);
+    --mode-invert: var(--light-mode-invert);
 }
 
 :root{
     background: var(--background);
     color: var(--color);
+    filter: invert(var(--mode-invert, 0))
+}
+img {
+    /* Invert back; this is quite elegant! */
+    filter: invert(var(--mode-invert, 0))
 }
 
 /* Attempts to use the framework to reproduce the original font-settings. */
