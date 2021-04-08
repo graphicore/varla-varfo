@@ -332,7 +332,11 @@ a {
     padding-top: 1.25em;
     padding-left: 8px;
     padding-right: 8px;
-    font-size: 0.8125em;
+    /** font-size: 0.8125em; was 13px so 1em was 16px == 12 pt!
+     * but for now I stick to absolute font-sizes:
+     * 13px * 3/4 = 9.75pt
+     */
+    --font-size: 9.75;
     cursor: pointer;
 }
 
@@ -383,7 +387,11 @@ a {
     -webkit-box-shadow: inset 0 0 0 1px transparent;
     box-shadow: inset 0 0 0 1px transparent;
     font-family: inherit;
-    font-size: 0.8125em;
+    /** font-size: 0.8125em; was 13px so 1em was 16px == 12 pt!
+     * but for now I stick to absolute font-sizes:
+     * 13px * 3/4 = 9.75pt
+     */
+    --font-size: 9.75;
     direction: ltr;
     -webkit-transition: border-color 250ms,box-shadow 250ms;
     -moz-transition: border-color 250ms,box-shadow 250ms;
@@ -404,13 +412,19 @@ a {
     border: 0;
     padding: 0;
     cursor: pointer;
-    font-size: 0.8125em;
+    /** font-size: 0.8125em; was 13px so 1em was 16px == 12 pt!
+     * but for now I stick to absolute font-sizes:
+     * 13px * 3/4 = 9.75pt
+     */
+    --font-size: 9.75;
     direction: ltr;
     text-indent: -99999px;
     white-space: nowrap;
     overflow: hidden;
     z-index: 1;
 }
+
+
 
 
 
@@ -584,12 +598,12 @@ button.toggle-user_settings{
 
 .widgets_container button.close{
     margin-left: auto;
-    font-weight: 600;
+    --font-weight: 600;
 }
 
 .widgets_container legend{
     font-family: AmstelVar;
-    font-weight: 600;
+    --font-weight: 600;
 }
 
 label.user_preferences-fine_user_zoom::after {
@@ -743,6 +757,12 @@ font-variation-settings:
             "XTRA" var(--font-stretch),
             "opsz" var(--x-font-size)
             ;
+/* This is not required for the variable fonts, as font-variation-settings
+ * will win, however, it helps with the type-ramp bookmarklet to
+ * eliminate false doubles and it does not do any harm.
+ */
+font-weight: var(--font-weight);
+
 }
 
 b, strong {
@@ -825,7 +845,7 @@ h2 {
 }
 
 .mw-body-content h3, .mw-body-content h4 {
-    --font-family: Amstelvar;
+    --font-family: AmstelVar;
     --font-stretch: 400;
     --font-size: calc(6/5 * var(--default-font-size));
     --font-weight: 600;
@@ -844,8 +864,13 @@ h2 {
 }
 
 sup {
-  --font-size:  calc(2/3 * var(--default-font-size)); /* 2/3 pt * 12 *  = 8pt */
+    font-variant-position: super;
+    /* I'd expect the font to do this for me, the browser default is "super"
+     * which messes with the line height.
+     */
+    vertical-align: baseline;
 }
+
 #p-personal li {
     --font-size:  calc(3/4 * var(--default-font-size));
 }
@@ -909,8 +934,7 @@ i, cite, em, var, dfn {
 
 .runion-01 h1,
 .runion-01 h2,
-.runion-01 h3
-{
+.runion-01 h3 {
     column-span: all;
 }
 
