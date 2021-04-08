@@ -9,6 +9,11 @@
 
         if (computed.display === 'none')
             continue;
+
+        if(elem.offsetParent === null && computed.position !== 'fixed')
+            /* a parent node is hidden */
+            continue;
+
         if(!Array.from(elem.childNodes).some(node=>
                 /* is a text Node */
                 node.nodeType === Node.TEXT_NODE &&
