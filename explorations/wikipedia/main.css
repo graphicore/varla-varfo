@@ -764,6 +764,17 @@ font-weight: var(--font-weight);
 
 }
 
+p {
+    /* likely not what we're going to use, but it aligns with the line height. */
+    margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
+    margin-block-end: calc(1pt * var(--x-font-size) * var(--x-line-height));
+}
+
+h2 + p,
+h3 + p {
+    margin-block-start: 0;
+}
+
 b, strong {
   --font-weight: 700;
 }
@@ -947,6 +958,10 @@ i, cite, em, var, dfn {
            hyphens: auto;
 
     text-align: justify;
+
+    /* Firefox does not support these! */
+    orphans: 3;
+    widows: 3;
 }
 
 .runion-01 h1,
