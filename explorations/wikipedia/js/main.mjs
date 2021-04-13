@@ -409,7 +409,7 @@ function hasNoSizeTextNode(node){
     rtest.setStart(node, 0);
     rtest.setEnd(node, node.data.length);
     let bounds = rtest.getBoundingClientRect();
-      return bounds.width === 0 && bounds.height === 0;
+    return bounds.width === 0 && bounds.height === 0;
 }
 
 
@@ -438,7 +438,15 @@ function* iterate(elem) {
         // }
         if(hasNoSizeTextNode(endNode)) {
             // console.log('skipping no size:',  endNode);
-            continue;
+
+            // White space at the end of a line is very important
+            // to have a heuristinc to restore hyphenation, firefox seems
+            // to give these nodes a size, but Chromium doesn't. Also,
+            // this improves the situation e.g. for single line (headline)
+            // and paragraph end cases, but that could also just disguise
+            // a missing heuristic.
+            if(endNode.parentNode.offsetParent === null)
+                continue;
         }
 
         while(i<maxI) {
@@ -560,21 +568,30 @@ function markupLine(line, index) {
             // it breaks any assumptions.
             continue;
 
-        filtered.push([node, startIndex, endIndex, node.data]);
+        filtered.push([node, startIndex, endIndex]);
     }
-
+    // FIXME: add all "whitespace" that breaks lines
+    let lineBreakers = new Set([' ', '-', '.', '\n']);
     // do it from end to start, so all offsets stay valid
     let last = filtered.length-1;
     for(let i=last;i>=0;i--) {
-        let [node, startIndex, endIndex, txt] = filtered[i];
+        let [node, startIndex, endIndex] = filtered[i];
         // we have at least one char of something
         let span = document.createElement('span');
         span.classList.add('runion-line');
         span.classList.add(`r00-l${index}`);
         if(i === 0)
             span.classList.add('r00-l-first');
-        if(i === last)
+        if(i === last){
             span.classList.add('r00-l-last');
+            // If the last character is not a line breaking character.
+            // FIXME: there are other heuristics/reasons to not add a hyphen!
+            if(!lineBreakers.has(node.data[endIndex-1])){
+                span.classList.add('r00-l-hyphen');
+            }
+        }
+
+
         span.style.background = randBG;
 
         // try letting range wrap here ...
