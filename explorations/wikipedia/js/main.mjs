@@ -382,7 +382,238 @@ function runion_01 (elem) {
 
 }
 
+function findLines() {
+var r00 = document.querySelector('.runion-01');
+
+function deepText(node){
+    var all = [];
+    if(node) {
+        node = node.firstChild;
+        while(node !== null) {
+            if(node.nodeType === Node.TEXT_NODE)
+                all.push(node);
+            else
+                  all.push(...deepText(node));
+            node = node.nextSibling;
+        }
+    }
+    return all;
+}
+
+function isEmptyTextNode(node){
+      return /^\s+$/g.test(node.data);
+}
+
+function hasNoSizeTextNode(node){
+    let rtest = new Range();
+    rtest.setStart(node, 0);
+    rtest.setEnd(node, node.data.length);
+    let bounds = rtest.getBoundingClientRect();
+      return bounds.width === 0 && bounds.height === 0;
+}
+
+
+function* iterate(elem) {
+    var computed = elem.ownerDocument.defaultView.getComputedStyle(elem)
+      , columnWidthEn = parseFloat(computed.getPropertyValue('--column-width-en'))
+      , fontSize = getElementSizesInPx(elem, 'font-size')
+      , columnWidth = 0.5 * fontSize * columnWidthEn
+      , textNodes = deepText(elem)
+      , lines = []
+      , currentLine = null
+      , last = null
+      ;
+    // This is not a clean char by char selection, what I'm looking for
+    //  much rather, we must go into element textNodes and return
+    var i=0, maxI = Infinity;//3000;
+    for(let ti=0, tl=textNodes.length;ti<tl && i<maxI;ti++) {
+        let endNode = textNodes[ti];
+        let endNodeIndex = 0;
+        // hasNoSizeTextNode seems better for me, because we also may want
+        // to keep e.g. ' ' when tuning word-space.
+        // skip empty text nodes ...
+        // if(isEmptyTextNode(endNode)) {
+        //     console.log('skipping empty:',  endNode);
+        //     continue;
+        // }
+        if(hasNoSizeTextNode(endNode)) {
+            // console.log('skipping no size:',  endNode);
+            continue;
+        }
+
+        while(i<maxI) {
+            // this is only done initialy once
+            if(!currentLine) {
+                // a range can be 0 length, so initially start and end can be the same
+                currentLine = {
+                    range: new Range()
+                  , nodes: [endNode]
+                };
+                currentLine.range.setStart(endNode, endNodeIndex);
+            }
+            try {
+                // expecting an IndexSizeError ...
+                currentLine.range.setEnd(endNode, endNodeIndex);
+            }
+            catch(err) {
+                if(err.name === 'IndexSizeError') {
+                    // see the BTW, there's another way to detect this
+                    // console.log(`at ${i}: (BTW ${endNode.data.length === endNodeIndex-1})`, err);
+                    break;
+                }
+                throw err; // re-raise
+            }
+
+            // print bb
+            let bcr = currentLine.range.getBoundingClientRect()
+              , xOffset = window.pageXOffset
+              , yOffset = window.pageYOffset
+              , bottom = bcr.bottom + yOffset
+              , width = bcr.width
+              , [lastEndNode, lastEndNodeIndex, lastBottom] = last || [null, null, null]
+                // only the main case!
+                // TODO: detect column change!
+
+                // actually, I get the correct line height with
+                // (bottom - lastBottom).toFixed(2) here (which is
+                // currently 20.8px) but there's a little error
+                // hence, the toFixed, CAUTION line-height can change
+                // between elements!
+              , lineHasChanged =  last && (bottom - lastBottom).toFixed(2) > 0
+                // FIXME: guessed 5 would be good enough, but there should
+                // be a more robust way.
+                // FIXME: This heuristic also fails when e.g. in a list
+                // item (see under Contents 6.1) the line is shorter due
+                // to  indentation. We must compensate for all kinds of
+                // indentation e.g. a new <p> will likely have an indent!
+                // NOTE: a bigger change of the selection top is also a
+                // very strong indicator of a column change, but, it wouldn't
+                // detect when the columns are only one line, e.g. in
+                // firefox CSS-widows and CSS-orphans does not work so this
+                // definitely happens!
+                // TODO: we may also likely have to identify cases where
+                // justification is not required or wanted!
+                // (section headliness/"column-span: all;" elements) etc.
+                // but for now it makes more sense to apply this to as
+                // much different stuff as possible.
+              , columnHasChanged = width > columnWidth + 5
+              ;
+            // we already unpacked the old last!
+            // caution how endNodeIndex changes below in the condition
+            // that's why I don't do this after the condition.
+            last = [endNode, endNodeIndex, bottom];
+            // console.log(`bcr ${i}, ${endNodeIndex} => bottom ${bcr.bottom + yOffset} left ${bcr.left + xOffset} x+O ${bcr.x + xOffset} right ${bcr.right + xOffset}  `);
+            if(lineHasChanged || columnHasChanged) {
+                // console.log('lineHasChanged', lineHasChanged, bottom, lastBottom, (bottom - lastBottom));
+                // console.log(columnHasChanged, 'width', width, 'columnWidth', columnWidth);
+                currentLine.range.setEnd(lastEndNode, lastEndNodeIndex);
+                lines.push(currentLine);
+                yield currentLine.range;
+                currentLine = {
+                    range: new Range()
+                  , nodes: [lastEndNode]
+                };
+                currentLine.range.setStart(lastEndNode, lastEndNodeIndex);
+            }
+            else {
+                // If we start a new line we don't do this and try
+                // this endNode + endNodeIndex again
+                endNodeIndex += 1;
+            }
+
+            if(currentLine.nodes[currentLine.nodes.length-1] !== endNode) {
+                currentLine.nodes.push(endNode);
+            }
+            i += 1;
+        }
+    }
+    markupLines(lines);
+}
+
+
+function markupLines(lines) {
+    // do it from end to start, so all offsets stay valid
+    for(let i=lines.length-1;i>=0;i--)
+        markupLine(lines[i], i);
+}
+function markupLine(line, index) {
+    let {range, nodes} = line
+      , filtered = []
+      ;
+    let randBG = `rgb(${(Math.random() / 2 + .5) * 255}, `
+                   + `${(Math.random() / 2 + .5) * 255}, `
+                   + `${(Math.random() / 2 + .5) * 255})`;
+
+    for(let node of nodes) {
+        let startIndex = node === range.startContainer
+                    ? range.startOffset
+                    : 0
+          , endIndex = node === range.endContainer
+                    ? range.endOffset
+                    : node.data.length // -1???
+          ;
+        if(startIndex === endIndex)
+            // This means the selection is empty. it messes with
+            // detecting the first/last element reliably, hence I filter
+            // it in a pass before, that way.
+            // TODO: see if it happens, and, when it happens whether
+            // it breaks any assumptions.
+            continue;
+
+        filtered.push([node, startIndex, endIndex, node.data]);
+    }
+
+    // do it from end to start, so all offsets stay valid
+    let last = filtered.length-1;
+    for(let i=last;i>=0;i--) {
+        let [node, startIndex, endIndex, txt] = filtered[i];
+        // we have at least one char of something
+        let span = document.createElement('span');
+        span.classList.add('runion-line');
+        span.classList.add(`r00-l${index}`);
+        if(i === 0)
+            span.classList.add('r00-l-first');
+        if(i === last)
+            span.classList.add('r00-l-last');
+        span.style.background = randBG;
+
+        // try letting range wrap here ...
+        // works awesomely great so far.
+        let r = new Range();
+        r.setStart(node, startIndex);
+        r.setEnd(node, endIndex);
+        r.surroundContents(span);
+    }
+}
+
+
+var gen = iterate(r00)
+  , next = ()=>{
+        // show selection
+        let val = gen.next();
+        if(val.done)
+            return;
+        let lineRange = val.value;
+        // document.getSelection().removeAllRanges();
+        // document.getSelection().addRange(lineRange);
+        //setTimeout(next, 0);
+        next();
+    }
+  ;
+
+next();
+}
+window.findLines = findLines;
+
+
+
+
+function massageWikipediaMarkup(document){
+    document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
+}
+
 function main() {
+    massageWikipediaMarkup(document);
     setDefaultFontSize(document);
 
     let userSettingsWidget = new WidgetsContainerWidget(

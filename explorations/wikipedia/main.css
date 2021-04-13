@@ -968,6 +968,7 @@ i, cite, em, var, dfn {
            hyphens: auto;
 
     text-align: justify;
+    text-justify: inter-word;  /* auto is OK so far as well*/
 
     /* Firefox does not support these! */
     orphans: 3;
@@ -987,4 +988,10 @@ i, cite, em, var, dfn {
     margin-right: 0;
     /* FIXME: this stuff distracts from the column layout, needs resolution. */
     display: none;
+}
+
+
+.runion-line {
+    text-decoration: underline red;
+    background: bisque;
 }
