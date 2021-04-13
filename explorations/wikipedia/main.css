@@ -764,7 +764,9 @@ font-weight: var(--font-weight);
 
 }
 
-p {
+
+/* All about line raster/grid consistency across columns. */
+p, ul, table {
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
     margin-block-end: calc(1pt * var(--x-font-size) * var(--x-line-height));
@@ -774,6 +776,13 @@ h2 + p,
 h3 + p {
     margin-block-start: 0;
 }
+
+table{
+    border-spacing: 0;
+}
+
+
+
 
 b, strong {
   --font-weight: 700;
@@ -910,6 +919,7 @@ b, strong {
 i, cite, em, var, dfn {
     --font-style: italic;
 }
+
 .hatnote {
     --font-style: italic;
 }
