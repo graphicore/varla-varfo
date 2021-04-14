@@ -532,6 +532,10 @@ function* findLines(elem) {
                 // item (see under Contents 6.1) the line is shorter due
                 // to  indentation. We must compensate for all kinds of
                 // indentation e.g. a new <p> will likely have an indent!
+                // FIXME: in Chromium under ## Color
+                // Main article: Type color     I-|n typesetting ...
+                // FIXME: the headline ## Inscriptional and architectural lett-ering[edit]
+                // classical fail because of this!
                 // NOTE: a bigger change of the selection top is also a
                 // very strong indicator of a column change, but, it wouldn't
                 // detect when the columns are only one line, e.g. in
@@ -542,6 +546,7 @@ function* findLines(elem) {
                 // (section headliness/"column-span: all;" elements) etc.
                 // but for now it makes more sense to apply this to as
                 // much different stuff as possible.
+
               , columnHasChanged = last && width > columnWidth + 5
               ;
 
@@ -580,6 +585,7 @@ function* reverseArrayIterator(array) {
 function markupLine(line, index) {
     let {range, nodes} = line
       , filtered = []
+      , lineElements = []
       ;
     let randBG = `rgb(${(Math.random() / 2 + .5) * 255}, `
                    + `${(Math.random() / 2 + .5) * 255}, `
@@ -603,25 +609,108 @@ function markupLine(line, index) {
 
         filtered.push([node, startIndex, endIndex]);
     }
-    // FIXME: add all "whitespace" etc. that breaks lines
+
+    // FIXME: add all punctuation and "white-space" etc. that breaks lines
     let lineBreakers = new Set([' ', '-', '—', '.', ',', '\n']);
-    // do it from end to start, so all offsets stay valid
+    let addHyphen = false;
+    {
+        let [node, , endIndex] = filtered[filtered.length-1];
+        // If the last character is not a line breaking character.
+        // FIXME: there are other heuristics/reasons to not add a hyphen!
+        //        but the error is not always here.
+        if(!lineBreakers.has(node.data[endIndex-1])) {
+            addHyphen = true;
+        }
+    }
+
+    // There are cases where the line essentially is a block element,
+    // like a <h2> and after that closes, we get a "\n" which is attributed
+    // to that line. We should detect these, but I'm not sure how!
+    // Basically, there is white-space that matters, in an inline context,
+    // and whitespace that does not matter, in an block context.
+    // Wrapping white space that does not matter into a <span> is not good.
+    // E.g. after headlines, new sections then start with an empty line.
+    // But, it would also cause trouble within the section.
+    //
+    // NOTE, the <h2> problem above comes from the rule:
+    //        h2 + p, h3 + p {
+    //              margin-block-start: 0;
+    //        }
+    // Which then fails. there are other cases where that rule is not
+    // good, e.g. where the .thumbs at the beginning of a section are
+    // display: none (a temporary measure) or where for other reasons
+    // elements are hidden. There's a dirty fix:
+    //        h2 ~ p, h3 ~ p {
+    //              margin-block-start: 0;
+    //        }
+    // But that changes other cases, e.g. when a div.hatnote follows
+    // the h2 (## History).
+    // All in all, for the current phase of development, it may be better
+    // to fix these problems on the CSS-level and move on for now.
+    //
+    // OK, this is all I need so far.
+    filtered = filtered.filter(([node])=>{
+        // Remove if node is only whites pace and node.previousSibling is
+        // an element and 'block'.
+        // If the previous sibling is a comment, we should skip that
+        // but it could be <h2><comment><whitespace><comment><this node whitespace>
+        // ... so, catching some cases here:
+        let cur = node
+          , getComputedStyle = node.ownerDocument.defaultView.getComputedStyle
+          ;
+        while(true) {
+            if(cur.nodeType === Node.TEXT_NODE) {
+                if(!_isWhiteSpaceTextNode(cur))
+                    // Keep! Is not only white space.
+                    return true;
+            }
+            if(!cur.previousSibling)
+                // Seems like we reached the first node in an element.
+                // not what we are looking for at all here, keep.
+                return true;
+            cur = cur.previousSibling;
+            if(cur.nodeType === Node.ELEMENT_NODE) {
+                let display = getComputedStyle(cur).getPropertyValue('display');
+                if(display === 'block') {
+                    // found it
+                    return false;
+                }
+                if(display === 'none')
+                    continue;
+                // FIXME: cur could also be position absolute to be a `continue`!
+                // But this would mess up other things in the line finding
+                // as well, so to edgy for now.
+                // The white space matters probably, could be the space
+                // between two <a>s.
+                return true;
+            }
+            if(cur.nodeType === Node.COMMENT_NODE)
+                continue;
+        }
+    });
+
+    // TODO: Although they seem to cause no trouble (yet), all
+    // white space only first line (.r00-l-first nodes) seem
+    // unnecessary as well:
+    // for(let node of document.querySelectorAll('.r00-l-first')) {
+    //       if(/^\s+$/g.test(node.textContent)) console.log(node);
+    // }
+
+    // Do it from end to start, so all offsets stay valid.
     let last = filtered.length-1;
     for(let i=last;i>=0;i--) {
         let [node, startIndex, endIndex] = filtered[i];
         // we have at least one char of something
         let span = document.createElement('span');
+        lineElements.unshift(span); // backwards iteration so no push...
         span.classList.add('runion-line');
         span.classList.add(`r00-l${index}`);
         if(i === 0)
             span.classList.add('r00-l-first');
-        if(i === last){
+        if(i === last) {
             span.classList.add('r00-l-last');
-            // If the last character is not a line breaking character.
-            // FIXME: there are other heuristics/reasons to not add a hyphen!
-            if(!lineBreakers.has(node.data[endIndex-1])){
+            if(addHyphen)
                 span.classList.add('r00-l-hyphen');
-            }
         }
         span.style.background = randBG;
 
