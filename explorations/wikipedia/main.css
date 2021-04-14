@@ -1014,19 +1014,21 @@ i, cite, em, var, dfn {
 }
 /**
  * introduce explicit wrapping before each line
+ * This normalizes the behavior of Chrome and Firefox, both loose
+ * their hyphenation with the first line ::before display: block rule
+ * now, we need to mark elements in JS explicitly that require hyphens!.
  */
 .runion-line.r00-l-first::before {
     xx-content: '';
     xx-display: block;
 }
-/* The above normalizes the behavior of Chrom and Firefox, both lose
- * their hyphenation now, we need to mark elements in js explicitly that
- * require hyphens!.
- *
- * NOTE: since this happened the line wrapping is good again, not changing
- * in Chrome (nor Firefox). This has the advantage, that the last-line in
- * a paragraph is aligned left and the other lines are justified by
- * word-space, exactly what we are looking for.
+
+/*
+ * This fixes line wrapping, not changing in Chrome (nor Firefox). This
+ * has the advantage, that the last-line in a paragraph is aligned left
+ * and the other lines are justified by word-space, exactly what we are
+ * looking for.
+ * The heuristic that the adds the hyphen class may still have flaws!
  */
 .runion-line.r00-l-hyphen::after {
     content: '-';

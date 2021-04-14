@@ -382,10 +382,12 @@ function runion_01 (elem) {
 
 }
 
-function findLines() {
-var r00 = document.querySelector('.runion-01');
 
-function deepText(node){
+/***
+ * Justification
+ * to port https://variablefonts.typenetwork.com/topics/spacing/justification
+ ***/
+function _deepText(node) {
     var all = [];
     if(node) {
         node = node.firstChild;
@@ -393,18 +395,18 @@ function deepText(node){
             if(node.nodeType === Node.TEXT_NODE)
                 all.push(node);
             else
-                  all.push(...deepText(node));
+                  all.push(..._deepText(node));
             node = node.nextSibling;
         }
     }
     return all;
 }
 
-function isEmptyTextNode(node){
-      return /^\s+$/g.test(node.data);
+function _isWhiteSpaceTextNode(node) {
+    return /^\s+$/g.test(node.data);
 }
 
-function hasNoSizeTextNode(node){
+function _hasNoSizeTextNode(node){
     let rtest = new Range();
     rtest.setStart(node, 0);
     rtest.setEnd(node, node.data.length);
@@ -412,82 +414,117 @@ function hasNoSizeTextNode(node){
     return bounds.width === 0 && bounds.height === 0;
 }
 
-
-function* iterate(elem) {
+/**
+ * Find lines that the browser has composed by using Range objects
+ * and their getBoundingClientRect.
+ *
+ * FIXME: needs work for special cases etc.
+ * TODO: we could search from back to front as that would make a better
+ *       pipeline with the following transformations, if we keep doing
+ *       those from back to front.
+ */
+function* findLines(elem) {
+    // FIXME: need to refine how these basic infos are gathered.
     var computed = elem.ownerDocument.defaultView.getComputedStyle(elem)
       , columnWidthEn = parseFloat(computed.getPropertyValue('--column-width-en'))
       , fontSize = getElementSizesInPx(elem, 'font-size')
       , columnWidth = 0.5 * fontSize * columnWidthEn
-      , textNodes = deepText(elem)
-      , lines = []
+      , textNodes = _deepText(elem)
       , currentLine = null
       , last = null
+      , newLine = (node, index)=>{
+            let line = {
+                range: new Range()
+              , nodes: [node]
+            };
+            line.range.setStart(node, index);
+            return line;
+        }
       ;
     // This is not a clean char by char selection, what I'm looking for
-    //  much rather, we must go into element textNodes and return
+    // much rather, we must go into element textNodes and return
+
+    // NOTE: i/maxI is for development and debugging only to limit
+    // the algorithm.
     var i=0, maxI = Infinity;//3000;
     for(let ti=0, tl=textNodes.length;ti<tl && i<maxI;ti++) {
         let endNode = textNodes[ti];
         let endNodeIndex = 0;
-        // hasNoSizeTextNode seems better for me, because we also may want
-        // to keep e.g. ' ' when tuning word-space.
-        // skip empty text nodes ...
-        // if(isEmptyTextNode(endNode)) {
+        // Seems necessary to keep/not filter some of these e.g.
+        // keep ' ' when tuning word-space, also for detecting if
+        // a line break was caused by white-space or hyphenation.
+        // Skipping more nodes, especially before _hasNoSizeTextNode
+        // could speed things up though!
+        // if(_isWhiteSpaceTextNode(endNode)) {
         //     console.log('skipping empty:',  endNode);
         //     continue;
         // }
-        if(hasNoSizeTextNode(endNode)) {
-            // console.log('skipping no size:',  endNode);
 
-            // White space at the end of a line is very important
-            // to have a heuristinc to restore hyphenation, firefox seems
-            // to give these nodes a size, but Chromium doesn't. Also,
-            // this improves the situation e.g. for single line (headline)
-            // and paragraph end cases, but that could also just disguise
-            // a missing heuristic.
-            if(endNode.parentNode.offsetParent === null)
-                continue;
+        // White space at the end of a line is very important
+        // to have a heuristic to restore hyphenation, Firefox seems
+        // to give those nodes a size, but Chromium doesn't. Also,
+        // this improves the situation e.g. for single line (headline)
+        // and paragraph end cases, but that could also just disguise
+        // a missing heuristic.
+        //
+        // If parentNode.offsetParent === null it's likely in a
+        // display:none context, we back up with _hasNoSizeTextNode
+        if(endNode.parentNode.offsetParent === null && _hasNoSizeTextNode(endNode))
+            continue;
+        // this is only done initialy once
+        if(!currentLine) {
+            // a range can be 0 length, so initially start and end can be the same
+            currentLine = newLine(endNode, endNodeIndex);
         }
-
         while(i<maxI) {
-            // this is only done initialy once
-            if(!currentLine) {
-                // a range can be 0 length, so initially start and end can be the same
-                currentLine = {
-                    range: new Range()
-                  , nodes: [endNode]
-                };
-                currentLine.range.setStart(endNode, endNodeIndex);
-            }
-            try {
+            // TODO: This whole block is expensive, we should reduce the
+            // repetitions needed using a binary search or something. There
+            // should be a good starting point using e.g. columnWidth/
+            // columnWidthEn (~glyphs per line) but the way we get those
+            // values is not ideal either.
+            if(endNode.data.length < endNodeIndex)
+                // this should reliably prevent the IndexSizeError
+                // when setting currentLine.range.setEnd(endNode, endNodeIndex);
+                break;
+            i++;
+            //try {
                 // expecting an IndexSizeError ...
                 currentLine.range.setEnd(endNode, endNodeIndex);
-            }
-            catch(err) {
-                if(err.name === 'IndexSizeError') {
-                    // see the BTW, there's another way to detect this
+            //}
+            //catch(err) {
+            //    if(err.name === 'IndexSizeError') {
+                    // See the BTW, there's another way to detect this
                     // console.log(`at ${i}: (BTW ${endNode.data.length === endNodeIndex-1})`, err);
-                    break;
-                }
-                throw err; // re-raise
-            }
-
-            // print bb
+            //        break;
+            //    }
+            //  throw err; // re-raise
+            //}
             let bcr = currentLine.range.getBoundingClientRect()
               , xOffset = window.pageXOffset
               , yOffset = window.pageYOffset
               , bottom = bcr.bottom + yOffset
               , width = bcr.width
               , [lastEndNode, lastEndNodeIndex, lastBottom] = last || [null, null, null]
-                // only the main case!
-                // TODO: detect column change!
-
                 // actually, I get the correct line height with
                 // (bottom - lastBottom).toFixed(2) here (which is
                 // currently 20.8px) but there's a little error
                 // hence, the toFixed, CAUTION line-height can change
                 // between elements!
-              , lineHasChanged =  last && (bottom - lastBottom).toFixed(2) > 0
+                // FIXME: current known glitches:
+                //   * Chromium
+                //     ## Section: Principles of the typographic craft
+                //     - mid paragraph line: "type, line length, line spacing, color con"
+                //     - last column line: "Guardian and The Economist, go so far as "
+                //     - first column line: "to commission a type designer to create"
+                //     - second paragraph line "tical: Typography not only has a direct"
+                //   * Chromiunm
+                //     ## Section: Citations
+                //     all pretty bad, likely because the font spec is all over the place
+                //     and lineHasChanged is too sensitive.
+                //
+                //  The glitches appeared with: (bottom - lastBottom).toFixed(2) > 0
+                //  playing here with the sensitivity do improve some cases, but not all.
+              , lineHasChanged =  last && Math.floor(bottom - lastBottom) > 1
                 // FIXME: guessed 5 would be good enough, but there should
                 // be a more robust way.
                 // FIXME: This heuristic also fails when e.g. in a list
@@ -504,9 +541,13 @@ function* iterate(elem) {
                 // (section headliness/"column-span: all;" elements) etc.
                 // but for now it makes more sense to apply this to as
                 // much different stuff as possible.
-              , columnHasChanged = width > columnWidth + 5
+              , columnHasChanged = last && width > columnWidth + 5
               ;
-            // we already unpacked the old last!
+            if(((bottom - lastBottom).toFixed(2) > 0)  !==  (Math.floor(bottom - lastBottom) > 1))
+                console.log('bottom', bottom, 'lastBottom', lastBottom, 'bottom - lastBottom', bottom - lastBottom);
+
+
+            // We just unpacked the old last!
             // caution how endNodeIndex changes below in the condition
             // that's why I don't do this after the condition.
             last = [endNode, endNodeIndex, bottom];
@@ -514,36 +555,30 @@ function* iterate(elem) {
             if(lineHasChanged || columnHasChanged) {
                 // console.log('lineHasChanged', lineHasChanged, bottom, lastBottom, (bottom - lastBottom));
                 // console.log(columnHasChanged, 'width', width, 'columnWidth', columnWidth);
+
+                // We went one to far, hence using the last position.
                 currentLine.range.setEnd(lastEndNode, lastEndNodeIndex);
-                lines.push(currentLine);
-                yield currentLine.range;
-                currentLine = {
-                    range: new Range()
-                  , nodes: [lastEndNode]
-                };
-                currentLine.range.setStart(lastEndNode, lastEndNodeIndex);
+                yield currentLine;
+                currentLine = newLine(lastEndNode, lastEndNodeIndex);
             }
             else {
+
                 // If we start a new line we don't do this and try
                 // this endNode + endNodeIndex again
                 endNodeIndex += 1;
+                if(currentLine.nodes[currentLine.nodes.length-1] !== endNode) {
+                    currentLine.nodes.push(endNode);
+                }
             }
-
-            if(currentLine.nodes[currentLine.nodes.length-1] !== endNode) {
-                currentLine.nodes.push(endNode);
-            }
-            i += 1;
         }
     }
-    markupLines(lines);
 }
 
-
-function markupLines(lines) {
-    // do it from end to start, so all offsets stay valid
-    for(let i=lines.length-1;i>=0;i--)
-        markupLine(lines[i], i);
+function* reverseArrayIterator(array) {
+    for(let i=array.length-1;i>=0;i--)
+        yield [array[i], i];
 }
+
 function markupLine(line, index) {
     let {range, nodes} = line
       , filtered = []
@@ -570,8 +605,8 @@ function markupLine(line, index) {
 
         filtered.push([node, startIndex, endIndex]);
     }
-    // FIXME: add all "whitespace" that breaks lines
-    let lineBreakers = new Set([' ', '-', '.', '\n']);
+    // FIXME: add all "whitespace" etc. that breaks lines
+    let lineBreakers = new Set([' ', '-', '—', '.', ',', '\n']);
     // do it from end to start, so all offsets stay valid
     let last = filtered.length-1;
     for(let i=last;i>=0;i--) {
@@ -590,8 +625,6 @@ function markupLine(line, index) {
                 span.classList.add('r00-l-hyphen');
             }
         }
-
-
         span.style.background = randBG;
 
         // try letting range wrap here ...
@@ -603,24 +636,17 @@ function markupLine(line, index) {
     }
 }
 
+function justify() {
 
-var gen = iterate(r00)
-  , next = ()=>{
-        // show selection
-        let val = gen.next();
-        if(val.done)
-            return;
-        let lineRange = val.value;
-        // document.getSelection().removeAllRanges();
-        // document.getSelection().addRange(lineRange);
-        //setTimeout(next, 0);
-        next();
-    }
-  ;
+let elem = document.querySelector('.runion-01');
+let lines = Array.from(findLines(elem));
 
-next();
+// Do it from end to start, so all offsets stay valid.
+for(let line_index of reverseArrayIterator(lines))
+    markupLine(...line_index);
+
 }
-window.findLines = findLines;
+window.findLines = justify;
 
 
 
