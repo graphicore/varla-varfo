@@ -523,7 +523,8 @@ function* findLines(elem) {
                 //     and lineHasChanged is too sensitive.
                 //
                 //  The glitches appeared with: (bottom - lastBottom).toFixed(2) > 0
-                //  playing here with the sensitivity do improve some cases, but not all.
+                //  playing here with the sensitivity does improve some cases, but not all.
+                //  But there are also some other sources of error.
               , lineHasChanged =  last && Math.floor(bottom - lastBottom) > 1
                 // FIXME: guessed 5 would be good enough, but there should
                 // be a more robust way.
@@ -543,9 +544,6 @@ function* findLines(elem) {
                 // much different stuff as possible.
               , columnHasChanged = last && width > columnWidth + 5
               ;
-            if(((bottom - lastBottom).toFixed(2) > 0)  !==  (Math.floor(bottom - lastBottom) > 1))
-                console.log('bottom', bottom, 'lastBottom', lastBottom, 'bottom - lastBottom', bottom - lastBottom);
-
 
             // We just unpacked the old last!
             // caution how endNodeIndex changes below in the condition
