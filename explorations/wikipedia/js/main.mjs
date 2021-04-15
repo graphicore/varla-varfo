@@ -786,7 +786,7 @@ function justifyLine(container, elements) {
                 // does more harm than good, but testing it.
                 setProperty('white-space', 'nowrap');
                 // can't set to ::before directly
-                elements[0].classList.add('line-containment-break');
+                elements[0].classList.add('line-containment');
                 console.log('CAUTION: applied line containment protocol');
                 return;
             }
@@ -838,7 +838,7 @@ for(let line_index of reverseArrayIterator(lines)) {
 async function* justifyLineGenerator() {
     for(let [i, lineElements] of elementLines.entries()) {
         justifyLine(elem, lineElements);
-        if(i === 50) {
+        if(i === 51) {
             console.log('stoping due to dev iterations limit');
             return;
         }
@@ -848,11 +848,13 @@ async function* justifyLineGenerator() {
 
     }
 }
-(async function() {
+let runJustifyLine = (async function() {
     for await (let val of justifyLineGenerator()) {
         //pass; console.log(num);
     }
-})();
+});
+
+runJustifyLine();
 
 
 
