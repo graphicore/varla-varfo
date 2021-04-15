@@ -696,9 +696,9 @@ label.user_preferences-user_distance::after {
 --font-slant: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
---font-stretch: 520;/* by (xtra, wdth) */
-
-
+/* used to be 520 but making it narrow to work out justification */
+--font-stretch: 440;/* by (xtra, wdth) */
+--font-stretch-change: 0;
 
 /* in pt! We need JS to get the document default font-size in pt,
  * because we can't yet calculate it
@@ -749,11 +749,14 @@ word-spacing: calc(1em * var(--word-space));
 --x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
 --x-font-grade: calc(var(--font-grade) + var(--font-grade-color-scheme-adjust, 0));
 
+--x-font-stretch: calc(var(--font-stretch) + var(--font-stretch-change, 0));
+
+
 font-variation-settings:
             "slnt" var(--font-slant),
             "wght" var(--font-weight),
             "GRAD" var(--x-font-grade),
-            "XTRA" var(--font-stretch),
+            "XTRA" var(--x-font-stretch),
             "opsz" var(--x-font-size)
             ;
 /* This is not required for the variable fonts, as font-variation-settings
@@ -1008,20 +1011,30 @@ i, cite, em, var, dfn {
  *
  * NOTE: there may be fringe cases where this assumption is not good
  * but it looks good so far.
- */
+
+Now set directly as element style in line containment protocol...
 .runion-line {
     xx-white-space: nowrap;
 }
+ */
+
+
 /**
  * introduce explicit wrapping before each line
  * This normalizes the behavior of Chrome and Firefox, both loose
  * their hyphenation with the first line ::before display: block rule
  * now, we need to mark elements in JS explicitly that require hyphens!.
- */
+
 .runion-line.r00-l-first::before {
     xx-content: '';
     xx-display: block;
 }
+*/
+.line-containment::before{
+    content: '';
+    display: block;
+}
+
 
 /*
  * This fixes line wrapping, not changing in Chrome (nor Firefox). This
@@ -1033,4 +1046,5 @@ i, cite, em, var, dfn {
 .runion-line.r00-l-hyphen::after {
     content: '-';
 }
+
 

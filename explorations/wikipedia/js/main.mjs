@@ -593,7 +593,7 @@ function markupLine(line, index, nextLineTextContent) {
     }
 
     if(!filtered.length) {
-        return;
+        return null;
     }
 
     // FIXME: add all punctuation and "white-space" etc. that breaks lines
@@ -710,6 +710,102 @@ function markupLine(line, index, nextLineTextContent) {
         r.setEnd(node, endIndex);
         r.surroundContents(span);
     }
+    return lineElements;
+}
+
+function justifyLine(container, elements) {
+    //get the line height
+
+    //if the height of all elements getBoundingClientRect is bigger than
+    // the line height
+    // or maybe better, if there are difffernt bottoms in the first and
+    // last  client rect that have any width:
+    var setProperty = (name, value)=>{
+            for(let elem of elements) {
+                elem.style.setProperty(name, value);
+            }
+        }
+      , setFontStretchChange = change=>setProperty('--font-stretch-change', change)
+      , everythingIsOnTheSameLine= ()=>{
+            if(elements.length === 1) {
+                let elem = elements[0]
+                  , boxes = elem.getClientRects()
+                  ;
+                if(boxes.length === 1)
+                    return true;
+                else
+                    return false;
+
+            }
+            else {
+                let bottoms = new Set();
+                for(let elem of elements){
+                    bottoms.add(Math.floor(elem.getBoundingClientRect().bottom));
+                    if(bottoms.size > 1) {
+                        let difference = Math.max(...bottoms) - Math.min(...bottoms);
+                        if(difference > 10)
+                            return false;
+                    }
+                }
+                return true;
+            }
+            // false is better for this quick and dirty hack,
+            // because it means, at least don't grow too much
+            // and at the end we do line containment.
+            return false;
+        }
+      ;
+    let xtraStepGrow = 5
+      , xtraStepShrink = 1
+      // Do it relative for testing now, no need to getComputedStyle ;-)
+      // starting at
+      , change = 0
+      // css --font-stretch is 440
+      , maxChange = 200
+      , minChange = -40
+      ;
+    function growToFit() {
+        while(everythingIsOnTheSameLine()) {
+            // make the line longer
+            change += xtraStepGrow;
+            if(change > maxChange)
+                // giving up
+                return;
+            setFontStretchChange(change);
+        }
+        // the line broke
+        shrinkToFit();
+    }
+    function shrinkToFit() {
+        while(!everythingIsOnTheSameLine()) {
+            // make the line shorter
+            change -= xtraStepShrink;
+            if(change < minChange) {
+                // giving up, this could be bad for the following lines!
+                // Trying a containment protocol, which I generally think
+                // does more harm than good, but testing it.
+                setProperty('white-space', 'nowrap');
+                // can't set to ::before directly
+                elements[0].classList.add('line-containment-break');
+                console.log('CAUTION: applied line containment protocol');
+                return;
+            }
+            setFontStretchChange(change);
+        }
+    }
+
+    if(!everythingIsOnTheSameLine()) {
+        // make the line shorter
+        //     (this should never be the case, unless we went to far making the
+        //     line wider, however, it could help if the browser breaks lines
+        //     differntly after we did created the element line)
+        console.log('Bad: the line breaks initially', elements);
+        shrinkToFit();
+    }
+    else {
+        growToFit();
+    }
+
 }
 
 function justify() {
@@ -722,20 +818,48 @@ let lines = Array.from(findLines(elem));
 // FIXME: this nextLineTextContent is not exactly beautiful, can I do better?
 // It's rather robust though, look at the next line as well to determine
 // if a hyphen is needed. Maybe, I should collect inter-line white space.
-let nextLineTextContent;
+let nextLineTextContent
+  , elementLines = []
+  ;
 for(let line_index of reverseArrayIterator(lines)) {
     let textContent = line_index[0].range.toString();
-    markupLine(...line_index, nextLineTextContent);
+    let lineElements = markupLine(...line_index, nextLineTextContent);
+    if(lineElements)
+        elementLines.unshift(lineElements);
     nextLineTextContent = textContent;
 }
+
+//for(let [i, lineElements] of elementLines.entries()){
+//    if(i > 100)
+//       break;
+//    justifyLine(elem, lineElements);
+//}
+
+async function* justifyLineGenerator() {
+    for(let [i, lineElements] of elementLines.entries()) {
+        justifyLine(elem, lineElements);
+        if(i === 50) {
+            console.log('stoping due to dev iterations limit');
+            return;
+        }
+        yield await new Promise((resolve, reject)=>{
+           setTimeout(()=>resolve(true), 0);
+        });
+
+    }
+}
+(async function() {
+    for await (let val of justifyLineGenerator()) {
+        //pass; console.log(num);
+    }
+})();
+
+
 
 }
 window.findLines = justify;
 
-
-
-
-function massageWikipediaMarkup(document){
+function massageWikipediaMarkup(document) {
     document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
 }
 
