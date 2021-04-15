@@ -273,7 +273,11 @@ function setDefaultFontSize(document) {
 }
 
 function getELementLineWidthAndEmInPx(elem) {
-    var widthPx = elem.clientWidth // this includes padding left and right
+    // elem.clientWidth:
+    // Note: This property will round the value to an integer. If you need
+    // a fractional value, use element.getBoundingClientRect().
+
+    var widthPx = elem.getBoundingClientRect().width // this includes padding left and right
       , [emInPx] = getElementSizesInPx(elem, 'font-size')
       ;
     return [widthPx, emInPx];
@@ -358,8 +362,13 @@ function runion_01 (elem) {
         // This creates "room for error", 5px was determined by trying out.
         // A fail is when _runion_01_columns returns e.g. a 4 columns setting
         // but the browser shows 3 columns.
+        // FIXME: I can't reproduce this anymore, hence no compensation
+        // anymore. It could be that element.clientWidth returns a rounded
+        // value and I switched it to element.getBoundingClientRect() which
+        // does not round. It's also better when this is precise, because
+        // then it is better suited to estimate actual line-length.
       , enInPx = emInPx / 2
-      , compensateForError = 5
+      , compensateForError = 0
       , availableWidthEn = (widthPx - compensateForError) / enInPx
       , [columns, lineLengthEn, columnGapEn, paddingLeftEn,
                     paddingRightEn] = _runion_01_columns(availableWidthEn);
@@ -379,7 +388,6 @@ function runion_01 (elem) {
 
     // NOTE: classes may need to be removed if a runion changes its type!
     elem.classList.add('runion-01');
-
 }
 
 
@@ -424,12 +432,7 @@ function _hasNoSizeTextNode(node){
  *       those from back to front.
  */
 function* findLines(elem) {
-    // FIXME: need to refine how these basic infos are gathered.
-    var computed = elem.ownerDocument.defaultView.getComputedStyle(elem)
-      , columnWidthEn = parseFloat(computed.getPropertyValue('--column-width-en'))
-      , fontSize = getElementSizesInPx(elem, 'font-size')
-      , columnWidth = 0.5 * fontSize * columnWidthEn
-      , textNodes = _deepText(elem)
+    var textNodes = _deepText(elem)
       , currentLine = null
       , last = null
       , newLine = (node, index)=>{
@@ -441,9 +444,6 @@ function* findLines(elem) {
             return line;
         }
       ;
-    // This is not a clean char by char selection, what I'm looking for
-    // much rather, we must go into element textNodes and return
-
     // NOTE: i/maxI is for development and debugging only to limit
     // the algorithm.
     var i=0, maxI = Infinity;//3000;
@@ -482,83 +482,65 @@ function* findLines(elem) {
             // should be a good starting point using e.g. columnWidth/
             // columnWidthEn (~glyphs per line) but the way we get those
             // values is not ideal either.
+            // getClientRects() in a context of textNodes will give
+            // a DOMRect per line a node covers.
             if(endNode.data.length < endNodeIndex)
                 // this should reliably prevent the IndexSizeError
                 // when setting currentLine.range.setEnd(endNode, endNodeIndex);
+                // Doing this so we don't have to handle the error, handling
+                // the error is in the git history.
                 break;
             i++;
-            //try {
-                // expecting an IndexSizeError ...
-                currentLine.range.setEnd(endNode, endNodeIndex);
-            //}
-            //catch(err) {
-            //    if(err.name === 'IndexSizeError') {
-                    // See the BTW, there's another way to detect this
-                    // console.log(`at ${i}: (BTW ${endNode.data.length === endNodeIndex-1})`, err);
-            //        break;
-            //    }
-            //  throw err; // re-raise
-            //}
-            let bcr = currentLine.range.getBoundingClientRect()
-              , xOffset = window.pageXOffset
-              , yOffset = window.pageYOffset
-              , bottom = bcr.bottom + yOffset
-              , width = bcr.width
-              , [lastEndNode, lastEndNodeIndex, lastBottom] = last || [null, null, null]
-                // actually, I get the correct line height with
-                // (bottom - lastBottom).toFixed(2) here (which is
-                // currently 20.8px) but there's a little error
-                // hence, the toFixed, CAUTION line-height can change
-                // between elements!
-                // FIXME: current known glitches:
-                //   * Chromium
-                //     ## Section: Principles of the typographic craft
-                //     - mid paragraph line: "type, line length, line spacing, color con"
-                //     - last column line: "Guardian and The Economist, go so far as "
-                //     - first column line: "to commission a type designer to create"
-                //     - second paragraph line "tical: Typography not only has a direct"
-                //   * Chromiunm
-                //     ## Section: Citations
-                //     all pretty bad, likely because the font spec is all over the place
-                //     and lineHasChanged is too sensitive.
-                //
-                //  The glitches appeared with: (bottom - lastBottom).toFixed(2) > 0
-                //  playing here with the sensitivity does improve some cases, but not all.
-                //  But there are also some other sources of error.
-              , lineHasChanged =  last && Math.floor(bottom - lastBottom) > 1
-                // FIXME: guessed 5 would be good enough, but there should
-                // be a more robust way.
-                // FIXME: This heuristic also fails when e.g. in a list
-                // item (see under Contents 6.1) the line is shorter due
-                // to  indentation. We must compensate for all kinds of
-                // indentation e.g. a new <p> will likely have an indent!
-                // FIXME: in Chromium under ## Color
-                // Main article: Type color     I-|n typesetting ...
-                // FIXME: the headline ## Inscriptional and architectural lett-ering[edit]
-                // classical fail because of this!
-                // NOTE: a bigger change of the selection top is also a
-                // very strong indicator of a column change, but, it wouldn't
-                // detect when the columns are only one line, e.g. in
-                // firefox CSS-widows and CSS-orphans does not work so this
-                // definitely happens!
-                // TODO: we may also likely have to identify cases where
-                // justification is not required or wanted!
-                // (section headliness/"column-span: all;" elements) etc.
-                // but for now it makes more sense to apply this to as
-                // much different stuff as possible.
+            currentLine.range.setEnd(endNode, endNodeIndex);
 
-              , columnHasChanged = last && width > columnWidth + 5
+            // FIXME: current known glitches:
+            //   * Chromium and Firefox
+            //     ## Section: Citations
+            //     all pretty bad, but it seems the reason is no longer
+            //     how lines are detected.
+            let rects = Array.from(currentLine.range.getClientRects())
+              , [beforeLastRect, lastRect] = rects.slice(-2)
+              , touchingLeft = false
+              , touchingBottom = false
+              , changed = false
               ;
 
-            // We just unpacked the old last!
-            // caution how endNodeIndex changes below in the condition
-            // that's why I don't do this after the condition.
-            last = [endNode, endNodeIndex, bottom];
-            // console.log(`bcr ${i}, ${endNodeIndex} => bottom ${bcr.bottom + yOffset} left ${bcr.left + xOffset} x+O ${bcr.x + xOffset} right ${bcr.right + xOffset}  `);
-            if(lineHasChanged || columnHasChanged) {
-                // console.log('lineHasChanged', lineHasChanged, bottom, lastBottom, (bottom - lastBottom));
-                // console.log(columnHasChanged, 'width', width, 'columnWidth', columnWidth);
+            if(rects.length <= 1) {
+                // Pass; line breaks and column breaks create new client
+                // rects,  if there's only one rect, there's no line or
+                // column break. Zero rects should never happen (in this
+                // context?), but it would also mean neither line or
+                // column break. Even an empty string node would produce
+                // one rect.
+            }
+            else if(rects.length > 1) {
+                // Other reasons why we would have more rects is that
+                // the nodes in the selection could be actually in different
+                // elements like in "<em>hello<em> <strong>world</strong>"
+                // even on the same line, this would create three rects
+                // one for each "hello", " ", and "world".
+                //
+                // FIXME: precision? fringe cases e.g. pseudo element content?
+                // look for the line:
+                //              ISBN 978-3-447-06184-1. "the latter
+                // it has an aditional " in a pseudo-element, and that causes
+                // the line to break, because the lower level client rects
+                // of the TextNodes don't touch at that position.
+                if(Math.abs(Math.floor(lastRect.left - beforeLastRect.right)) <= 1) {
+                    // The result of the subtraction above will be positive
+                    // for e.g. a column change and negative for a normal
+                    // line change.
+                    touchingLeft = true;
+                }
 
+                if (Math.floor(lastRect.bottom - beforeLastRect.bottom) < 1) {
+                    touchingBottom = true;
+                }
+                changed = !(touchingLeft && touchingBottom);
+            }
+            let [lastEndNode, lastEndNodeIndex] = last || [null, null];
+            last = [endNode, endNodeIndex];
+            if(changed) {
                 // We went one to far, hence using the last position.
                 currentLine.range.setEnd(lastEndNode, lastEndNodeIndex);
                 yield currentLine;
@@ -582,7 +564,7 @@ function* reverseArrayIterator(array) {
         yield [array[i], i];
 }
 
-function markupLine(line, index) {
+function markupLine(line, index, nextLineTextContent) {
     let {range, nodes} = line
       , filtered = []
       , lineElements = []
@@ -610,15 +592,22 @@ function markupLine(line, index) {
         filtered.push([node, startIndex, endIndex]);
     }
 
+    if(!filtered.length) {
+        return;
+    }
+
     // FIXME: add all punctuation and "white-space" etc. that breaks lines
     let lineBreakers = new Set([' ', '-', '—', '.', ',', '\n']);
     let addHyphen = false;
     {
         let [node, , endIndex] = filtered[filtered.length-1];
-        // If the last character is not a line breaking character.
         // FIXME: there are other heuristics/reasons to not add a hyphen!
-        //        but the error is not always here.
-        if(!lineBreakers.has(node.data[endIndex-1])) {
+        //        but the error is not always in here.
+        // If the last character is not a line breaking character,
+        // e.g. in Firefox after sectioning headlines, I get hyphens.
+        if(nextLineTextContent && nextLineTextContent.length
+                && !lineBreakers.has(nextLineTextContent[0])
+                && !lineBreakers.has(node.data[endIndex-1])) {
             addHyphen = true;
         }
     }
@@ -650,7 +639,7 @@ function markupLine(line, index) {
     //
     // OK, this is all I need so far.
     filtered = filtered.filter(([node])=>{
-        // Remove if node is only whites pace and node.previousSibling is
+        // Remove if node is only white space and node.previousSibling is
         // an element and 'block'.
         // If the previous sibling is a comment, we should skip that
         // but it could be <h2><comment><whitespace><comment><this node whitespace>
@@ -729,8 +718,16 @@ let elem = document.querySelector('.runion-01');
 let lines = Array.from(findLines(elem));
 
 // Do it from end to start, so all offsets stay valid.
-for(let line_index of reverseArrayIterator(lines))
-    markupLine(...line_index);
+
+// FIXME: this nextLineTextContent is not exactly beautiful, can I do better?
+// It's rather robust though, look at the next line as well to determine
+// if a hyphen is needed. Maybe, I should collect inter-line white space.
+let nextLineTextContent;
+for(let line_index of reverseArrayIterator(lines)) {
+    let textContent = line_index[0].range.toString();
+    markupLine(...line_index, nextLineTextContent);
+    nextLineTextContent = textContent;
+}
 
 }
 window.findLines = justify;
