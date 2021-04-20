@@ -55,7 +55,7 @@ export default class DOMTool {
 
       if(attr) for(let k in attr) {
           if(k === 'xmlns')
-              continue
+              continue;
           elem.setAttribute(k, attr[k]);
       }
 
@@ -275,6 +275,26 @@ export default class DOMTool {
           results[attr] = elem.getAttribute(attr);
       return results;
   }
+
+  static getElementSizesInPx(elem, ...properties) {
+    // At the moment asserting expecting all queried properties
+    // to return "px" values.
+    var style = elem.ownerDocument.defaultView.getComputedStyle(elem)
+      , result = []
+      ;
+    for(let p of properties) {
+        let vStr = style[p];
+        if(vStr.slice(-2) !== 'px')
+            throw new Error(`Computed style of "${p}" did not yield a "px" value: ${vStr}`);
+        let val = parseFloat(vStr.slice(0, -2));
+        if(val !== val)
+            throw new Error(`Computed style of "${p}" did not parse to an integer: ${vStr}`);
+        result.push(val);
+    }
+    return result;
+}
+
+
 }
 
 // static functions to methods, these don't require the `this` state
@@ -290,4 +310,5 @@ DOMTool.prototype.getMarkerComment = DOMTool.getMarkerComment;
 DOMTool.prototype.insertAtMarkerComment = DOMTool.insertAtMarkerComment;
 DOMTool.prototype.clear = DOMTool.clear;
 DOMTool.prototype.validateChildEvent = DOMTool.validateChildEvent;
-
+DOMTool.prototype.getElementSizesInPx = DOMTool.getElementSizesInPx;
+export const getElementSizesInPx = DOMTool.getElementSizesInPx;
