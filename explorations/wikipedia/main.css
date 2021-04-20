@@ -970,8 +970,13 @@ i, cite, em, var, dfn {
       -ms-hyphens: auto;
            hyphens: auto;
 
-    text-align: justify;
-    text-justify: inter-word;  /* auto is OK so far as well*/
+    text-align: left;
+    /* text-align: justify;
+     * We'll do the justification ourselves, initially, left-aligned is
+     * required, because we can use it to measure the empty that is
+     * left on the line.
+     */
+    /*text-justify: inter-word;   auto is OK so far as well*/
 
     /* Firefox does not support these! */
     orphans: 3;
@@ -1013,10 +1018,11 @@ i, cite, em, var, dfn {
  * but it looks good so far.
 
 Now set directly as element style in line containment protocol...
+ */
 .runion-line {
     xx-white-space: nowrap;
 }
- */
+
 
 
 /**
@@ -1030,11 +1036,17 @@ Now set directly as element style in line containment protocol...
     xx-display: block;
 }
 */
+
+.runion-line.r00-l-first::before,
 .line-containment::before{
     content: '';
     display: block;
 }
 
+/* --line-info-data */
+.r00-l-first:hover::before {
+    content: var(--line-info-data);
+}
 
 /*
  * This fixes line wrapping, not changing in Chrome (nor Firefox). This
@@ -1042,9 +1054,14 @@ Now set directly as element style in line containment protocol...
  * and the other lines are justified by word-space, exactly what we are
  * looking for.
  * The heuristic that the adds the hyphen class may still have flaws!
+ *
+ * One problem I see here, if I want to break the line intentionally
+ * or if it just happens for some reason, the hyphen will stay within
+ * the word.
  */
 .runion-line.r00-l-hyphen::after {
-    content: '-';
+    content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
+                     doesn't do anything*/
 }
 
 

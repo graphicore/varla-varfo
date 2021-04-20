@@ -716,6 +716,26 @@ function* findLines(elem) {
     }
 }
 
+
+function getClosestBlockParent(node) {
+  // if node is a block it will be returned
+  let elem;
+  if(node.type === Node.ELEMENT_NODE)
+    elem = node;
+  else
+    elem = node.parentElement;
+
+  while(true){
+      // Used to identify a block element, elem.clientWidth is 0 for inline
+      // elements. To futher distinguish, elem.getBoundlingClientRect()
+      // would return for an inline and a block element a width, that is
+      // also for an inline element not 0 (unless is may be empty?).
+      if(elem.clientWidth !== 0)
+      // got a block
+      return elem;
+    elem = elem.parentNode;
+  }
+}
 function* reverseArrayIterator(array) {
     for(let i=array.length-1;i>=0;i--)
         yield [array[i], i];
@@ -756,6 +776,8 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     }
 
     // FIXME: add all punctuation and "white-space" etc. that breaks lines.
+    // not too sure about ] and ) but I've seen a line-break after a ] in
+    // a foot note link (inside a <sup>.
     let lineBreakers = new Set([' ', '-', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
     let addHyphen = false;
     {
@@ -874,7 +896,11 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     return lineElements;
 }
 
-function justifyLine(container, elements) {
+
+// This is terribly slow, but it works most of the time/for most of
+// the lines, It's also just a proof of concept and not what we're
+// going to do eventually.
+function OLD_justifyLine(container, elements) {
     //get the line height
 
     //if the height of all elements getBoundingClientRect is bigger than
@@ -966,7 +992,79 @@ function justifyLine(container, elements) {
     else {
         growToFit();
     }
+}
 
+function justifyLine(container, lineElements) {
+    let lineRange = new Range()
+      , lastNode = lineElements[lineElements.length-1]
+      , lineParent
+      , parentRects
+      ;
+    lineRange.setStart(lineElements[0], 0);
+    lineRange.setEnd(lastNode, lastNode.childNodes.length);
+    // lineParent = lineRange.commonAncestorContainer;
+    // if(lineParent === lineElements[0]){
+    //     console.log('commonAncestorContainer is line node');
+    // }
+    // This is probably very robust.
+    lineParent = getClosestBlockParent(lineElements[0]);
+
+    if(lineParent === container) {
+        console.log('DON\'T KNOW (yet) what to do: lineParent === container');
+        return;
+    }
+    parentRects = lineParent.getClientRects();
+    // expect all of the line to be
+
+    // Using this: lineElements[0].getClientRects()[0]
+    // fails in firefox when we force .runion-line.r00-l-first::before
+    // to break (what we do). The first rect is the breaking rect with a
+    // width of zero. The lineRange.getClientRects() don't have this issue.
+    let rectOfFirstLine = lineRange.getClientRects()[0]
+      , rectOfLine
+      , i=0
+      ;
+    for(let rect of parentRects) {
+
+        // if rectOfFirstLine is in rectOfLine we got a hit
+        // console.log('rectOfFirstLine', rectOfFirstLine, 'rect', rect, i++);
+        if(        rectOfFirstLine.top >= rect.top
+                && rectOfFirstLine.bottom <= rect.bottom
+                && rectOfFirstLine.left >= rect.left
+                && rectOfFirstLine.right <= rect.right) {
+            rectOfLine = rect;
+            break;
+        }
+        // console.log('did not fit', i++, 'rectOfFirstLine', rectOfFirstLine ,
+        //      '\nrect', rect, '\n',
+        //       parentRects, '\n', lineParent,
+        //       lineRange.getClientRects()
+        //       );
+        // console.log(rectOfFirstLine.top, '>=', rect.top, rectOfFirstLine.top >= rect.top);
+        // console.log(rectOfFirstLine.bottom, '<=', rect.bottom, rectOfFirstLine.bottom <= rect.bottom);
+        // console.log(rectOfFirstLine.left, '>=', rect.left, rectOfFirstLine.left >= rect.left);
+        // console.log(rectOfFirstLine.right, '<=', rect.right, rectOfFirstLine.right <= rect.right);
+    }
+    let style = lineParent.ownerDocument.defaultView.getComputedStyle(lineParent);
+    let widthPaddings = getElementSizesInPx(lineParent, 'padding-left', 'padding-right');
+
+    // Looks all plausible!
+    // FIXME: Does not take into account a first-line text-indent.
+    // Last lines should not be justified ever.
+    let availableLineLength = rectOfLine.width - widthPaddings[0] - widthPaddings[1]
+      , actualLineLength = lineRange.getBoundingClientRect().width
+      , availableWhiteSpace = availableLineLength - actualLineLength
+      ;
+    //console.log('availableWhiteSpace', availableWhiteSpace, '...',
+    //    actualLineLength, '/', availableLineLength , '=',
+    //    actualLineLength / availableLineLength);
+
+    // will be 1 for ideal lines and > 1 for less than full lines
+    var wsRatio = actualLineLength / availableLineLength;
+    var hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`;
+    for(let elem of lineElements) {
+        elem.style.background = hslColor;
+    }
 }
 
 function justify() {
@@ -974,19 +1072,26 @@ function justify() {
 let elem = document.querySelector('.runion-01');
 let lines = Array.from(findLines(elem));
 
+
 // Do it from end to start, so all offsets stay valid.
 
 // FIXME: this nextLineTextContent is not exactly beautiful, can I do better?
 // It's rather robust though, look at the next line as well to determine
 // if a hyphen is needed. Maybe, I should collect inter-line white space.
-let nextLineTextContent
+let nextLineTextContent = ''
+  , nextLinePrecedingWhiteSpace = ''
   , elementLines = []
   ;
 for(let line_index of reverseArrayIterator(lines)) {
-    let textContent = line_index[0].range.toString();
-    let lineElements = markupLine(...line_index, nextLineTextContent);
+    let [line, ] = line_index
+      , precedingWhiteSpace = line.wsTextContent
+      , textContent = line.range.toString()
+      , lineElements = markupLine(...line_index, nextLinePrecedingWhiteSpace, nextLineTextContent)
+      ;
+
     if(lineElements)
         elementLines.unshift(lineElements);
+    nextLinePrecedingWhiteSpace = precedingWhiteSpace;
     nextLineTextContent = textContent;
 }
 
@@ -999,7 +1104,7 @@ async function* justifyLineGenerator() {
     for(let [i, lineElements] of elementLines.entries()) {
         justifyLine(elem, lineElements);
         if(i === 51) {
-            console.log('stoping due to dev iterations limit');
+            console.log('STOPING justifyLine due to dev iterations limit', i);
             return;
         }
         yield await new Promise((resolve, reject)=>{
@@ -1014,7 +1119,7 @@ let runJustifyLine = (async function() {
     }
 });
 
-// runJustifyLine();
+runJustifyLine();
 
 
 
