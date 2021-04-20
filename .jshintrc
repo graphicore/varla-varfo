@@ -1,0 +1,13 @@
+{
+    "browser": true,
+    "esversion": 9,
+    "freeze": true,
+    "eqeqeq": true,
+    "laxcomma": true,
+    "laxbreak": true,
+    "undef": true,
+    "unused": true,
+    "globals": {
+
+    }
+}
