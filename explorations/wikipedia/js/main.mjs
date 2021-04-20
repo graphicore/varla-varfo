@@ -410,8 +410,32 @@ function _deepText(node) {
     return all;
 }
 
+/**
+ * In https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Whitespace#whitespace_helper_functions
+ * we find this regex that is not "\s" originally called "is_all_ws":
+ *
+ *
+ * Throughout, whitespace is defined as one of the characters
+ *  "\t" TAB \u0009
+ *  "\n" LF  \u000A
+ *  "\r" CR  \u000D
+ *  " "  SPC \u0020
+ *
+ * This does not use Javascript's "\s" because that includes non-breaking
+ * spaces (and also some other characters).
+ */
+
+/**
+ * Determine whether a node's text content is entirely whitespace.
+ *
+ * @param nod  A node implementing the |CharacterData| interface (i.e.,
+ *             a |Text|, |Comment|, or |CDATASection| node
+ * @return     True if all of the text content of |nod| is whitespace,
+ *             otherwise false.
+ */
 function _isWhiteSpaceTextNode(node) {
-    return /^\s+$/g.test(node.data);
+  // Use ECMA-262 Edition 3 String and RegExp features
+  return !(/[^\t\n\r ]/.test(node.data));
 }
 
 function _hasNoSizeTextNode(node){
@@ -422,6 +446,130 @@ function _hasNoSizeTextNode(node){
     return bounds.width === 0 && bounds.height === 0;
 }
 
+
+const WHITESPACE = new Set([' ', '\t', '\r', '\n']);
+
+class Line {
+    constructor() {
+        this.range = new Range();
+        this.nodes =  [];
+        // Collect the whitespace before the line separately.
+        this.wsNodes = [];
+        this.wsTextContent = '';
+        this.wsRange = new Range();
+        this._collectWhitespace = true;
+    }
+
+    _addNodeIndex(range, nodes, node, index) {
+        if(!nodes.length) {
+            range.setStart(node, index);
+        }
+        range.setEnd(node, index);
+        if(nodes[nodes.length-1] !== node) {
+            nodes.push(node);
+        }
+    }
+
+    setIndex(node, index) {
+        if(this.collectWhitespace
+                 // not a new node
+                 && this.wsRange.endContainer === node
+                 // This is important, seems like these double sometimes
+                 // when coming from this.collectWhitespace.
+                 && this.wsRange.endOffset < index
+                 && !WHITESPACE.has(node.data[index-1])) {
+            // first none-whitespace data
+            this.collectWhitespace = false;
+            this._addNodeIndex(this.range, this.nodes,
+                    this.wsRange.endContainer, this.wsRange.endOffset);
+        }
+
+
+        if(this.collectWhitespace) {
+            this._addNodeIndex(this.wsRange, this.wsNodes, node, index);
+        }
+        else {
+            this._addNodeIndex(this.range, this.nodes, node, index);
+        }
+    }
+    undoSetIndex(node, index) {
+        // only done once at the end of the line, we know that node
+        // must be in this.nodes
+        let nodes, range;
+        if(this.collectWhitespace) {
+            nodes = this.wsNodes;
+            range = this.wsRange;
+        }
+        else {
+            nodes = this.nodes;
+            range = this.range;
+        }
+        while(node !== nodes[nodes.length-1]) {
+            nodes.pop();
+            if(!nodes.length)
+                throw new Error('Node not found in nodes!');
+        }
+        this.setIndex(node, index);
+    }
+    set collectWhitespace(val) {
+        if(val !== false)
+            throw new Error('Line.collectWhitespace can only be set to false.');
+        if(!this._collectWhitespace)
+            return;
+        this._collectWhitespace = false;
+        // Preserving the textContent, as the nodes/selection will become
+        // invalid.
+        this.wsTextContent = this.wsRange.toString();
+    }
+    get collectWhitespace() {
+        return this._collectWhitespace;
+    }
+    removeWhiteSpaceFromEndOfLine() {
+        let endIndex = this.range.endOffset
+          , endNode = this.range.endContainer
+           // after this, the line ends without cleaning whitespace
+           // so it's for now our a natural bound for the next line.
+          , collected = [[endNode, endIndex]]
+          ;
+
+        if(endNode !== this.nodes[this.nodes.length-1]) {
+            // I think this will never fire, but I may be mistaken, let's see!
+            throw new Error('Assertion Failed: '
+                    + 'this.range.endContainer !== last node of this.nodes.');
+        }
+        while(true) {
+            if(endIndex === 0) {
+                // we reached the start/boundary of endNode
+                // remove that node, it now belongs wholly to whitespace
+                this.nodes.pop();
+                // set the start of endNode as a start for whitespace
+                collected.push([endNode, 0]);
+                endNode = this.nodes[this.nodes.length-1];
+                if(!endNode) {
+                    //  we are out of nodes! this is probably an empty line!!!
+                    break;
+                }
+                endIndex = endNode.data.length;
+                // Set the "end index" of the next node to start the search
+                // for witespace.
+                collected.push([endNode, endIndex]);
+                continue;// re-evaluate the new endIndex
+            }
+            if(WHITESPACE.has(endNode.data[endIndex-1])) {
+                endIndex -= 1;
+                continue;
+            }
+            // else
+            // after this: whitespace or emptiness
+            // before this: no whitespace
+            collected.push([endNode, endIndex]);
+            break;
+        }
+        collected.reverse();
+        this.setIndex(...collected[0]);
+        return collected;
+    }
+}
 /**
  * Find lines that the browser has composed by using Range objects
  * and their getBoundingClientRect.
@@ -435,14 +583,6 @@ function* findLines(elem) {
     var textNodes = _deepText(elem)
       , currentLine = null
       , last = null
-      , newLine = (node, index)=>{
-            let line = {
-                range: new Range()
-              , nodes: [node]
-            };
-            line.range.setStart(node, index);
-            return line;
-        }
       ;
     // NOTE: i/maxI is for development and debugging only to limit
     // the algorithm.
@@ -450,6 +590,7 @@ function* findLines(elem) {
     for(let ti=0, tl=textNodes.length;ti<tl && i<maxI;ti++) {
         let endNode = textNodes[ti];
         let endNodeIndex = 0;
+
         // Seems necessary to keep/not filter some of these e.g.
         // keep ' ' when tuning word-space, also for detecting if
         // a line break was caused by white-space or hyphenation.
@@ -473,8 +614,7 @@ function* findLines(elem) {
             continue;
         // this is only done initialy once
         if(!currentLine) {
-            // a range can be 0 length, so initially start and end can be the same
-            currentLine = newLine(endNode, endNodeIndex);
+            currentLine = new Line();
         }
         while(i<maxI) {
             // TODO: This whole block is expensive, we should reduce the
@@ -484,6 +624,11 @@ function* findLines(elem) {
             // values is not ideal either.
             // getClientRects() in a context of textNodes will give
             // a DOMRect per line a node covers.
+            //
+            // If endNode.data.length === endNodeIndex this is the ending
+            // index of he node, i.e. after the last element.
+            // if endNode.data.length > endNodeIndex this is an index that
+            // adresses a char directly.
             if(endNode.data.length < endNodeIndex)
                 // this should reliably prevent the IndexSizeError
                 // when setting currentLine.range.setEnd(endNode, endNodeIndex);
@@ -491,7 +636,12 @@ function* findLines(elem) {
                 // the error is in the git history.
                 break;
             i++;
-            currentLine.range.setEnd(endNode, endNodeIndex);
+            currentLine.setIndex(endNode, endNodeIndex);
+            if(currentLine.collectWhitespace === true){
+                endNodeIndex += 1;
+                continue;
+            }
+
 
             // FIXME: current known glitches:
             //   * Chromium and Firefox
@@ -542,18 +692,25 @@ function* findLines(elem) {
             last = [endNode, endNodeIndex];
             if(changed) {
                 // We went one to far, hence using the last position.
-                currentLine.range.setEnd(lastEndNode, lastEndNodeIndex);
+                // this probably already clears most of the whitespace
+                // we'd remove in the next step, but this is the first
+                // obvious thing to do to undo the line breaking itself.
+                currentLine.undoSetIndex(lastEndNode, lastEndNodeIndex);
+                // from the end of the range remove selected whitespace
+                // " ", "\t" "\r" "\n"
+                let whiteSpaceNodeIndexes = currentLine.removeWhiteSpaceFromEndOfLine();
                 yield currentLine;
-                currentLine = newLine(lastEndNode, lastEndNodeIndex);
+                currentLine = new Line();
+                for(let [wsNode, wsIndex] of whiteSpaceNodeIndexes) {
+                    currentLine.setIndex(wsNode, wsIndex);
+                }
+                currentLine.setIndex(lastEndNode, lastEndNodeIndex);
+                // Now, the next iteration will be: endNode, endNodeIndex
             }
             else {
-
                 // If we start a new line we don't do this and try
                 // this endNode + endNodeIndex again
                 endNodeIndex += 1;
-                if(currentLine.nodes[currentLine.nodes.length-1] !== endNode) {
-                    currentLine.nodes.push(endNode);
-                }
             }
         }
     }
@@ -564,7 +721,7 @@ function* reverseArrayIterator(array) {
         yield [array[i], i];
 }
 
-function markupLine(line, index, nextLineTextContent) {
+function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextContent) {
     let {range, nodes} = line
       , filtered = []
       , lineElements = []
@@ -593,11 +750,13 @@ function markupLine(line, index, nextLineTextContent) {
     }
 
     if(!filtered.length) {
+        // maybe we don't need this anymore!
+        console.log('Removed a line at:', index);
         return null;
     }
 
-    // FIXME: add all punctuation and "white-space" etc. that breaks lines
-    let lineBreakers = new Set([' ', '-', '—', '.', ',', '\n']);
+    // FIXME: add all punctuation and "white-space" etc. that breaks lines.
+    let lineBreakers = new Set([' ', '-', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
     let addHyphen = false;
     {
         let [node, , endIndex] = filtered[filtered.length-1];
@@ -605,7 +764,8 @@ function markupLine(line, index, nextLineTextContent) {
         //        but the error is not always in here.
         // If the last character is not a line breaking character,
         // e.g. in Firefox after sectioning headlines, I get hyphens.
-        if(nextLineTextContent && nextLineTextContent.length
+        if(        !nextLinePrecedingWhiteSpace.length
+                && nextLineTextContent.length
                 && !lineBreakers.has(nextLineTextContent[0])
                 && !lineBreakers.has(node.data[endIndex-1])) {
             addHyphen = true;
@@ -682,6 +842,7 @@ function markupLine(line, index, nextLineTextContent) {
     // white space only first line (.r00-l-first nodes) seem
     // unnecessary as well:
     // for(let node of document.querySelectorAll('.r00-l-first')) {
+    //       // NOTE: don't use \s
     //       if(/^\s+$/g.test(node.textContent)) console.log(node);
     // }
 
@@ -834,7 +995,6 @@ for(let line_index of reverseArrayIterator(lines)) {
 //       break;
 //    justifyLine(elem, lineElements);
 //}
-
 async function* justifyLineGenerator() {
     for(let [i, lineElements] of elementLines.entries()) {
         justifyLine(elem, lineElements);
@@ -854,7 +1014,7 @@ let runJustifyLine = (async function() {
     }
 });
 
-runJustifyLine();
+// runJustifyLine();
 
 
 
