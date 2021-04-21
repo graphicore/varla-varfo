@@ -737,22 +737,30 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     // width of zero. The lineRange.getClientRects() don't have this issue.
     let rectOfFirstLine = lineRange.getClientRects()[0]
       , rectOfLine
+      // , i=0
       ;
     for(let rect of parentRects) {
 
         // If rectOfFirstLine is contained in rectOfLine we got a hit.
-        if(        rectOfFirstLine.top >= rect.top
-                && rectOfFirstLine.bottom <= rect.bottom
-                && rectOfFirstLine.left >= rect.left
+
+        // FIXME: top and bottom tests failed with very small line-space
+        // which is normal, now that the runion reduces line-space down
+        // to 1, and now we get some ovwerflow.
+        // If left/right is a fit, we're at least in the correct column.
+        // would be nice to have this very accurate though, so we can
+        // rely on it.
+        if(     //   rectOfFirstLine.top >= rect.top
+                //   rectOfFirstLine.bottom <= rect.bottom
+                   rectOfFirstLine.left >= rect.left
                 && rectOfFirstLine.right <= rect.right) {
             rectOfLine = rect;
             break;
         }
         // console.log('did not fit', i++, 'rectOfFirstLine', rectOfFirstLine ,
-        //      '\nrect', rect, '\n',
-        //       parentRects, '\n', lineParent,
-        //       lineRange.getClientRects()
-        //       );
+        //     '\nrect', rect, '\n',
+        //     parentRects, '\n', lineParent,
+        //     lineRange.getClientRects()
+        //     );
         // console.log(rectOfFirstLine.top, '>=', rect.top, rectOfFirstLine.top >= rect.top);
         // console.log(rectOfFirstLine.bottom, '<=', rect.bottom, rectOfFirstLine.bottom <= rect.bottom);
         // console.log(rectOfFirstLine.left, '>=', rect.left, rectOfFirstLine.left >= rect.left);

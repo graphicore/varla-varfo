@@ -285,11 +285,28 @@ function _runion_01_columns(availableWidthEn) {
      *    as well, but it will be hard to calculate within this algorithm as
      *    it is.
      */
+    const minLineLength = 33
+       , maxLineLength = 65
+        // at minimal line length === 1
+        // at maximal line length === 1.2
+        // otherwise inbetween.
+        // never smaller than 1
+       , minLineHeight = 1
+       , maxLineHeight = 1.2
+       , calcLineHeight=(lineLengthEn)=>{
+            const lineLengthPos = lineLengthEn-minLineLength
+                , lineLengthRange = maxLineLength - minLineLength
+                , ratio = lineLengthPos/lineLengthRange
+                , raw = minLineHeight + ((maxLineHeight-minLineHeight) * ratio)
+                ;
+            return Math.min(maxLineHeight, Math.max(minLineHeight, raw));
+         }
+       ;
     var columnConfig = [
         [ 0, 65, 0]  // 1
-      , [33, 65, 3] // 2
-      , [33, 50, 2.5] // 3
-      , [33, 40, 2] // 4
+      , [minLineLength, maxLineLength, 3] // 2
+      , [minLineLength, 50, 2.5] // 3
+      , [minLineLength, 40, 2] // 4
     ];
     for(let columns=1,max=columnConfig.length; columns<=max; columns++) {
         let [minLineLength, maxLineLength, columnGapEn] = columnConfig[columns-1]
@@ -300,10 +317,11 @@ function _runion_01_columns(availableWidthEn) {
           , paddingRightEn = 0
           , gaps = columns - 1
           , lineLengthEn = (availableWidthEn - (gaps * columnGapEn)) / columns
+          , lineHeight = calcLineHeight(lineLengthEn)
           ;
         if(lineLengthEn > minLineLength && lineLengthEn <= maxLineLength)
             // compose
-            return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
+            return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn, lineHeight];
     }
 
     // Add padding, we don’t use more than the configured columns.
@@ -327,9 +345,10 @@ function _runion_01_columns(availableWidthEn) {
             // Another strategy could be e.g. to distribute the padding to the right only.
           , paddingLeftEn = paddingEn * 3/5
           , paddingRightEn = paddingEn * 2/5
+          , lineHeight = calcLineHeight(lineLengthEn)
           ;
         // compose
-        return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
+        return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn, lineHeight];
     }
     // With a proper config this should not be possible (1 column min-width = 0),
     // thus, if this happens we must look at the case and figure out what to do.
@@ -354,13 +373,17 @@ function runion_01 (elem) {
       , compensateForError = 0
       , availableWidthEn = (widthPx - compensateForError) / enInPx
       , [columns, lineLengthEn, columnGapEn, paddingLeftEn,
-                    paddingRightEn] = _runion_01_columns(availableWidthEn);
+                    paddingRightEn, lineHeight] = _runion_01_columns(availableWidthEn);
 
     elem.style.setProperty('--column-count', `${columns}`);
     elem.style.setProperty('--column-gap-en', `${columnGapEn}`);
     elem.style.setProperty('--column-width-en', `${lineLengthEn}`);
     elem.style.setProperty('--padding-left-en', `${paddingLeftEn}`);
     elem.style.setProperty('--padding-right-en', `${paddingRightEn}`);
+    elem.style.setProperty('--line-height', `${lineHeight}`);
+
+
+
     // Debugging stuff:
     // elem.style.setProperty('--available-width-en', `${availableWidthEn}`);
     // elem.style.setProperty('--mesured-width-px', `${widthPx}`);
@@ -377,7 +400,7 @@ function runion_01 (elem) {
 window.justify = () =>{
     let elem = document.querySelector('.runion-01');
     return justify(elem);
-}
+};
 
 function massageWikipediaMarkup(document) {
     document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');

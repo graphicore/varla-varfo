@@ -750,7 +750,15 @@ word-spacing: calc(1em * var(--word-space));
  * but from :root{--font-size: 12;}
  */
 --x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
---x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
+/* FIXME: not sure if the distance change should be implemented here!
+ * actually, the runion takes care of --line-height, so it should do this
+ * as well.
+ * I wonder if the following meant that for some distances we want to
+ * have line-space bigger than 1.2 but never smaller than, or if it
+ * was a mix up between min and max, and min was meant.
+ * --x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
+ */
+--x-line-height: max(1, min(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05))));
 --x-font-grade: calc(var(--font-grade) + var(--font-grade-color-scheme-adjust, 0));
 
 --x-font-stretch: calc(var(--font-stretch) + var(--font-stretch-change, 0));
@@ -1030,6 +1038,10 @@ Now set directly as element style in line containment protocol...
      * Also done by inactive "line-containment", which checks if a line breaks.)
      */
     white-space: nowrap;
+    /* with small line-heights and color coded line backgrounds, we
+     * tend to clip descenders.
+     */
+    mix-blend-mode: darken;
 }
 
 
