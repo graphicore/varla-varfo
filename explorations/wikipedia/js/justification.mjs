@@ -1680,9 +1680,7 @@ function doJustification() {
  ****/
 
 // for development:
-export function justify(options) {
-
-    let elem = document.querySelector('.runion-01');
+export function justify(elem, options) {
     let lines = Array.from(findLines(elem));
 
     let relweight
@@ -1766,8 +1764,42 @@ export function justify(options) {
     });
 
     runJustifyLine();
+    // TODO: if  justify is still running (async execution mode)
+    //       it must be possible to abort it. Therefore, the caller
+    //       must provide an `abort` function
+    let abort = ()=>console.warn('Not implemented justify->abort().')
+      , unjustify = ()=>{
+            abort();
+            _unjustify(elem, elementLines);
+    }
+    return {unjustify: unjustify, abort: abort};
 }
 
+function _unjustify(container, elementLines) {
+    console.log('unjustify');
+    for(let line of elementLines){
+        for(let elem of line) {
+            elem.replaceWith(...elem.childNodes);
+        }
+    }
+    // From MDN:
+    //   > The Node.normalize() method puts the specified node and all of its
+    //   > sub-tree into a "normalized" form. In a normalized sub-tree, no text
+    //   > nodes in the sub-tree are empty and there are no adjacent text nodes.
+    //
+    // Without this, running unjustify seems to fix the markup, but
+    // re-running justify afterwards creates lines as if each span of
+    // the previous run is on it's own line. could be an internal browser
+    // caching thing, however, it appears in Firefox and Chromium.
+    //
+    // This is likely due to the fact that we check if client-rects are
+    // touching and that we don't include line separating whitespace
+    // in the lines, which become fragment whitespace nodes eventually.
+    // There could be a fix in the findLines algorithm as well. Running
+    // `container.normalize()` always before findLines on the other hand
+    // would likely make it more resilient.
+    container.normalize();
+}
 
 // TODO before doing actual justification:
 //  * collect whitespace and empty nodes between lines

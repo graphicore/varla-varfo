@@ -1,7 +1,7 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
 import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
-import {justify as justify} from './justification.mjs';
+import {justify} from './justification.mjs';
 
 const PORTAL_AUGMENTATION_TEMPLATE = `
 <fieldset>
@@ -374,7 +374,10 @@ function runion_01 (elem) {
 }
 
 // temporary global exposure to run directly via dev-tool.
-window.findLines = justify;
+window.justify = () =>{
+    let elem = document.querySelector('.runion-01');
+    return justify(elem);
+}
 
 function massageWikipediaMarkup(document) {
     document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
