@@ -605,20 +605,124 @@ function OLD_justifyLine(container, elements) {
     }
 }
 
-function justifyLine(container, lineElements) {
+
+function _approachZero(min, max, value, control) {
+    // More nextValue/value means control gets smaller, eventually it
+    // becomes negative. If control is < 0 value must get smaller and if
+    // control is > 0 value must grow.
+    let nextValue = value;
+    if (control < 0) {
+        // in the middle between now and min
+        nextValue = (value + min) / 2;
+        if(value < max)
+            // Otherwise, original max should be faster next round.
+            max = value;
+    }
+    else if(control > 0) {
+        // in the middle between now and max
+        nextValue = (value + max) / 2;
+        if(value > min)
+            // Otherwise, original min should be faster next round.
+            min = value;
+    }
+    return [min, max, nextValue];
+}
+
+/**
+ * NOTE: this generator keeps internal state (and that's it's sole purpose),
+ * it should be called consecutively, not intermittently with other generators
+ * that manipulate the same control/value.
+ */
+function* _approachZeroGenerator(originalMin, originalMax, initialValue) {
+    let currentMin = originalMin
+      , currentMax = originalMax
+      , value = initialValue
+      , control
+      ;
+    while (true) {
+        // The intial yield is not that interesting, as we changed nothing yet, we use
+        // it to aquire the inital value of control.
+        control = yield value;
+        [currentMin, currentMax, value] = _approachZero(currentMin, currentMax, value, control);
+
+    }
+}
+
+function* _justifyByGenerator(setVal, readVal, originalMin, originalMax, tries=10) {
+    let control = yield true
+      , value = readVal() /*initial value*/
+      , ctrlGen = _approachZeroGenerator(originalMin, originalMax, value)
+      ;
+    // The initial call is required to prime the generator
+    // with the initial control value.
+    ctrlGen.next(control);
+    // assert ctrVal.value === value
+    while(tries--) {
+        // not god enough
+        let ctrVal = ctrlGen.next(control);
+        if(ctrVal.done)
+            // the generator gave up
+            break;
+
+        if (Math.abs(value - ctrVal.value) / (originalMax - originalMin) < 0.005) {
+            // Close enough. I think this is to end the control system,
+            // once the size of the next change compared to the magnitude
+            // of the overall change value range is getting very small.
+            //
+            // It reads something like this: If the ratio of the
+            // difference between next and current value (cnew - cnow)
+            // and the difference between the original max and min values
+            // is smaller than 0.005.
+            break;
+        }
+        value = ctrVal.value;
+        setVal(ctrVal.value);
+        // read from outside
+        control = yield true;
+    }
+}
+
+/**
+ * from https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Whitespace#whitespace_helper_functions
+ *
+ * was called data_of(txt)
+ * Version of |data| that doesn't include whitespace at the beginning
+ * and end and normalizes all whitespace to a single space.  (Normally
+ * |data| is a property of text nodes that gives the text of the node.)
+ *
+ * @param txt  The text node whose data should be returned
+ * @return     A string giving the contents of the text node with
+ *             whitespace collapsed.
+ */
+function _whiteSpaceNormalize( txt ) {
+    // Use ECMA-262 Edition 3 String and RegExp features
+    txt = txt.replace(/[\t\n\r ]+/g, " ");
+    if (txt.charAt(0) === " ")
+      txt = txt.substring(1, txt.length);
+    if (txt.charAt(txt.length - 1) === " ")
+      txt = txt.substring(0, txt.length - 1);
+    return txt;
+}
+
+function justifyLine(container, lineElements, fontSizePx, tolerances) {
     let lineRange = new Range()
+      , firstNode = lineElements[0]
       , lastNode = lineElements[lineElements.length-1]
       , lineParent
       , parentRects
+      , setPropertyToLine = (name, value)=>{
+            for(let elem of lineElements) {
+                elem.style.setProperty(name, value);
+            }
+        }
+      , _lineStyleForAll = firstNode.ownerDocument.defaultView.getComputedStyle(firstNode)
+      , getPropertyFromLine = (name)=>_lineStyleForAll.getPropertyValue(name)
       ;
-    lineRange.setStart(lineElements[0], 0);
+    lineRange.setStart(firstNode, 0);
     lineRange.setEnd(lastNode, lastNode.childNodes.length);
-    // lineParent = lineRange.commonAncestorContainer;
-    // if(lineParent === lineElements[0]){
-    //     console.log('commonAncestorContainer is line node');
-    // }
-    // This is probably very robust.
-    lineParent = getClosestBlockParent(lineElements[0]);
+    // This is probably very robust, as long as we have block/inline elements.
+    // Needs refinements when more display types must be supported.
+    lineParent = getClosestBlockParent(firstNode);
 
     if(lineParent === container) {
         console.log('DON\'T KNOW (yet) what to do: lineParent === container');
@@ -627,18 +731,16 @@ function justifyLine(container, lineElements) {
     parentRects = lineParent.getClientRects();
     // expect all of the line to be
 
-    // Using this: lineElements[0].getClientRects()[0]
+    // Using this: firstNode.getClientRects()[0]
     // fails in firefox when we force .runion-line.r00-l-first::before
     // to break (what we do). The first rect is the breaking rect with a
     // width of zero. The lineRange.getClientRects() don't have this issue.
     let rectOfFirstLine = lineRange.getClientRects()[0]
       , rectOfLine
-      //, i=0
       ;
     for(let rect of parentRects) {
 
-        // if rectOfFirstLine is in rectOfLine we got a hit
-        // console.log('rectOfFirstLine', rectOfFirstLine, 'rect', rect, i++);
+        // If rectOfFirstLine is contained in rectOfLine we got a hit.
         if(        rectOfFirstLine.top >= rect.top
                 && rectOfFirstLine.bottom <= rect.bottom
                 && rectOfFirstLine.left >= rect.left
@@ -659,22 +761,255 @@ function justifyLine(container, lineElements) {
     // let style = lineParent.ownerDocument.defaultView.getComputedStyle(lineParent);
     let widthPaddings = getElementSizesInPx(lineParent, 'padding-left', 'padding-right');
 
-    // Looks all plausible!
-    // FIXME: Does not take into account a first-line text-indent.
-    // Last lines should not be justified ever.
+    // The values below looked all plausible.
+    // FIXME: Does not take into account:
+    //                      - first-line text-indent
+    //                      - floats around this line (we don't do this yet)
+    //        Last lines should not be justified ever.
     let availableLineLength = rectOfLine.width - widthPaddings[0] - widthPaddings[1]
       , actualLineLength = lineRange.getBoundingClientRect().width
-      , availableWhiteSpace = availableLineLength - actualLineLength
+      , readUnusedWhiteSpace =()=>{ // This will be called a lot!
+            return availableLineLength - lineRange.getBoundingClientRect().width;
+        }
       ;
-    //console.log('availableWhiteSpace', availableWhiteSpace, '...',
-    //    actualLineLength, '/', availableLineLength , '=',
-    //    actualLineLength / availableLineLength);
 
-    // will be 1 for ideal lines and > 1 for less than full lines
-    var wsRatio = actualLineLength / availableLineLength;
-    var hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`;
-    for(let elem of lineElements) {
-        elem.style.background = hslColor;
+    // This block is just a visualization, on "how bad" a line is,
+    // i.e. more unusedWhiteSpace is worse, appears darker red,
+    // "good" lines become lighter red to white.
+    {
+        // wsRatio will be 1 for ideal lines and < 1 for less than full lines.
+        let wsRatio = actualLineLength / availableLineLength
+          , hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`
+          ;
+        setPropertyToLine('background', hslColor);
+    }
+
+
+    // prepare the actual justification
+
+    // TODO: does not include generic :before and :after content
+    let lineText = _whiteSpaceNormalize(lineRange.toString());
+    // Asking for this class is very specific, but at least it covers
+    // one common pseudo class content case in our scenario.
+    if(lastNode.classList.contains('r00-l-hyphen'))
+        lineText +=  '-';
+
+    let setLetterSpacingEm = (letterSpacingEm)=>{
+            // NOTE: it is defined in pt:
+            //      letter-spacing: calc(1pt * var(--letter-space));
+            let letterSpacingPt = letterSpacingEm * fontSizePx * 0.75;
+            setPropertyToLine('--letter-space', letterSpacingPt);
+            // this was just for reporting
+            // line.setAttribute('data-letterspace', Math.round(fitLS * 1000));
+                        //console.log(line.textContent.trim().split(' ')[0], control);
+        }
+      , lineGlyphsLength = lineText.length
+      , lineWordSpaces = lineText.split(' ').length - 1
+      , setWordSpacingPx = (wordSpacingPx)=> {
+            // NOTE: it is defined in em:
+            //      word-spacing: calc(1em * var(--word-space));
+            //
+            let wordSpacingEm = wordSpacingPx / fontSizePx;
+            setPropertyToLine('--word-space', wordSpacingEm);
+            // this was just for reporting
+            // line.setAttribute('data-wordspace', Math.round(parseFloat(line.style.wordSpacing) * 1000));
+        }
+      , setXTRA = val=>setPropertyToLine('--font-stretch', val)
+      , readXTRA = ()=>parseFloat(getPropertyFromLine('--font-stretch'))
+      , [xtraMin, ,xtraMax] = tolerances.XTRA
+      , generators = [
+            _justifyByGenerator(setXTRA, readXTRA, xtraMin,xtraMax),
+            _justifyByLetterSpacingGenerator    (setLetterSpacingEm, lineGlyphsLength,
+                              fontSizePx, tolerances['letter-spacing']),
+            _fullyJustifyByWordSpacingGenerator(setWordSpacingPx, lineWordSpaces),
+        //   // NOTE: these are different to the vabro way, but could be possible!
+        //   // letter-space
+        // , _justifyByGenerator(setVal, readVal, originalMin, originalMax)
+        //   // word-space (there's a rule that this must stay smaller than line space I think)
+        // , _justifyByGenerator(setVal, readVal, originalMin, originalMax)
+    ];
+    // run the actual justification
+    justifyControlLoop(readUnusedWhiteSpace, generators);
+}
+
+
+// TODO: could also define an order, as the vabro.js order is different than
+//       what DB suggested the last time.
+// modes.wordspace = true
+// modes.letterspace = true
+// modes.xtra = true
+
+function OLD_justifyByXTRA(line, tolerances, paragraph, parabox) {
+    // TODO: I'd like to generalize this as a control system for all
+    //       [min, /*default*/ ,max] triples, as I think the other two
+    //       available functions are maybe not as sensitive as this one
+    //
+
+    // FIXME: do somewhere outside
+    //don't wordspace last line of paragraph
+    // if (line.nextElementSibling) {
+    //     if (modes.wordspace) {
+    //         line.addClass("needs-wordspace");
+    //     }
+    //     if (modes.letterspace) {
+    //         line.addClass('needs-letterspace');
+    //     }
+    // }
+
+    // Since this, for now runs only for one entry "XTRA"
+    // for(let [axis, tol] of Object.entries(tolerances)){
+    let axis = 'XTRA'
+      , tol = tolerances[axis]
+      // the two above may be function arguments
+      , [originalMin, /* originalDefault */, originalMax] = tol
+      , cmin = originalMin
+      , cmax = originalMax
+        // TODO: the start value, it's not using the default at tol[1] here
+        // maybe we can use the actual current line value and maybe even
+        // log a message/warning if it's not the default value.
+        // Just until this code gets  more mature.
+      , cnow = fvs2obj(paragraph.style.fontVariationSettings)[axis]
+      , cnew
+      , dw
+      , tries = 10
+      ;
+    while (tries--) {
+        // FIXME: do this our way
+        // set the new value for the line, no need for the setFVS function!
+        // interesting, that we in the first iteration set the current
+        // now value. I'd like to refactor this to be smarter
+        line.setFVS(axis, cnow);
+        line.setAttribute('data-' + axis, Math.round(cnow));
+
+        // FIXME: do this our way
+        // measure available space on the line.
+        // TODO: could be:
+        // dw = yield undefined; // maybe there's a value that makes sense
+        // then the caller can decide what to do when dw has changed and if
+        // e.g. wordspace adjustment etc. is still required.
+        dw = parabox.width - line.clientWidth;
+
+        //console.log(line.textContent.trim().split(' ')[0], dw, cmin, cmax, cnow);
+
+        // This means "+/- less than one pixel"
+        if (Math.abs(dw) < 1) {
+            // FIXME: move these effects outside of this function
+            // we don't do line wordspace anymore
+            // line.removeClass('needs-wordspace');
+            // line.setAttribute('data-wordspace', 0);
+            break;
+        }
+
+        // the line is bigger than the available space
+        if (dw < 0) { // suggests dw < 0 and dw < -1
+            //narrower
+            cnew = (cnow + cmin) / 2; // in the middle between now and min
+            cmax = cnow; // FIXME: maybe only do this if(cnow < cmax)
+        }
+        else { // suggests dw > 0 and dw > 1
+            cnew = (cnow + cmax) / 2; // in the middle between now and max
+            cmin = cnow; // FIXME: maybe only do this if(cnow < cmax)
+        }
+
+        // FIXME: can I understand what this does better? I think
+        // it's to end the control system, once the size of the next
+        // change compared to the magnitude of the overall change value
+        // range is getting very small.
+        // It reads somethinglike this: If the ratio of the
+        // difference between next and current value (cnew - cnow)
+        // and the difference between the original max and min values
+        // is smaller than 0.005.
+        if (Math.abs(cnew - cnow) / (originalMax - originalMin) < 0.005) {
+            break;
+        }
+        cnow = cnew;
+    }
+}
+
+function* _justifyByLetterSpacingGenerator(setVal, lineGlyphsLength, fontSizePx, [minLS, /*defaultLS*/,maxLS]) {
+        // unusedSpace
+    let unusedSpace = yield true
+        // available pixel per glyph
+      , letterSpacingEm = unusedSpace / lineGlyphsLength / fontSizePx
+      ;
+    // CAUTION: min/max are as it seems in em, as old usage implied.
+    letterSpacingEm = Math.max(minLS, Math.min(maxLS, letterSpacingEm));
+    // FIXME: whoa, no fancy control system? I think this should
+    // maybe test and correct down if needed. But maybe it's just good
+    // enough.
+    setVal(letterSpacingEm);
+}
+
+function* _fullyJustifyByWordSpacingGenerator(setVal, lineWordSpaces) {
+    let unusedSpace = yield true
+     , wordSpacingPx = unusedSpace / lineWordSpaces
+     ;
+    // No control system again, also, this just expands to fully fit the line,
+    // there's no min/max adherence.
+    setVal(wordSpacingPx);
+}
+
+function justifyControlLoop(readUnusedWhiteSpace, generators) {
+    let gen = generators.shift();
+    while(gen) {
+        let unusedWhiteSpace = readUnusedWhiteSpace();
+        if (Math.abs(unusedWhiteSpace) < 1) {
+            // all good, we have a perfect line
+            return;
+        }
+        let result = gen.next(unusedWhiteSpace);
+        if(result.done) {
+            // generator exhausted
+            gen = generators.shift();
+            continue;
+        }
+    }
+}
+
+function justifyByLetterSpacing(line, tolerances, parabox, fontsizepx) {
+        // available space
+    let dw = parabox.width - line.clientWidth
+      , [minLS, /*defaultLS*/,maxLS] = tolerances['letter-spacing']
+        // FIXME: line.textContent.length must consider for
+        //        multiple consecutive white spaces, that are reduced
+        //        in HTML to one white spice.
+        // available pixel per glyph
+      , fitLS = dw / line.textContent.length / fontsizepx
+      ;
+    fitLS = Math.max(minLS, Math.min(maxLS, fitLS));
+    // FIXME: whoa, no fancy control system? I think this should
+    // maybe test and correct down if needed. But maybe it's just good
+    // enough.
+    // because we devided by fontsizepx we can use this in em directly.
+    line.style.letterSpacing = fitLS + "em";
+    // this was just for reporting
+    // line.setAttribute('data-letterspace', Math.round(fitLS * 1000));
+                //console.log(line.textContent.trim().split(' ')[0], dw);
+}
+
+function justifyByWordSpacing(line, parabox, fontsizepx) {
+    var dw = parabox.width - line.clientWidth;
+    // FIXME: this also needs to be white-space normalized
+    var spaces = line.textContent.split(" ").length - 1;
+    // No control system again, also, this just expands to fully fit the line,
+    // there's no min/max adherence.
+    line.style.wordSpacing = (dw / spaces / fontsizepx) + "em";
+    // this was just for reporting
+    // line.setAttribute('data-wordspace', Math.round(parseFloat(line.style.wordSpacing) * 1000));
+    //console.log(line.textContent.trim().split(' ')[0], dw);
+}
+
+function _vabroOriginalOutline(paragraph,modes,tolerances,line) {
+    //now expand width to fit
+    let justifyByXTRA =()=>{throw new Error('Not Implemented justifyByXTRA');};
+    paragraph.querySelectorAll("var").forEach(justifyByXTRA(line));
+
+    if (modes.letterspace && 'letter-spacing' in tolerances) {
+        paragraph.querySelectorAll("var.needs-letterspace").forEach(justifyByLetterSpacing);
+    }
+
+    if (modes.wordspace) {
+        paragraph.querySelectorAll("var.needs-wordspace").forEach(justifyByWordSpacing);
     }
 }
 
@@ -689,148 +1024,104 @@ function justifyLine(container, lineElements) {
  */
 
 
-const globalAxes = {"Zycon":{"T1  ":{"name":"Toggle 1","min":0.0,"max":1.0,"default":0.0},
-"T2  ":{"name":"Toggle 2","min":0.0,"max":1.0,"default":0.0},
-"T3  ":{"name":"Toggle 3","min":0.0,"max":1.0,"default":0.0},
-"T4  ":{"name":"Toggle 4","min":0.0,"max":1.0,"default":0.0},
-"M1  ":{"name":"Motion 1","min":-1.0,"max":1.0,"default":0.0},
-"M2  ":{"name":"Motion 2","min":-1.0,"max":1.0,"default":0.0},
-"instances":[]},
-"RobotoDelta-VF":{"order":["XTRA","XOPQ","YOPQ","YTLC","YTUC","YTAS","YTDE","YTAD","YTDD","UDLN","wght","wdth","opsz","PWGT","PWDT","POPS","GRAD","YTRA"],"XTRA":{"name":"XTRA","min":210.0,"max":513.0,"default":359.0},
-"XOPQ":{"name":"XOPQ","min":26.0,"max":171.0,"default":94.0},
-"YOPQ":{"name":"YOPQ","min":26.0,"max":132.0,"default":77.0},
-"YTLC":{"name":"YTLC","min":416.0,"max":570.0,"default":514.0},
-"YTUC":{"name":"YTUC","min":528.0,"max":760.0,"default":712.0},
-"YTAS":{"name":"YTAS","min":649.0,"max":854.0,"default":750.0},
-"YTDE":{"name":"YTDE","min":-305.0,"max":-98.0,"default":-203.0},
-"YTAD":{"name":"YTAD","min":460.0,"max":600.0,"default":563.0},
-"YTDD":{"name":"YTDD","min":-1.0,"max":1.0,"default":0.0},
-"UDLN":{"name":"UDLN","min":-195.0,"max":0.0,"default":-49.0},
-"wght":{"name":"wght","min":100.0,"max":900.0,"default":400.0},
-"wdth":{"name":"wdth","min":75.0,"max":125.0,"default":100.0},
-"opsz":{"name":"opsz","min":8.0,"max":144.0,"default":12.0},
-"PWGT":{"name":"PWGT","min":44.0,"max":150.0,"default":94.0},
-"PWDT":{"name":"PWDT","min":560.0,"max":867.0,"default":712.0},
-"POPS":{"name":"POPS","min":-1.0,"max":1.0,"default":0.0},
-"GRAD":{"name":"GRAD","min":-1.0,"max":1.0,"default":0.0},
-"YTRA":{"name":"YTRA","min":-1.0,"max":1.0,"default":0.0},
-"instances":[]},
-"Amstelvar-VF":{"order":["opsz"],"opsz":{"name":"Optical Size","min":0.0,"max":1.0,"default":0.0},
-"instances":[]},
-"Roboto-VF":{"order":["wght","wdth","slnt"],"wght":{"name":"Weight","min":100.0,"max":900.0,"default":400.0},
-"wdth":{"name":"Width","min":75.0,"max":100.0,"default":100.0},
-"slnt":{"name":"Slant","min":0.0,"max":12.0,"default":0.0},
-"instances":[]},
-"Roboto-min-VF":{"wght":{"name":"Weight","min":100.0,"max":900.0,"default":400.0},
-"wdth":{"name":"Width","min":75.0,"max":100.0,"default":100.0},
-"slnt":{"name":"Slant","min":-12.0,"max":0.0,"default":0.0},
-"instances":[{"axes":{"wght":100.0,"wdth":100.0,"slnt":0.0},
-"name":"Thin"},
-{"axes":{"wght":300.0,"wdth":100.0,"slnt":0.0},
-"name":"Light"},
-{"axes":{"wght":400.0,"wdth":100.0,"slnt":0.0},
-"name":"Regular"},
-{"axes":{"wght":500.0,"wdth":100.0,"slnt":0.0},
-"name":"Medium"},
-{"axes":{"wght":700.0,"wdth":100.0,"slnt":0.0},
-"name":"Bold"},
-{"axes":{"wght":900.0,"wdth":100.0,"slnt":0.0},
-"name":"Black"},
-{"axes":{"wght":100.0,"wdth":100.0,"slnt":-12.0},
-"name":"Thin Italic"},
-{"axes":{"wght":300.0,"wdth":100.0,"slnt":-12.0},
-"name":"Light Italic"},
-{"axes":{"wght":400.0,"wdth":100.0,"slnt":-12.0},
-"name":"Italic"},
-{"axes":{"wght":500.0,"wdth":100.0,"slnt":-12.0},
-"name":"Medium Italic"},
-{"axes":{"wght":700.0,"wdth":100.0,"slnt":-12.0},
-"name":"Bold Italic"},
-{"axes":{"wght":900.0,"wdth":100.0,"slnt":-12.0},
-"name":"Black Italic"},
-{"axes":{"wght":300.0,"wdth":75.0,"slnt":0.0},
-"name":"Condensed Light"},
-{"axes":{"wght":400.0,"wdth":75.0,"slnt":0.0},
-"name":"Condensed Regular"},
-{"axes":{"wght":526.3158,"wdth":75.0,"slnt":0.0},
-"name":"Condensed Medium"},
-{"axes":{"wght":710.12659,"wdth":75.0,"slnt":0.0},
-"name":"Condensed Bold"},
-{"axes":{"wght":300.0,"wdth":75.0,"slnt":-12.0},
-"name":"Condensed Light Italic"},
-{"axes":{"wght":400.0,"wdth":75.0,"slnt":-12.0},
-"name":"Condensed Italic"},
-{"axes":{"wght":526.3158,"wdth":75.0,"slnt":-12.0},
-"name":"Condensed Medium Italic"},
-{"axes":{"wght":710.12659,"wdth":75.0,"slnt":-12.0},
-"name":"Condensed Bold Italic"}]},
-"AmstelvarAlpha-VF":{"order":["wght","wdth","opsz","XOPQ","XTRA","YOPQ","YTLC","YTSE","GRAD","XTCH","YTCH","YTAS","YTDE","YTUC","YTRA","PWGT","PWDT"],"wght":{"name":"Weight","min":100.0,"max":900.0,"default":400.0},
-"wdth":{"name":"Width","min":35.0,"max":100.0,"default":100.0},
-"opsz":{"name":"Optical Size","min":10.0,"max":72.0,"default":14.0},
-"XOPQ":{"name":"x opaque","min":5.0,"max":500.0,"default":88.0},
-"XTRA":{"name":"x transparent","min":42.0,"max":402.0,"default":402.0},
-"YOPQ":{"name":"y opaque","min":4.0,"max":85.0,"default":50.0},
-"YTLC":{"name":"lc y transparent","min":445.0,"max":600.0,"default":500.0},
-"YTSE":{"name":"Serif height","min":0.0,"max":48.0,"default":18.0},
-"GRAD":{"name":"Grade","min":88.0,"max":150.0,"default":88.0},
-"XTCH":{"name":"x transparent Chinese","min":736.0,"max":1082.0,"default":911.0},
-"YTCH":{"name":"y transparent Chinese","min":736.0,"max":1082.0,"default":907.0},
-"YTAS":{"name":"y transparent ascender","min":650.0,"max":850.0,"default":750.0},
-"YTDE":{"name":"y transparent descender","min":150.0,"max":350.0,"default":250.0},
-"YTUC":{"name":"y transparent uppercase","min":650.0,"max":950.0,"default":750.0},
-"YTRA":{"name":"y transparent","min":800.0,"max":1200.0,"default":1000.0},
-"PWGT":{"name":"Para Weight","min":38.0,"max":250.0,"default":88.0},
-"PWDT":{"name":"Para Width","min":60.0,"max":402.0,"default":402.0},
-"instances":[]},
-"Decovar-VF":{"order":["wght","INLN","WORM","SINL","SWRM","SSTR","TRND","TSHR","TINL","TOIL","TWRM","TFLR","TBIF","TSLB","TRSB"],"BLDA":{"name":"Inline","min":0.0,"max":1000.0,"default":0.0},
-"TRMD":{"name":"Shearded","min":0.0,"max":1000.0,"default":0.0},
-"TRMC":{"name":"Rounded Slab","min":0.0,"max":1000.0,"default":0.0},
-"SKLD":{"name":"Stripes","min":0.0,"max":1000.0,"default":0.0},
-"TRML":{"name":"Worm Terminal","min":0.0,"max":1000.0,"default":0.0},
-"SKLA":{"name":"Inline Skeleton","min":0.0,"max":1000.0,"default":0.0},
-"TRMF":{"name":"Open Inline Terminal","min":0.0,"max":1000.0,"default":0.0},
-"TRMK":{"name":"Inline Terminal","min":0.0,"max":1000.0,"default":0.0},
-"BLDB":{"name":"Worm","min":0.0,"max":1000.0,"default":0.0},
-"WMX2":{"name":"Weight","min":0.0,"max":1000.0,"default":0.0},
-"TRMB":{"name":"Flared","min":0.0,"max":1000.0,"default":0.0},
-"TRMA":{"name":"Rounded","min":0.0,"max":1000.0,"default":0.0},
-"SKLB":{"name":"Worm Skeleton","min":0.0,"max":1000.0,"default":0.0},
-"TRMG":{"name":"Slab","min":0.0,"max":1000.0,"default":0.0},
-"TRME":{"name":"Bifurcated","min":0.0,"max":1000.0,"default":0.0},
-"instances":[{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Default"},
-{"axes":{"BLDA":1000.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Open"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":1000.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Worm"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":1000.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Checkered"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":1000.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Checkered Reverse"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":500.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Striped"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":1000.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Rounded"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":1000.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Flared"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":1000.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":1000.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Flared Open"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":1000.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Rounded Slab"},
-{"axes":{"BLDA":0.0,"TRMD":1000.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Sheared"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":1000.0},
-"name":"Bifurcated"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":500.0,"TRMF":500.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Inline"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":0.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":1000.0,"TRME":0.0},
-"name":"Slab"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":0.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":1000.0,"TRMB":0.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Contrast"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":0.0,"SKLD":0.0,"TRML":0.0,"SKLA":1000.0,"TRMF":0.0,"TRMK":0.0,"BLDB":0.0,"WMX2":1000.0,"TRMB":1000.0,"TRMA":0.0,"SKLB":0.0,"TRMG":0.0,"TRME":0.0},
-"name":"Fancy"},
-{"axes":{"BLDA":0.0,"TRMD":0.0,"TRMC":750.0,"SKLD":0.0,"TRML":250.0,"SKLA":1000.0,"TRMF":250.0,"TRMK":250.0,"BLDB":1000.0,"WMX2":750.0,"TRMB":500.0,"TRMA":500.0,"SKLB":1000.0,"TRMG":750.0,"TRME":500.0},
-"name":"Mayhem"}]}};
+const globalAxes = {
+  "RobotoDelta-VF":{
+    "order":["XTRA","XOPQ","YOPQ","YTLC","YTUC","YTAS","YTDE","YTAD","YTDD","UDLN","wght","wdth","opsz","PWGT","PWDT","POPS","GRAD","YTRA"],"XTRA":{"name":"XTRA","min":210.0,"max":513.0,"default":359.0},
+    "XOPQ":{"name":"XOPQ","min":26.0,"max":171.0,"default":94.0},
+    "YOPQ":{"name":"YOPQ","min":26.0,"max":132.0,"default":77.0},
+    "YTLC":{"name":"YTLC","min":416.0,"max":570.0,"default":514.0},
+    "YTUC":{"name":"YTUC","min":528.0,"max":760.0,"default":712.0},
+    "YTAS":{"name":"YTAS","min":649.0,"max":854.0,"default":750.0},
+    "YTDE":{"name":"YTDE","min":-305.0,"max":-98.0,"default":-203.0},
+    "YTAD":{"name":"YTAD","min":460.0,"max":600.0,"default":563.0},
+    "YTDD":{"name":"YTDD","min":-1.0,"max":1.0,"default":0.0},
+    "UDLN":{"name":"UDLN","min":-195.0,"max":0.0,"default":-49.0},
+    "wght":{"name":"wght","min":100.0,"max":900.0,"default":400.0},
+    "wdth":{"name":"wdth","min":75.0,"max":125.0,"default":100.0},
+    "opsz":{"name":"opsz","min":8.0,"max":144.0,"default":12.0},
+    "PWGT":{"name":"PWGT","min":44.0,"max":150.0,"default":94.0},
+    "PWDT":{"name":"PWDT","min":560.0,"max":867.0,"default":712.0},
+    "POPS":{"name":"POPS","min":-1.0,"max":1.0,"default":0.0},
+    "GRAD":{"name":"GRAD","min":-1.0,"max":1.0,"default":0.0},
+    "YTRA":{"name":"YTRA","min":-1.0,"max":1.0,"default":0.0},
+    "instances":[]
+  },
+  "Amstelvar-VF":{
+    "order":["opsz"],"opsz":{"name":"Optical Size","min":0.0,"max":1.0,"default":0.0},
+    "instances":[]
+  },
+  "Roboto-VF":{
+    "order":["wght","wdth","slnt"],"wght":{"name":"Weight","min":100.0,"max":900.0,"default":400.0},
+    "wdth":{"name":"Width","min":75.0,"max":100.0,"default":100.0},
+    "slnt":{"name":"Slant","min":0.0,"max":12.0,"default":0.0},
+    "instances":[]
+  },
+  "Roboto-min-VF":{
+    "wght":{"name":"Weight","min":100.0,"max":900.0,"default":400.0},
+    "wdth":{"name":"Width","min":75.0,"max":100.0,"default":100.0},
+    "slnt":{"name":"Slant","min":-12.0,"max":0.0,"default":0.0},
+    "instances":[{"axes":{"wght":100.0,"wdth":100.0,"slnt":0.0},
+    "name":"Thin"},
+    {"axes":{"wght":300.0,"wdth":100.0,"slnt":0.0},
+    "name":"Light"},
+    {"axes":{"wght":400.0,"wdth":100.0,"slnt":0.0},
+    "name":"Regular"},
+    {"axes":{"wght":500.0,"wdth":100.0,"slnt":0.0},
+    "name":"Medium"},
+    {"axes":{"wght":700.0,"wdth":100.0,"slnt":0.0},
+    "name":"Bold"},
+    {"axes":{"wght":900.0,"wdth":100.0,"slnt":0.0},
+    "name":"Black"},
+    {"axes":{"wght":100.0,"wdth":100.0,"slnt":-12.0},
+    "name":"Thin Italic"},
+    {"axes":{"wght":300.0,"wdth":100.0,"slnt":-12.0},
+    "name":"Light Italic"},
+    {"axes":{"wght":400.0,"wdth":100.0,"slnt":-12.0},
+    "name":"Italic"},
+    {"axes":{"wght":500.0,"wdth":100.0,"slnt":-12.0},
+    "name":"Medium Italic"},
+    {"axes":{"wght":700.0,"wdth":100.0,"slnt":-12.0},
+    "name":"Bold Italic"},
+    {"axes":{"wght":900.0,"wdth":100.0,"slnt":-12.0},
+    "name":"Black Italic"},
+    {"axes":{"wght":300.0,"wdth":75.0,"slnt":0.0},
+    "name":"Condensed Light"},
+    {"axes":{"wght":400.0,"wdth":75.0,"slnt":0.0},
+    "name":"Condensed Regular"},
+    {"axes":{"wght":526.3158,"wdth":75.0,"slnt":0.0},
+    "name":"Condensed Medium"},
+    {"axes":{"wght":710.12659,"wdth":75.0,"slnt":0.0},
+    "name":"Condensed Bold"},
+    {"axes":{"wght":300.0,"wdth":75.0,"slnt":-12.0},
+    "name":"Condensed Light Italic"},
+    {"axes":{"wght":400.0,"wdth":75.0,"slnt":-12.0},
+    "name":"Condensed Italic"},
+    {"axes":{"wght":526.3158,"wdth":75.0,"slnt":-12.0},
+    "name":"Condensed Medium Italic"},
+    {"axes":{"wght":710.12659,"wdth":75.0,"slnt":-12.0},
+    "name":"Condensed Bold Italic"}]
+  },
+  "AmstelvarAlpha-VF":{
+    "order":["wght","wdth","opsz","XOPQ","XTRA","YOPQ","YTLC","YTSE","GRAD","XTCH","YTCH","YTAS","YTDE","YTUC","YTRA","PWGT","PWDT"],"wght":{"name":"Weight","min":100.0,"max":900.0,"default":400.0},
+    "wdth":{"name":"Width","min":35.0,"max":100.0,"default":100.0},
+    "opsz":{"name":"Optical Size","min":10.0,"max":72.0,"default":14.0},
+    "XOPQ":{"name":"x opaque","min":5.0,"max":500.0,"default":88.0},
+    "XTRA":{"name":"x transparent","min":42.0,"max":402.0,"default":402.0},
+    "YOPQ":{"name":"y opaque","min":4.0,"max":85.0,"default":50.0},
+    "YTLC":{"name":"lc y transparent","min":445.0,"max":600.0,"default":500.0},
+    "YTSE":{"name":"Serif height","min":0.0,"max":48.0,"default":18.0},
+    "GRAD":{"name":"Grade","min":88.0,"max":150.0,"default":88.0},
+    "XTCH":{"name":"x transparent Chinese","min":736.0,"max":1082.0,"default":911.0},
+    "YTCH":{"name":"y transparent Chinese","min":736.0,"max":1082.0,"default":907.0},
+    "YTAS":{"name":"y transparent ascender","min":650.0,"max":850.0,"default":750.0},
+    "YTDE":{"name":"y transparent descender","min":150.0,"max":350.0,"default":250.0},
+    "YTUC":{"name":"y transparent uppercase","min":650.0,"max":950.0,"default":750.0},
+    "YTRA":{"name":"y transparent","min":800.0,"max":1200.0,"default":1000.0},
+    "PWGT":{"name":"Para Weight","min":38.0,"max":250.0,"default":88.0},
+    "PWDT":{"name":"Para Width","min":60.0,"max":402.0,"default":402.0},
+    "instances":[]
+  }
+};
 
 function getPrimaryFontFamily(ff) {
     return ff.split(',')[0].trim().replace(/^["']\s*/, '').replace(/\s*$/, '')
@@ -843,9 +1134,9 @@ function getPrimaryFontFamily(ff) {
 
 function obj2fvs(fvs) {
     var clauses = [];
-    Object.forEach(fvs, function(v, k) {
+    for(let [k, v] of Object.entries(fvs)){
         clauses.push('"' + k + '" ' + v);
-    });
+    }
     return clauses.join(", ");
 }
 
@@ -1104,7 +1395,7 @@ function interInterpolate(targetX, targetY, theGrid) {
         ẇ: [corners.ŝẇ, corners.șẇ, Xratio]
     };
 
-    Object.forEach(edges, function(hlr, edge) {
+    for(let [edge, hlr] of Object.entries(edges)){
         var high = hlr[0];
         var low = hlr[1];
         var ratio = hlr[2];
@@ -1112,15 +1403,15 @@ function interInterpolate(targetX, targetY, theGrid) {
         if (typeof high === 'number' && typeof low === 'number') {
             edges[edge] = low + (high - low) * ratio;
         } else {
-            Object.forEach(high, function(sml, axis) {
+            for(let [axis, sml] of Object.entries(high)){
                 middle[axis] = [];
                 for (var i=0; i<3; i++) {
                     middle[axis].push(low[axis][i] + (high[axis][i] - low[axis][i]) * ratio);
                 }
-            });
+            }
             edges[edge] = middle;
         }
-    });
+    }
 
     //now we can inter-interpolate between the interpolated edge values
     if (typeof edges.ẉ === 'number') {
@@ -1140,7 +1431,30 @@ function interInterpolate(targetX, targetY, theGrid) {
 }
 
 function getJustificationTolerances(font, targetsize, targetweight) {
-    return interInterpolate(targetsize, targetweight, calculations.justification[font] || calculations.justification['default']);
+    let settings
+      , lastName = font
+        // temporary, to not confuse old settings data with new settings data
+      , aliases = {
+            'AmstelVar': 'AmstelvarAlpha-VF'
+        }
+      ;
+
+    while(lastName) {
+        settings = calculations.justification[lastName];
+        if(settings)
+            break;
+        lastName = aliases[lastName];
+    }
+    if(lastName !== font)
+        console.log(`Using an alias for font "${font}": ${lastName}`);
+
+    if(!settings){
+        console.log(`font "${font}" not found in ${[...Object.keys(calculations.justification)].join(', ')}. `
+            + 'Using default.');
+        settings = calculations.justification['default'];
+    }
+
+    return interInterpolate(targetsize, targetweight, settings);
 }
 
 function doJustification() {
@@ -1173,23 +1487,34 @@ function doJustification() {
 
         var tolerances = getJustificationTolerances(fontfamily, fontsize, relweight);
 
+// >>>
+
+
+
         var words = paragraph.textContent.trim().split(/\s+/);
 
         paragraph.innerHTML = "<span>" + words.join("</span> <span>") + "</span>";
 
         //start at maximum squish and then adjust upward from there
-        Object.forEach(tolerances, function(tol, axis) {
+        for(let [axis, tol] of Object.entries(tolerances)){
             if (axis.length !== 4) {
+                // letter-spacing and word-spacing are not set here
                 return;
             }
+            // from what we have, only XTRA arrives here
             if (axis.toLowerCase() in modes) {
+                // tol === min value
+                // FIXME: If we don't do this as the default in the CSS
+                //        we must do it prior to justification
                 paragraph.setFVS(axis, tol[0]);
             }
-        });
+        }
 
+        // that's to get the availableLineLength
         var parabox = paragraph.getBoundingClientRect();
         var spans = paragraph.querySelectorAll("span");
 
+        // put words into lines, my approach is more sophisticated
         var lastY = false;
         var lines = [], line = [];
 
@@ -1224,8 +1549,15 @@ function doJustification() {
           lines.push(line.join(" "));
         }
 
+        // the text content of the words is unpacked already
+        // this is putting the words into lines, which themselves are
+        // mad up <var> elements
         paragraph.innerHTML = "<var>" + lines.join("</var> <var>") + "</var>";
 
+
+
+
+        // this is the actual justification, will copy...
         //now expand width to fit
         paragraph.querySelectorAll("var").forEach(function(line, index) {
             //don't wordspace last line of paragraph
@@ -1238,12 +1570,11 @@ function doJustification() {
                 }
             }
 
-            Object.forEach(tolerances, function(tol, axis) {
+            for(let [axis, tol] of Object.entries(tolerances)){
                 if (axis.length !== 4) {
                     return;
                 }
                 if (axis.toLowerCase() in modes) {
-                    var tries = 0;
 
                     var cmin = tolerances[axis][0];
                     var cmax = tolerances[axis][2];
@@ -1281,7 +1612,7 @@ function doJustification() {
                         cnow = cnew;
                     }
                 }
-            });
+            }
         });
 
         if (modes.letterspace && 'letter-spacing' in tolerances) {
@@ -1349,10 +1680,43 @@ function doJustification() {
  ****/
 
 // for development:
-export function justify() {
+export function justify(options) {
 
     let elem = document.querySelector('.runion-01');
     let lines = Array.from(findLines(elem));
+
+    let relweight
+        // FIXME: there are e.g. <strong> elements!
+      , elemStyle = elem.ownerDocument.defaultView.getComputedStyle(elem)
+      , fontWeight = parseFloat(elemStyle.getPropertyValue('--font-weight'))
+        // in pt; using --x-font-size I get the CSS-`calc` formular not the actual value.
+      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
+      , fontSize = fontSizePx * 3/4
+        // expecting a clean, no font-stack fallbacks, single family name from --font-family
+      , fontfamily = elemStyle.getPropertyValue('--font-family').trim()
+      ;
+
+    let fvs = {XOPQ: false}; // FIXME: don't do this now, as we don't have an
+                  // XOPQ value in font variations settings anyways.
+     if (fvs.XOPQ && globalAxes[fontfamily] && globalAxes[fontfamily].XOPQ) {
+         relweight = 100 * fvs.XOPQ / globalAxes[fontfamily].XOPQ.default;
+     } else if (fontWeight) {
+         // we want to land here for now
+         relweight = 100 * fontWeight / 400;
+     } else {
+         relweight = 100;
+     }
+
+
+    let tolerances = getJustificationTolerances(fontfamily, fontSize, relweight);
+    console.log('fontSize', fontSize, 'relweight', relweight, 'tolerances:', tolerances);
+    // > fontSize 12 relweight 100 tolerances: {
+    //                // All these appear a bit low/narrow for the current AmstelVar
+    //                // all values: [min, default, max]
+    // >        XTRA: [375, 402, 402],
+    // >        'letter-spacing': [-0.025, 0, 0.025],
+    // >        'word-spacing': [-0.20500000000000002, 0, 0.20500000000000002]
+    // > }
 
 
     // Do it from end to start, so all offsets stay valid.
@@ -1384,7 +1748,7 @@ export function justify() {
     //}
     async function* justifyLineGenerator() {
         for(let [i, lineElements] of elementLines.entries()) {
-            justifyLine(elem, lineElements);
+            justifyLine(elem, lineElements, fontSizePx, tolerances);
             if(i === 51) {
                 console.log('STOPING justifyLine due to dev iterations limit', i);
                 return;
@@ -1402,8 +1766,8 @@ export function justify() {
     });
 
     runJustifyLine();
-
 }
+
 
 // TODO before doing actual justification:
 //  * collect whitespace and empty nodes between lines

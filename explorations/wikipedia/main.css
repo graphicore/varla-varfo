@@ -697,7 +697,11 @@ label.user_preferences-user_distance::after {
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
 /* used to be 520 but making it narrow to work out justification */
---font-stretch: 440;/* by (xtra, wdth) */
+/* interestingly, vabro.js suggests to sart at 375 and to max out at 402
+ * was 440 and I thought it was tight.
+ *  */
+--font-stretch: 375;/* by (xtra, wdth) */
+/* so far only experimental used in OLD_justifyLine*/
 --font-stretch-change: 0;
 
 /* in pt! We need JS to get the document default font-size in pt,
@@ -1020,7 +1024,12 @@ i, cite, em, var, dfn {
 Now set directly as element style in line containment protocol...
  */
 .runion-line {
-    xx-white-space: nowrap;
+    /* FIXME: could be a keeper but just for now this is good for
+     * not having to check if a line breaks while doing justification
+     *
+     * Also done by inactive "line-containment", which checks if a line breaks.)
+     */
+    white-space: nowrap;
 }
 
 
@@ -1031,22 +1040,26 @@ Now set directly as element style in line containment protocol...
  * their hyphenation with the first line ::before display: block rule
  * now, we need to mark elements in JS explicitly that require hyphens!.
 
-.runion-line.r00-l-first::before {
-    xx-content: '';
-    xx-display: block;
-}
+FIXME: 2 problems:
+*    - Lines that are either the first child of a block <p> element don't text-indent.
+*    - lines in li-elements break and create an empty line before.
+*      e.g. this fixes it:
+*                   li .runion-line.r00-l-first::before {
+*                       content: unset;
+*                       display: unset;
+*                   }
 */
-
 .runion-line.r00-l-first::before,
 .line-containment::before{
     content: '';
     display: block;
 }
 
-/* --line-info-data */
+/* --line-info-data
 .r00-l-first:hover::before {
     content: var(--line-info-data);
 }
+*/
 
 /*
  * This fixes line wrapping, not changing in Chrome (nor Firefox). This
