@@ -1,4 +1,4 @@
-/* jshint browser: true, devel: true, esversion: 9, laxcomma: true, laxbreak: true, unused: false */
+/* jshint browser: true, devel: true, esversion: 9, laxcomma: true, laxbreak: true, unused: true */
 import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 
 /***
@@ -48,14 +48,13 @@ function _isWhiteSpaceTextNode(node) {
   return !(/[^\t\n\r ]/.test(node.data));
 }
 
-function _hasNoSizeTextNode(node){
+function _hasNoSizeTextNode(node) {
     let rtest = new Range();
     rtest.setStart(node, 0);
     rtest.setEnd(node, node.data.length);
     let bounds = rtest.getBoundingClientRect();
     return bounds.width === 0 && bounds.height === 0;
 }
-
 
 const WHITESPACE = new Set([' ', '\t', '\r', '\n']);
 
@@ -252,7 +251,6 @@ function* findLines(elem) {
                 continue;
             }
 
-
             // FIXME: current known glitches:
             //   * Chromium and Firefox
             //     ## Section: Citations
@@ -381,7 +379,7 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     }
 
     if(!filtered.length) {
-        // maybe we don't need this anymore!
+        // FIXME maybe we don't need this anymore!
         console.log('Removed a line at:', index);
         return null;
     }
@@ -389,6 +387,10 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     // FIXME: add all punctuation and "white-space" etc. that breaks lines.
     // not too sure about ] and ) but I've seen a line-break after a ] in
     // a foot note link (inside a <sup>.
+    // All elements on a page that end up with the class `r00-l-hyphen`
+    // should be inspected to see what belongs in here, at least for our
+    // example, this could be feasible. This heuristic is probably not
+    // ideal in the long run, yet simple.
     let lineBreakers = new Set([' ', '-', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
     let addHyphen = false;
     {
@@ -455,13 +457,15 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
                 let display = getComputedStyle(cur).getPropertyValue('display');
                 if(display === 'block') {
                     // found it
+                    // FIXME: I don't think this filter is needed anymore!
+                    console.log('Filtered a whitespace line.');
                     return false;
                 }
                 if(display === 'none')
                     continue;
                 // FIXME: cur could also be position absolute to be a `continue`!
                 // But this would mess up other things in the line finding
-                // as well, so to edgy for now.
+                // as well, so too edgy for now.
                 // The white space matters probably, could be the space
                 // between two <a>s.
                 return true;
@@ -507,105 +511,6 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     return lineElements;
 }
 
-
-// This is terribly slow, but it works most of the time/for most of
-// the lines, It's also just a proof of concept and not what we're
-// going to do eventually.
-function OLD_justifyLine(container, elements) {
-    //get the line height
-
-    //if the height of all elements getBoundingClientRect is bigger than
-    // the line height
-    // or maybe better, if there are difffernt bottoms in the first and
-    // last  client rect that have any width:
-    var setProperty = (name, value)=>{
-            for(let elem of elements) {
-                elem.style.setProperty(name, value);
-            }
-        }
-      , setFontStretchChange = change=>setProperty('--font-stretch-change', change)
-      , everythingIsOnTheSameLine= ()=>{
-            if(elements.length === 1) {
-                let elem = elements[0]
-                  , boxes = elem.getClientRects()
-                  ;
-                if(boxes.length === 1)
-                    return true;
-                else
-                    return false;
-
-            }
-            else {
-                let bottoms = new Set();
-                for(let elem of elements){
-                    bottoms.add(Math.floor(elem.getBoundingClientRect().bottom));
-                    if(bottoms.size > 1) {
-                        let difference = Math.max(...bottoms) - Math.min(...bottoms);
-                        if(difference > 10)
-                            return false;
-                    }
-                }
-                return true;
-            }
-            // false is better for this quick and dirty hack,
-            // because it means, at least don't grow too much
-            // and at the end we do line containment.
-            return false;
-        }
-      ;
-    let xtraStepGrow = 5
-      , xtraStepShrink = 1
-      // Do it relative for testing now, no need to getComputedStyle ;-)
-      // starting at
-      , change = 0
-      // css --font-stretch is 440
-      , maxChange = 200
-      , minChange = -40
-      ;
-    function growToFit() {
-        while(everythingIsOnTheSameLine()) {
-            // make the line longer
-            change += xtraStepGrow;
-            if(change > maxChange)
-                // giving up
-                return;
-            setFontStretchChange(change);
-        }
-        // the line broke
-        shrinkToFit();
-    }
-    function shrinkToFit() {
-        while(!everythingIsOnTheSameLine()) {
-            // make the line shorter
-            change -= xtraStepShrink;
-            if(change < minChange) {
-                // giving up, this could be bad for the following lines!
-                // Trying a containment protocol, which I generally think
-                // does more harm than good, but testing it.
-                setProperty('white-space', 'nowrap');
-                // can't set to ::before directly
-                elements[0].classList.add('line-containment');
-                console.log('CAUTION: applied line containment protocol');
-                return;
-            }
-            setFontStretchChange(change);
-        }
-    }
-
-    if(!everythingIsOnTheSameLine()) {
-        // make the line shorter
-        //     (this should never be the case, unless we went to far making the
-        //     line wider, however, it could help if the browser breaks lines
-        //     differntly after we did created the element line)
-        console.log('Bad: the line breaks initially', elements);
-        shrinkToFit();
-    }
-    else {
-        growToFit();
-    }
-}
-
-
 function _approachZero(min, max, value, control) {
     // More nextValue/value means control gets smaller, eventually it
     // becomes negative. If control is < 0 value must get smaller and if
@@ -629,7 +534,7 @@ function _approachZero(min, max, value, control) {
 }
 
 /**
- * NOTE: this generator keeps internal state (and that's it's sole purpose),
+ * NOTE: this generator keeps internal state (and that's its sole purpose),
  * it should be called consecutively, not intermittently with other generators
  * that manipulate the same control/value.
  */
@@ -644,7 +549,6 @@ function* _approachZeroGenerator(originalMin, originalMax, initialValue) {
         // it to aquire the inital value of control.
         control = yield value;
         [currentMin, currentMax, value] = _approachZero(currentMin, currentMax, value, control);
-
     }
 }
 
@@ -748,8 +652,9 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
         // FIXME: top and bottom tests failed with very small line-space
         // which is normal, now that the runion reduces line-space down
         // to 1, and now we get some ovwerflow.
-        // If left/right is a fit, we're at least in the correct column.
-        // would be nice to have this very accurate though, so we can
+        // If left/right is a fit, we're at least in the correct column,
+        // which is the main reason for this.
+        // Would be nice to have this very accurate though, so we can
         // rely on it.
         if(     //   lineRect.top >= rect.top
                 //   lineRect.bottom <= rect.bottom
@@ -839,7 +744,6 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
       , setWordSpacingPx = (wordSpacingPx)=> {
             // NOTE: it is defined in em:
             //      word-spacing: calc(1em * var(--word-space));
-            //
             let wordSpacingEm = wordSpacingPx / fontSizePx;
             setPropertyToLine('--word-space', wordSpacingEm);
             // this was just for reporting
@@ -849,115 +753,27 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
       , readXTRA = ()=>parseFloat(getPropertyFromLine('--font-stretch'))
       , [xtraMin, ,xtraMax] = tolerances.XTRA
       , generators = [
+
             _justifyByGenerator(setXTRA, readXTRA, xtraMin,xtraMax),
             _justifyByLetterSpacingGenerator    (setLetterSpacingEm, lineGlyphsLength,
                               fontSizePx, tolerances['letter-spacing']),
+            // We had some good results with this not used at all,
+            // But if it can do some reduced word-spacing, optionally
+            // not fully justified, it could still be an option.
             _fullyJustifyByWordSpacingGenerator(setWordSpacingPx, lineWordSpaces),
+
         //   // NOTE: these are different to the vabro way, but could be possible!
         //   // letter-space
-        // , _justifyByGenerator(setVal, readVal, originalMin, originalMax)
+        // , _justifyByGenerator(setLetterSpacingEm, readLetterSpacingEm, originalMin, originalMax)
         //   // word-space (there's a rule that this must stay smaller than line space I think)
-        // , _justifyByGenerator(setVal, readVal, originalMin, originalMax)
+        // , _justifyByGenerator(setWordSpacingPx, readWordSpacingPx, originalMin, originalMax)
     ];
     // run the actual justification
     justifyControlLoop(readUnusedWhiteSpace, generators);
 }
 
-
-// TODO: could also define an order, as the vabro.js order is different than
-//       what DB suggested the last time.
-// modes.wordspace = true
-// modes.letterspace = true
-// modes.xtra = true
-
-function OLD_justifyByXTRA(line, tolerances, paragraph, parabox) {
-    // TODO: I'd like to generalize this as a control system for all
-    //       [min, /*default*/ ,max] triples, as I think the other two
-    //       available functions are maybe not as sensitive as this one
-    //
-
-    // FIXME: do somewhere outside
-    //don't wordspace last line of paragraph
-    // if (line.nextElementSibling) {
-    //     if (modes.wordspace) {
-    //         line.addClass("needs-wordspace");
-    //     }
-    //     if (modes.letterspace) {
-    //         line.addClass('needs-letterspace');
-    //     }
-    // }
-
-    // Since this, for now runs only for one entry "XTRA"
-    // for(let [axis, tol] of Object.entries(tolerances)){
-    let axis = 'XTRA'
-      , tol = tolerances[axis]
-      // the two above may be function arguments
-      , [originalMin, /* originalDefault */, originalMax] = tol
-      , cmin = originalMin
-      , cmax = originalMax
-        // TODO: the start value, it's not using the default at tol[1] here
-        // maybe we can use the actual current line value and maybe even
-        // log a message/warning if it's not the default value.
-        // Just until this code gets  more mature.
-      , cnow = fvs2obj(paragraph.style.fontVariationSettings)[axis]
-      , cnew
-      , dw
-      , tries = 10
-      ;
-    while (tries--) {
-        // FIXME: do this our way
-        // set the new value for the line, no need for the setFVS function!
-        // interesting, that we in the first iteration set the current
-        // now value. I'd like to refactor this to be smarter
-        line.setFVS(axis, cnow);
-        line.setAttribute('data-' + axis, Math.round(cnow));
-
-        // FIXME: do this our way
-        // measure available space on the line.
-        // TODO: could be:
-        // dw = yield undefined; // maybe there's a value that makes sense
-        // then the caller can decide what to do when dw has changed and if
-        // e.g. wordspace adjustment etc. is still required.
-        dw = parabox.width - line.clientWidth;
-
-        //console.log(line.textContent.trim().split(' ')[0], dw, cmin, cmax, cnow);
-
-        // This means "+/- less than one pixel"
-        if (Math.abs(dw) < 1) {
-            // FIXME: move these effects outside of this function
-            // we don't do line wordspace anymore
-            // line.removeClass('needs-wordspace');
-            // line.setAttribute('data-wordspace', 0);
-            break;
-        }
-
-        // the line is bigger than the available space
-        if (dw < 0) { // suggests dw < 0 and dw < -1
-            //narrower
-            cnew = (cnow + cmin) / 2; // in the middle between now and min
-            cmax = cnow; // FIXME: maybe only do this if(cnow < cmax)
-        }
-        else { // suggests dw > 0 and dw > 1
-            cnew = (cnow + cmax) / 2; // in the middle between now and max
-            cmin = cnow; // FIXME: maybe only do this if(cnow < cmax)
-        }
-
-        // FIXME: can I understand what this does better? I think
-        // it's to end the control system, once the size of the next
-        // change compared to the magnitude of the overall change value
-        // range is getting very small.
-        // It reads somethinglike this: If the ratio of the
-        // difference between next and current value (cnew - cnow)
-        // and the difference between the original max and min values
-        // is smaller than 0.005.
-        if (Math.abs(cnew - cnow) / (originalMax - originalMin) < 0.005) {
-            break;
-        }
-        cnow = cnew;
-    }
-}
-
-function* _justifyByLetterSpacingGenerator(setVal, lineGlyphsLength, fontSizePx, [minLS, /*defaultLS*/,maxLS]) {
+function* _justifyByLetterSpacingGenerator(setVal, lineGlyphsLength,
+                                fontSizePx, [minLS, /*defaultLS*/,maxLS]) {
         // unusedSpace
     let unusedSpace = yield true
         // available pixel per glyph
@@ -996,54 +812,6 @@ function justifyControlLoop(readUnusedWhiteSpace, generators) {
         }
     }
 }
-
-function justifyByLetterSpacing(line, tolerances, parabox, fontsizepx) {
-        // available space
-    let dw = parabox.width - line.clientWidth
-      , [minLS, /*defaultLS*/,maxLS] = tolerances['letter-spacing']
-        // FIXME: line.textContent.length must consider for
-        //        multiple consecutive white spaces, that are reduced
-        //        in HTML to one white spice.
-        // available pixel per glyph
-      , fitLS = dw / line.textContent.length / fontsizepx
-      ;
-    fitLS = Math.max(minLS, Math.min(maxLS, fitLS));
-    // FIXME: whoa, no fancy control system? I think this should
-    // maybe test and correct down if needed. But maybe it's just good
-    // enough.
-    // because we devided by fontsizepx we can use this in em directly.
-    line.style.letterSpacing = fitLS + "em";
-    // this was just for reporting
-    // line.setAttribute('data-letterspace', Math.round(fitLS * 1000));
-                //console.log(line.textContent.trim().split(' ')[0], dw);
-}
-
-function justifyByWordSpacing(line, parabox, fontsizepx) {
-    var dw = parabox.width - line.clientWidth;
-    // FIXME: this also needs to be white-space normalized
-    var spaces = line.textContent.split(" ").length - 1;
-    // No control system again, also, this just expands to fully fit the line,
-    // there's no min/max adherence.
-    line.style.wordSpacing = (dw / spaces / fontsizepx) + "em";
-    // this was just for reporting
-    // line.setAttribute('data-wordspace', Math.round(parseFloat(line.style.wordSpacing) * 1000));
-    //console.log(line.textContent.trim().split(' ')[0], dw);
-}
-
-function _vabroOriginalOutline(paragraph,modes,tolerances,line) {
-    //now expand width to fit
-    let justifyByXTRA =()=>{throw new Error('Not Implemented justifyByXTRA');};
-    paragraph.querySelectorAll("var").forEach(justifyByXTRA(line));
-
-    if (modes.letterspace && 'letter-spacing' in tolerances) {
-        paragraph.querySelectorAll("var.needs-letterspace").forEach(justifyByLetterSpacing);
-    }
-
-    if (modes.wordspace) {
-        paragraph.querySelectorAll("var.needs-wordspace").forEach(justifyByWordSpacing);
-    }
-}
-
 
 /***
  * vabro.js
@@ -1153,37 +921,6 @@ const globalAxes = {
     "instances":[]
   }
 };
-
-function getPrimaryFontFamily(ff) {
-    return ff.split(',')[0].trim().replace(/^["']\s*/, '').replace(/\s*$/, '')
-        // had a case in Firefox, where ff = "AmstelvarAlpha-VF" (including the double quotes)
-        // and return was: AmstelvarAlpha-VF"
-        // I don't know which cases are supposed to be cleaned up with the
-        // calls to replace before.
-        .replace("\"", '');
-}
-
-function obj2fvs(fvs) {
-    var clauses = [];
-    for(let [k, v] of Object.entries(fvs)){
-        clauses.push('"' + k + '" ' + v);
-    }
-    return clauses.join(", ");
-}
-
-function fvs2obj(css) {
-    var result = {};
-    if (css === 'normal') {
-        return result;
-    }
-    css.split(',').forEach(function(clause) {
-        var m = clause.match(/['"](....)['"]\s+(\-?[0-9\.]+)/);
-        if (m) {
-            result[m[1]] = parseFloat(m[2]);
-        }
-    });
-    return result;
-}
 
 // CALCULATION STUFF
 const calculations = {
@@ -1434,7 +1171,7 @@ function interInterpolate(targetX, targetY, theGrid) {
         if (typeof high === 'number' && typeof low === 'number') {
             edges[edge] = low + (high - low) * ratio;
         } else {
-            for(let [axis, sml] of Object.entries(high)){
+            for(let [axis, /* sml */] of Object.entries(high)){
                 middle[axis] = [];
                 for (var i=0; i<3; i++) {
                     middle[axis].push(low[axis][i] + (high[axis][i] - low[axis][i]) * ratio);
@@ -1488,224 +1225,6 @@ function getJustificationTolerances(font, targetsize, targetweight) {
     return interInterpolate(targetsize, targetweight, settings);
 }
 
-function doJustification() {
-    document.querySelectorAll('.specimen.justify .rendered').forEach(function(paragraph) {
-        var container = paragraph.closest('.specimen.justify');
-
-        var modes = {};
-
-        container.className.split(/\s+/).forEach(function(word) {
-            modes[word] = true;
-        });
-
-        var startTime = (window.performance || Date).now();
-
-        //reset paragraph to plain text and remove special styling
-        var parastyle = getComputedStyle(paragraph);
-        var fontfamily = getPrimaryFontFamily(parastyle.fontFamily);
-        var fontsizepx = parseFloat(parastyle.fontSize);
-        var fontsize = fontsizepx * 72/96;
-        var fvs = fvs2obj(parastyle.fontVariationSettings);
-        var relweight;
-
-        if (fvs.XOPQ && globalAxes[fontfamily] && globalAxes[fontfamily].XOPQ) {
-            relweight = 100 * fvs.XOPQ / globalAxes[fontfamily].XOPQ.default;
-        } else if (parseInt(parastyle.fontWeight)) {
-            relweight = 100 * parseInt(parastyle.fontWeight) / 400;
-        } else {
-            relweight = 100;
-        }
-
-        var tolerances = getJustificationTolerances(fontfamily, fontsize, relweight);
-
-// >>>
-
-
-
-        var words = paragraph.textContent.trim().split(/\s+/);
-
-        paragraph.innerHTML = "<span>" + words.join("</span> <span>") + "</span>";
-
-        //start at maximum squish and then adjust upward from there
-        for(let [axis, tol] of Object.entries(tolerances)){
-            if (axis.length !== 4) {
-                // letter-spacing and word-spacing are not set here
-                return;
-            }
-            // from what we have, only XTRA arrives here
-            if (axis.toLowerCase() in modes) {
-                // tol === min value
-                // FIXME: If we don't do this as the default in the CSS
-                //        we must do it prior to justification
-                paragraph.setFVS(axis, tol[0]);
-            }
-        }
-
-        // that's to get the availableLineLength
-        var parabox = paragraph.getBoundingClientRect();
-        var spans = paragraph.querySelectorAll("span");
-
-        // put words into lines, my approach is more sophisticated
-        var lastY = false;
-        var lines = [], line = [];
-
-        spans.forEach(function(word) {
-            // var box = word.getBoundingClientRect();
-            // var eol = box.left - parabox.left + box.width;
-            var y = word.getBoundingClientRect().top;
-            if (lastY === false) {
-                lastY = y;
-            }
-
-            if (y === lastY) {
-                line.push(word.textContent);
-            } else {
-                //wrap!
-                line = line.join(" ");
-                lines.push(line);
-                line = [word.textContent];
-                // word = word.previousSibling;
-                // while (word.previousSibling) {
-                //   word = word.previousSibling;
-                //   paragraph.removeChild(word.nextSibling);
-                // }
-                // paragraph.removeChild(word);
-                //paragraph.innerHTML = paragraph.innerHTML.trim();
-            }
-
-            lastY = y;
-        });
-
-        if (line.length) {
-          lines.push(line.join(" "));
-        }
-
-        // the text content of the words is unpacked already
-        // this is putting the words into lines, which themselves are
-        // mad up <var> elements
-        paragraph.innerHTML = "<var>" + lines.join("</var> <var>") + "</var>";
-
-
-
-
-        // this is the actual justification, will copy...
-        //now expand width to fit
-        paragraph.querySelectorAll("var").forEach(function(line, index) {
-            //don't wordspace last line of paragraph
-            if (line.nextElementSibling) {
-                if (modes.wordspace) {
-                    line.addClass("needs-wordspace");
-                }
-                if (modes.letterspace) {
-                    line.addClass('needs-letterspace');
-                }
-            }
-
-            for(let [axis, tol] of Object.entries(tolerances)){
-                if (axis.length !== 4) {
-                    return;
-                }
-                if (axis.toLowerCase() in modes) {
-
-                    var cmin = tolerances[axis][0];
-                    var cmax = tolerances[axis][2];
-                    var cnow = fvs2obj(paragraph.style.fontVariationSettings)[axis];
-                    var cnew;
-
-                    var dw, tries = 10;
-
-                    while (tries--) {
-                        line.setFVS(axis, cnow);
-                        line.setAttribute('data-' + axis, Math.round(cnow));
-                        dw = parabox.width - line.clientWidth;
-
-                        //console.log(line.textContent.trim().split(' ')[0], dw, cmin, cmax, cnow);
-
-                        if (Math.abs(dw) < 1) {
-                            line.removeClass('needs-wordspace');
-                            line.setAttribute('data-wordspace', 0);
-                            break;
-                        }
-
-                        if (dw < 0) {
-                            //narrower
-                            cnew = (cnow + cmin) / 2;
-                            cmax = cnow;
-                        } else {
-                            cnew = (cnow + cmax) / 2;
-                            cmin = cnow;
-                        }
-
-                        if (Math.abs(cnew - cnow) / (tolerances[axis][2] - tolerances[axis][0]) < 0.005) {
-                            break;
-                        }
-
-                        cnow = cnew;
-                    }
-                }
-            }
-        });
-
-        if (modes.letterspace && 'letter-spacing' in tolerances) {
-            paragraph.querySelectorAll("var.needs-letterspace").forEach(function(line) {
-                var dw = parabox.width - line.clientWidth;
-
-                var minLS = tolerances['letter-spacing'][0];
-                var maxLS = tolerances['letter-spacing'][2];
-                var fitLS = dw / line.textContent.length / fontsizepx;
-
-                fitLS = Math.max(minLS, Math.min(maxLS, fitLS));
-
-                line.style.letterSpacing = fitLS + "em";
-
-                line.setAttribute('data-letterspace', Math.round(fitLS * 1000));
-
-                //console.log(line.textContent.trim().split(' ')[0], dw);
-            });
-        }
-
-        if (modes.wordspace) {
-            paragraph.querySelectorAll("var.needs-wordspace").forEach(function(line) {
-                var dw = parabox.width - line.clientWidth;
-                var spaces = line.textContent.split(" ").length - 1;
-                line.style.wordSpacing = (dw / spaces / fontsizepx) + "em";
-
-                line.setAttribute('data-wordspace', Math.round(parseFloat(line.style.wordSpacing) * 1000));
-
-                //console.log(line.textContent.trim().split(' ')[0], dw);
-            });
-        }
-
-        //set up param labels
-        paragraph.querySelectorAll("var").forEach(function(line) {
-            var label = [];
-            line.getAttributeNames().forEach(function(attr) {
-                var nicename;
-                if (attr.substr(0, 5) !== 'data-') {
-                    return;
-                }
-                switch(attr) {
-                    case 'data-params': return;
-                    case 'data-letterspace': nicename = 'ls'; break;
-                    case 'data-wordspace': nicename = 'ws'; break;
-                    default: nicename = attr.substr(5); break;
-                }
-                label.push(nicename + ' ' + line.getAttribute(attr));
-            });
-            if (label.length) {
-                line.setAttribute('data-params', label.join(" "));
-            }
-
-            line.textContent = line.textContent;
-        });
-
-        window.doLineHeights();
-
-        var endTime = (window.performance || Date).now();
-
-        console.log(container.className, "Reflowed in " + Math.round(endTime - startTime) / 1000 + "s");
-    });
-}
 /****
  * END OF vabro.js copy.
  ****/
@@ -1782,16 +1301,22 @@ export function justify(elem, options) {
                 console.log('STOPING justifyLine due to dev iterations limit', i);
                 return;
             }
-            yield await new Promise((resolve, reject)=>{
-               setTimeout(()=>resolve(true), 0);
+            // This does not render the progress as setTimout, look up
+            // "clamping" and "setTimeout".
+            // yield await Promise.resolve(true);
+            yield await new Promise((resolve /*, reject */)=>{
+                setTimeout(()=>resolve(true), 0);
             });
 
         }
     }
     let runJustifyLine = (async function() {
-        for await (let val of justifyLineGenerator()) {
-            //pass; console.log(num);
-        }
+        let gen = justifyLineGenerator();
+        // we could abort
+        //for await (let val of justifyLineGenerator()) {
+        //    pass; console.log(num);
+        //}
+        while(!(await gen.next()).done);
     });
 
     runJustifyLine();
@@ -1802,7 +1327,7 @@ export function justify(elem, options) {
       , unjustify = ()=>{
             abort();
             _unjustify(elem, elementLines);
-    }
+    };
     return {unjustify: unjustify, abort: abort};
 }
 
