@@ -718,8 +718,10 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
       , _lineStyleForAll = firstNode.ownerDocument.defaultView.getComputedStyle(firstNode)
       , getPropertyFromLine = (name)=>_lineStyleForAll.getPropertyValue(name)
       ;
-    lineRange.setStart(firstNode, 0);
-    lineRange.setEnd(lastNode, lastNode.childNodes.length);
+    // This is the best method so far, it includes the hyphens that may
+    // have been added by :after.
+    lineRange.setStartBefore(firstNode);
+    lineRange.setEndAfter(lastNode);
     // This is probably very robust, as long as we have block/inline elements.
     // Needs refinements when more display types must be supported.
     lineParent = getClosestBlockParent(firstNode);
@@ -735,13 +737,13 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     // fails in firefox when we force .runion-line.r00-l-first::before
     // to break (what we do). The first rect is the breaking rect with a
     // width of zero. The lineRange.getClientRects() don't have this issue.
-    let rectOfFirstLine = lineRange.getClientRects()[0]
-      , rectOfLine
+    let lineRect = lineRange.getBoundingClientRect()
+      , rectContainingLine
       // , i=0
       ;
     for(let rect of parentRects) {
 
-        // If rectOfFirstLine is contained in rectOfLine we got a hit.
+        // If lineRect is contained in rect we got a hit.
 
         // FIXME: top and bottom tests failed with very small line-space
         // which is normal, now that the runion reduces line-space down
@@ -749,22 +751,22 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
         // If left/right is a fit, we're at least in the correct column.
         // would be nice to have this very accurate though, so we can
         // rely on it.
-        if(     //   rectOfFirstLine.top >= rect.top
-                //   rectOfFirstLine.bottom <= rect.bottom
-                   rectOfFirstLine.left >= rect.left
-                && rectOfFirstLine.right <= rect.right) {
-            rectOfLine = rect;
+        if(     //   lineRect.top >= rect.top
+                //   lineRect.bottom <= rect.bottom
+                   lineRect.left >= rect.left
+                && lineRect.right <= rect.right) {
+            rectContainingLine = rect;
             break;
         }
-        // console.log('did not fit', i++, 'rectOfFirstLine', rectOfFirstLine ,
+        // console.log('did not fit', i++, 'lineRect', lineRect ,
         //     '\nrect', rect, '\n',
         //     parentRects, '\n', lineParent,
         //     lineRange.getClientRects()
         //     );
-        // console.log(rectOfFirstLine.top, '>=', rect.top, rectOfFirstLine.top >= rect.top);
-        // console.log(rectOfFirstLine.bottom, '<=', rect.bottom, rectOfFirstLine.bottom <= rect.bottom);
-        // console.log(rectOfFirstLine.left, '>=', rect.left, rectOfFirstLine.left >= rect.left);
-        // console.log(rectOfFirstLine.right, '<=', rect.right, rectOfFirstLine.right <= rect.right);
+        // console.log('top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top);
+        // console.log('bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom);
+        // console.log('lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left);
+        // console.log('rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right);
     }
     // let style = lineParent.ownerDocument.defaultView.getComputedStyle(lineParent);
     let widthPaddings = getElementSizesInPx(lineParent, 'padding-left', 'padding-right');
@@ -774,7 +776,8 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     //                      - first-line text-indent
     //                      - floats around this line (we don't do this yet)
     //        Last lines should not be justified ever.
-    let availableLineLength = rectOfLine.width - widthPaddings[0] - widthPaddings[1]
+    let availableLineLength = rectContainingLine.width - widthPaddings[0] - widthPaddings[1]
+        // lineRange.getBoundingClientRect() includes also hyphens added by :after if any!
       , actualLineLength = lineRange.getBoundingClientRect().width
       , readUnusedWhiteSpace =()=>{ // This will be called a lot!
             return availableLineLength - lineRange.getBoundingClientRect().width;
