@@ -775,12 +775,32 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     // FIXME: Does not take into account:
     //                      - first-line text-indent
     //                      - floats around this line (we don't do this yet)
+    //                      - hanging-punctuation(?) (not implemented in any browser)
+    //                      -  drop-caps/initial-letter(Safari only?) maybe as
+    //                         float with ::initial-letter? NOTE :initial-letter
+    //                          :first-line fail with our span surrounded lines and
+    //                          other inline elements.
     //        Last lines should not be justified ever.
+    //      NOTE: a possible fix could be not to measure the width,
+    //            but to calculate the distance to the right side!
+    //            PROFIT! works well for text-indent, but our
+    //                    r00-l-first:before{display: block} kills
+    //                    the text-indent. So that may need another handling.
     let availableLineLength = rectContainingLine.width - widthPaddings[0] - widthPaddings[1]
+      , rightStop = rectContainingLine.right - widthPaddings[1]
         // lineRange.getBoundingClientRect() includes also hyphens added by :after if any!
       , actualLineLength = lineRange.getBoundingClientRect().width
-      , readUnusedWhiteSpace =()=>{ // This will be called a lot!
-            return availableLineLength - lineRange.getBoundingClientRect().width;
+
+      // FIXME: even with white-space: no-wrap, our lines CAN WRAP!
+      //        this can happen with inline-elements (the <sup> elements
+      //        showed it. So, maybe, we must detect that wrapping
+      //        (e.g. a height change of lineRange.getBoundingClientRect())
+      //        and do something (undo one step, approximate). It's hard
+      //        for sure with the smarter generators.
+      , readUnusedWhiteSpace =()=>{
+            // This will be called a lot and it's *very* expensive!
+            //return availableLineLength - lineRange.getBoundingClientRect().width;
+            return rightStop  - lineRange.getBoundingClientRect().right;
         }
       ;
 
