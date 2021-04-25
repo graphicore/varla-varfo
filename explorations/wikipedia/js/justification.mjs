@@ -67,6 +67,9 @@ class Line {
         this.wsTextContent = '';
         this.wsRange = new Range();
         this._collectWhitespace = true;
+
+        // set externally  at the moment.
+        this.columnRect = null;
     }
 
     _addNodeIndex(range, nodes, node, index) {
@@ -179,6 +182,64 @@ class Line {
         return collected;
     }
 }
+
+function _getContainingRect(lineRangeOrNode,
+                                        container=null) {
+    let lineParent = getClosestBlockParent(
+                // if it has a startContainer it's probably a Range
+                // otherwise, assume it is a  Node
+                lineRangeOrNode.startContainer || lineRangeOrNode);
+
+    // FIXME: This may make sense in the justifyLine context but can be optional
+    // in findLines, I've never seen this trigger, but it is a possibility!
+    if(container && lineParent === container) {
+        console.log('FIXME: DON\'T KNOW (yet) what to do: lineParent === container', lineParent, container);
+        return;
+    }
+    let parentRects = lineParent.getClientRects();
+    // expect all of the line to be
+
+    // Using this: firstNode.getClientRects()[0]
+    // fails in firefox when we force .runion-line.r00-l-first::before
+    // to break (what we do). The first rect is the breaking rect with a
+    // width of zero. The lineRange.getClientRects() don't have this issue.
+    let lineRect = lineRangeOrNode.getBoundingClientRect()
+      // , i=0
+      ;
+    for(let rect of parentRects) {
+
+        // If lineRect is contained in rect we got a hit.
+
+        // FIXME: top and bottom tests failed with very small line-space
+        // which is normal, now that the runion reduces line-space down
+        // to 1, and now we get some ovwerflow.
+        // If left/right is a fit, we're at least in the correct column,
+        // which is the main reason for this.
+        // Would be nice to have this very accurate though, so we can
+        // rely on it.
+        if(     //   lineRect.top >= rect.top
+                //   lineRect.bottom <= rect.bottom
+                   lineRect.left >= rect.left
+                && lineRect.right <= rect.right) {
+            return [rect, lineParent];
+        }
+        // TODO: since this still sometimes goes wring, below
+        // is very helpful debugging output, which I would uncomment when
+        // needed. Once this heuristic stabilizes we may remove that stuff.
+        // console.log('did not fit', i++, 'lineRect', lineRect ,
+        //     '\nrect', rect, '\n',
+        //     parentRects, '\n', lineParent,
+        //     lineRangeOrNode.getClientRects()
+        //     );
+        // console.log('top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top);
+        // console.log('bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom);
+        // console.log('lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left);
+        // console.log('rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right);
+    }
+    throw new Error('_getContainingRect could\'n identify a containing rect.');
+}
+
+
 /**
  * Find lines that the browser has composed by using Range objects
  * and their getBoundingClientRect.
@@ -263,6 +324,11 @@ function* findLines(elem) {
               , changed = false
               ;
 
+            // get the column, each line has only one column, so, we
+            // need tp get it only once.
+            if(!currentLine.columnRect)
+                [currentLine.columnRect, ] = _getContainingRect(currentLine.range, elem);
+
             if(rects.length <= 1) {
                 // Pass; line breaks and column breaks create new client
                 // rects,  if there's only one rect, there's no line or
@@ -272,6 +338,25 @@ function* findLines(elem) {
                 // one rect.
             }
             else if(rects.length > 1) {
+                // new heuristic, to overcome the :before/:after{content: 'abc'}
+                // issue:
+                // as in justifyLine: use the parent box to identify the
+                // correct column rect
+                // then only ensure that the items are on the same "height"
+                // e.g. touchingBottom should be sufficient, but touchingLeft
+                // is replaced.
+
+
+
+                if(lastRect.left >= currentLine.columnRect.left && lastRect.right <= currentLine.columnRect.right) {
+                //if(Math.abs(Math.floor(lastRect.left - beforeLastRect.right)) <= 1) {
+                    // The result of the subtraction above will be positive
+                    // for e.g. a column change and negative for a normal
+                    // line change.
+                    touchingLeft = true;
+                }
+
+
                 // Other reasons why we would have more rects is that
                 // the nodes in the selection could be actually in different
                 // elements like in "<em>hello<em> <strong>world</strong>"
@@ -284,12 +369,11 @@ function* findLines(elem) {
                 // it has an aditional " in a pseudo-element, and that causes
                 // the line to break, because the lower level client rects
                 // of the TextNodes don't touch at that position.
-                if(Math.abs(Math.floor(lastRect.left - beforeLastRect.right)) <= 1) {
-                    // The result of the subtraction above will be positive
-                    // for e.g. a column change and negative for a normal
-                    // line change.
-                    touchingLeft = true;
-                }
+            //    if(Math.abs(Math.floor(lastRect.left - beforeLastRect.right)) <= 1) {
+            //        // The result of the subtraction above will be positive
+            //        // for e.g. a column change and negative for a normal
+            //        // line change.
+            //        touchingLeft = true;
 
                 if (Math.floor(lastRect.bottom - beforeLastRect.bottom) < 1) {
                     touchingBottom = true;
@@ -612,8 +696,6 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     let lineRange = new Range()
       , firstNode = lineElements[0]
       , lastNode = lineElements[lineElements.length-1]
-      , lineParent
-      , parentRects
       , setPropertyToLine = (name, value)=>{
             for(let elem of lineElements) {
                 elem.style.setProperty(name, value);
@@ -626,53 +708,8 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     // have been added by :after.
     lineRange.setStartBefore(firstNode);
     lineRange.setEndAfter(lastNode);
-    // This is probably very robust, as long as we have block/inline elements.
-    // Needs refinements when more display types must be supported.
-    lineParent = getClosestBlockParent(firstNode);
 
-    if(lineParent === container) {
-        console.log('DON\'T KNOW (yet) what to do: lineParent === container');
-        return;
-    }
-    parentRects = lineParent.getClientRects();
-    // expect all of the line to be
-
-    // Using this: firstNode.getClientRects()[0]
-    // fails in firefox when we force .runion-line.r00-l-first::before
-    // to break (what we do). The first rect is the breaking rect with a
-    // width of zero. The lineRange.getClientRects() don't have this issue.
-    let lineRect = lineRange.getBoundingClientRect()
-      , rectContainingLine
-      // , i=0
-      ;
-    for(let rect of parentRects) {
-
-        // If lineRect is contained in rect we got a hit.
-
-        // FIXME: top and bottom tests failed with very small line-space
-        // which is normal, now that the runion reduces line-space down
-        // to 1, and now we get some ovwerflow.
-        // If left/right is a fit, we're at least in the correct column,
-        // which is the main reason for this.
-        // Would be nice to have this very accurate though, so we can
-        // rely on it.
-        if(     //   lineRect.top >= rect.top
-                //   lineRect.bottom <= rect.bottom
-                   lineRect.left >= rect.left
-                && lineRect.right <= rect.right) {
-            rectContainingLine = rect;
-            break;
-        }
-        // console.log('did not fit', i++, 'lineRect', lineRect ,
-        //     '\nrect', rect, '\n',
-        //     parentRects, '\n', lineParent,
-        //     lineRange.getClientRects()
-        //     );
-        // console.log('top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top);
-        // console.log('bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom);
-        // console.log('lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left);
-        // console.log('rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right);
-    }
+    let [rectContainingLine, lineParent] = _getContainingRect(firstNode, container);
     // let style = lineParent.ownerDocument.defaultView.getComputedStyle(lineParent);
     let widthPaddings = getElementSizesInPx(lineParent, 'padding-left', 'padding-right');
 
