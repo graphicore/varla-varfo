@@ -980,6 +980,11 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
       //        (e.g. a height change of lineRange.getBoundingClientRect())
       //        and do something (undo one step, approximate). It's hard
       //        for sure with the smarter generators.
+      //        putting white-space: nowrap into the container solves this
+      //        when we keep the :before{display: block} for lines.
+      //        We may need exception for elements that are skipped by
+      //        justification. Luckily there's the :not() selector, which
+      //        could help.
       , readUnusedWhiteSpace =()=>{
             // This will be called a lot and it's *very* expensive!
             //return availableLineLength - lineRange.getBoundingClientRect().width;
@@ -1575,9 +1580,27 @@ export function justify(elem, options) {
     t1 = performance.now();
     console.log(`markupLine(s) took ${(t1 - t0) / 1000} seconds.`);
 
+    // This is required to make text-indents on first lines work
+    elem.classList.add('runion-activated');
+
+
+
+    t0 = performance.now();
+    for(let [index, lineElements] of elementLines.entries()) {
+    //     // this seems to have a penalty of 15 to 25 secconds depending
+    //     // on which method is used to determine if an element is a
+    //     // block-parent. need to investigate!
+    //     // and that only for the first-line detection
+        _markLogicalLinePosition(lineElements, index);
+    }
+    t1 = performance.now();
+    console.log(`_markLogicalLinePosition(s) took ${(t1 - t0) / 1000} seconds.`);
+
     //for(let [i, lineElements] of elementLines.entries()){
     //    if(i > 100)
     //       break;
+    //    if(lineElements[0].classList.contains('r00-last-line'))
+    //        continue;
     //    justifyLine(elem, lineElements);
     //}
 
@@ -1605,6 +1628,8 @@ export function justify(elem, options) {
         let jtAll = 0, jtCount = 0;
         for(let [i, lineElements] of elementLines.entries()) {
             if(i < devStart)
+                continue;
+            if(lineElements[0].classList.contains('r00-last-line'))
                 continue;
             let j0 = performance.now();
             try {
@@ -1658,6 +1683,7 @@ function _unjustify(container, elementLines) {
             elem.replaceWith(...elem.childNodes);
         }
     }
+    container.classList.remove('runion-activated');
     // From MDN:
     //   > The Node.normalize() method puts the specified node and all of its
     //   > sub-tree into a "normalized" form. In a normalized sub-tree, no text

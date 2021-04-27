@@ -983,6 +983,7 @@ i, cite, em, var, dfn {
            hyphens: auto;
 
     text-align: left;
+    text-indent: 2em;
     /* text-align: justify;
      * We'll do the justification ourselves, initially, left-aligned is
      * required, because we can use it to measure the empty that is
@@ -994,6 +995,11 @@ i, cite, em, var, dfn {
     orphans: 3;
     widows: 3;
 }
+
+.runion-01.runion-activated {
+    white-space: nowrap;
+}
+
 
 .runion-01 h1,
 .runion-01 h2,
@@ -1046,6 +1052,9 @@ Now set directly as element style in line containment protocol...
 
 
 
+
+
+
 /**
  * introduce explicit wrapping before each line
  * This normalizes the behavior of Chrome and Firefox, both loose
@@ -1066,6 +1075,30 @@ FIXME: 2 problems:
     content: '';
     display: block;
 }
+
+/* works surprisingly well so far, even though I would think
+ * e.g. html is always a first child, and hence it's likely that an
+ * element is the child of a first-child
+ *
+ * the main reason for this was <li> elements that had bad line breaks due
+ * to this.
+ *
+ * Ah, it is indeed problematic!
+ *
+ * All bad if we do .runion-01{white-space: nowrap} which we must!
+ * need a .r00-first-line (and ideally .r00-first-section-line or
+ * .r00-initial-line for the first line after a h1, h2, h3)
+ *
+ */
+
+.runion-line.r00-first-line.r00-l-first::before,
+xxxli :first-child.runion-line.r00-l-first::before,
+xxxli .runion-line.r00-l-first:first-child::before
+{
+    content: unset;
+    display: unset;
+}
+
 
 /* --line-info-data
 .r00-l-first:hover::before {
