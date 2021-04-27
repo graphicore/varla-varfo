@@ -264,7 +264,7 @@ function _isOutOfFlowContext(elem) {
         // FIXME: don't iterate all the way to the top, pass useful
         // stop elements to this method!
         if(node.parentElement === node.ownerDocument.body
-                || node.parentElement.classListe.contains('runion-01'))
+                || node.parentElement && node.parentElement.classList.contains('runion-01'))
             return false;
         node = node.parentElement;
     }
@@ -1623,7 +1623,7 @@ export function justify(elem, options) {
         //        , devCount = 60
         //        ;
         let devStart = 0
-          , devCount = 3050
+          , devCount = 50
           ;
         let jtAll = 0, jtCount = 0;
         for(let [i, lineElements] of elementLines.entries()) {
