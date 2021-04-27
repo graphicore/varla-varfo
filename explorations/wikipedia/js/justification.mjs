@@ -862,10 +862,8 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     //            PROFIT! works well for text-indent, but our
     //                    r00-l-first:before{display: block} kills
     //                    the text-indent. So that may need another handling.
-    let availableLineLength = rectContainingLine.width - widthPaddings[0] - widthPaddings[1]
-      , rightStop = rectContainingLine.right - widthPaddings[1]
+    let rightStop = rectContainingLine.right - widthPaddings[1]
         // lineRange.getBoundingClientRect() includes also hyphens added by :after if any!
-      , actualLineLength = lineRange.getBoundingClientRect().width
 
       // FIXME: even with white-space: no-wrap, our lines CAN WRAP!
       //        this can happen with inline-elements (the <sup> elements
@@ -890,7 +888,14 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
     // "good" lines become lighter red to white.
     {
         // wsRatio will be 1 for ideal lines and < 1 for less than full lines.
-        let wsRatio = actualLineLength / availableLineLength
+        let lineBCR = lineRange.getBoundingClientRect()
+          , lineStart = lineBCR.left
+          , availableLineLength = rightStop - lineStart
+          , actualLineLength = lineBCR.right - lineStart
+          , wsRatio = actualLineLength / availableLineLength
+            // === 0 for ideal lines
+            // === Full line length for empty lines
+            // === how to get the full line length????
           , hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`
           ;
         setPropertyToLine('background', hslColor);
