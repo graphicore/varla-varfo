@@ -43,7 +43,7 @@ function _deepText(node) {
  * @return     True if all of the text content of |nod| is whitespace,
  *             otherwise false.
  */
-function _isWhiteSpaceTextNode(node) {
+function _isWhiteSpaceTextNode(node) { // jshint ignore:line
   // Use ECMA-262 Edition 3 String and RegExp features
   return !(/[^\t\n\r ]/.test(node.data));
 }
@@ -349,8 +349,9 @@ function* findLines(elem) {
             //     all pretty bad, but it seems the reason is no longer
             //     how lines are detected.
             let rects = Array.from(currentLine.range.getClientRects())
-              , [beforeLastRect, lastRect] = rects.slice(-2)
-              , touchingLeft = false
+              , firstRect =rects[0]
+              , lastRect = rects[rects.length - 1]
+              , withinHorizontalBounds = false
               , touchingBottom = false
               , changed = false
               ;
@@ -375,41 +376,15 @@ function* findLines(elem) {
                 // correct column rect
                 // then only ensure that the items are on the same "height"
                 // e.g. touchingBottom should be sufficient, but touchingLeft
-                // is replaced.
-
-
-
+                // is replaced:
                 if(lastRect.left >= currentLine.columnRect.left && lastRect.right <= currentLine.columnRect.right) {
-                //if(Math.abs(Math.floor(lastRect.left - beforeLastRect.right)) <= 1) {
-                    // The result of the subtraction above will be positive
-                    // for e.g. a column change and negative for a normal
-                    // line change.
-                    touchingLeft = true;
+                    withinHorizontalBounds = true;
                 }
 
-
-                // Other reasons why we would have more rects is that
-                // the nodes in the selection could be actually in different
-                // elements like in "<em>hello<em> <strong>world</strong>"
-                // even on the same line, this would create three rects
-                // one for each "hello", " ", and "world".
-                //
-                // FIXME: precision? fringe cases e.g. pseudo element content?
-                // look for the line:
-                //              ISBN 978-3-447-06184-1. "the latter
-                // it has an aditional " in a pseudo-element, and that causes
-                // the line to break, because the lower level client rects
-                // of the TextNodes don't touch at that position.
-            //    if(Math.abs(Math.floor(lastRect.left - beforeLastRect.right)) <= 1) {
-            //        // The result of the subtraction above will be positive
-            //        // for e.g. a column change and negative for a normal
-            //        // line change.
-            //        touchingLeft = true;
-
-                if (Math.floor(lastRect.bottom - beforeLastRect.bottom) < 1) {
+                if (Math.floor(lastRect.bottom - firstRect.bottom) < 1) {
                     touchingBottom = true;
                 }
-                changed = !(touchingLeft && touchingBottom);
+                changed = !(withinHorizontalBounds && touchingBottom);
             }
             let [lastEndNode, lastEndNodeIndex] = last || [null, null];
             last = [endNode, endNodeIndex];
@@ -483,7 +458,7 @@ function* reverseArrayIterator(array) {
 
 function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextContent) {
     let {range, nodes} = line
-      , filtered = []
+      , prepared = []
       , lineElements = []
       ;
     let randBG = `hsl(${Math.round((Math.random() * 70)) + 90}, `  // 90 to 160
@@ -498,21 +473,7 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
                     ? range.endOffset
                     : node.data.length // -1???
           ;
-        if(startIndex === endIndex)
-            // This means the selection is empty. it messes with
-            // detecting the first/last element reliably, hence I filter
-            // it in a pass before, that way.
-            // TODO: see if it happens, and, when it happens whether
-            // it breaks any assumptions.
-            continue;
-
-        filtered.push([node, startIndex, endIndex]);
-    }
-
-    if(!filtered.length) {
-        // FIXME maybe we don't need this anymore!
-        console.log('Removed a line at:', index);
-        return null;
+        prepared.push([node, startIndex, endIndex]);
     }
 
     // FIXME: add all punctuation and "white-space" etc. that breaks lines.
@@ -525,7 +486,7 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     let lineBreakers = new Set([' ', '-', '–', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
     let addHyphen = false;
     {
-        let [node, , endIndex] = filtered[filtered.length-1];
+        let [node, , endIndex] = prepared[prepared.length-1];
         // FIXME: there are other heuristics/reasons to not add a hyphen!
         //        but the error is not always in here.
         // If the last character is not a line breaking character,
@@ -537,73 +498,6 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
             addHyphen = true;
         }
     }
-
-    // There are cases where the line essentially is a block element,
-    // like a <h2> and after that closes, we get a "\n" which is attributed
-    // to that line. We should detect these, but I'm not sure how!
-    // Basically, there is white-space that matters, in an inline context,
-    // and whitespace that does not matter, in an block context.
-    // Wrapping white space that does not matter into a <span> is not good.
-    // E.g. after headlines, new sections then start with an empty line.
-    // But, it would also cause trouble within the section.
-    //
-    // NOTE, the <h2> problem above comes from the rule:
-    //        h2 + p, h3 + p {
-    //              margin-block-start: 0;
-    //        }
-    // Which then fails. there are other cases where that rule is not
-    // good, e.g. where the .thumbs at the beginning of a section are
-    // display: none (a temporary measure) or where for other reasons
-    // elements are hidden. There's a dirty fix:
-    //        h2 ~ p, h3 ~ p {
-    //              margin-block-start: 0;
-    //        }
-    // But that changes other cases, e.g. when a div.hatnote follows
-    // the h2 (## History).
-    // All in all, for the current phase of development, it may be better
-    // to fix these problems on the CSS-level and move on for now.
-    //
-    // OK, this is all I need so far.
-    filtered = filtered.filter(([node])=>{
-        // Remove if node is only white space and node.previousSibling is
-        // an element and 'block'.
-        // If the previous sibling is a comment, we should skip that
-        // but it could be <h2><comment><whitespace><comment><this node whitespace>
-        // ... so, catching some cases here:
-        let cur = node;
-        while(true) {
-            if(cur.nodeType === Node.TEXT_NODE) {
-                if(!_isWhiteSpaceTextNode(cur))
-                    // Keep! Is not only white space.
-                    return true;
-            }
-            if(!cur.previousSibling)
-                // Seems like we reached the first node in an element.
-                // not what we are looking for at all here, keep.
-                return true;
-            cur = cur.previousSibling;
-            if(cur.nodeType === Node.ELEMENT_NODE) {
-                if(_isOutOfFlowContext(cur)) /* i.e. when display: none*/
-                    // FIXME: cur could also be position absolute to be a `continue`!
-                    // But this would mess up other things in the line finding
-                    // as well, so too edgy for now.
-                    // The white space matters probably, could be the space
-                    // between two <a>s.
-                    continue;
-                if(_isBlock(cur)){
-                    // found it
-                    // FIXME: I don't think this filter is needed anymore!
-                    console.log('Filtered a whitespace line, due to being a block:',
-                                cur, 'via node:', node, `in: ${nodes.map(n=>n.data).join(' ')}` );
-                    return false;
-                }
-                return true;
-            }
-            if(cur.nodeType === Node.COMMENT_NODE)
-                continue;
-        }
-    });
-
     // TODO: Although they seem to cause no trouble (yet), all
     // white space only first line (.r00-l-first nodes) seem
     // unnecessary as well:
@@ -613,9 +507,9 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     // }
 
     // Do it from end to start, so all offsets stay valid.
-    let last = filtered.length-1;
+    let last = prepared.length-1;
     for(let i=last;i>=0;i--) {
-        let [node, startIndex, endIndex] = filtered[i];
+        let [node, startIndex, endIndex] = prepared[i];
         // we have at least one char of something
         let span = document.createElement('span');
         lineElements.unshift(span); // backwards iteration so no push...
