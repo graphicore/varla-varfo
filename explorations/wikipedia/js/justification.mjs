@@ -567,7 +567,7 @@ function _isBlockFirstLine(lineElements) {
         if(previousElementSibling) {
 
             if(previousElementSibling.classList.contains('runion-line')) {
-                return false
+                return false;
             }
 
             // Handle cases that don't count.
