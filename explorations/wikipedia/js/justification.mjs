@@ -522,7 +522,7 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
     // should be inspected to see what belongs in here, at least for our
     // example, this could be feasible. This heuristic is probably not
     // ideal in the long run, yet simple.
-    let lineBreakers = new Set([' ', '-', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
+    let lineBreakers = new Set([' ', '-', '–', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
     let addHyphen = false;
     {
         let [node, , endIndex] = filtered[filtered.length-1];
