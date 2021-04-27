@@ -243,13 +243,6 @@ function _getContainingRect(lineRangeOrNode,
                   + ` for: ${lineRangeOrNode.textContent || lineRangeOrNode.toString()}`);
 }
 
-// see: https://developer.mozilla.org/en-US/docs/Web/CSS/position
-// it's unlikely taht simple, but these are the main cases.
-const _OUT_OF_FLOW_POSITIONS = new Set(['absolute', 'fixed']);
-// FIXME: Turns out that this is very, very expensive in FireFox,
-// not so much in Chrome. This method is to replace:
-// return elem.offsetParent === null;
-// So we should test each call of it against elem.offsetParent === null;
 function _isOutOfFlowContext(elem) {
     return elem.offsetParent === null;
 }
@@ -849,36 +842,17 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
 
     // The values below looked all plausible.
     // FIXME: Does not take into account:
-    //                      - first-line text-indent
     //                      - floats around this line (we don't do this yet)
     //                      - hanging-punctuation(?) (not implemented in any browser)
     //                      -  drop-caps/initial-letter(Safari only?) maybe as
     //                         float with ::initial-letter? NOTE :initial-letter
     //                          :first-line fail with our span surrounded lines and
     //                          other inline elements.
-    //        Last lines should not be justified ever.
-    //      NOTE: a possible fix could be not to measure the width,
-    //            but to calculate the distance to the right side!
-    //            PROFIT! works well for text-indent, but our
-    //                    r00-l-first:before{display: block} kills
-    //                    the text-indent. So that may need another handling.
     let rightStop = rectContainingLine.right - widthPaddings[1]
-        // lineRange.getBoundingClientRect() includes also hyphens added by :after if any!
-
-      // FIXME: even with white-space: no-wrap, our lines CAN WRAP!
-      //        this can happen with inline-elements (the <sup> elements
-      //        showed it. So, maybe, we must detect that wrapping
-      //        (e.g. a height change of lineRange.getBoundingClientRect())
-      //        and do something (undo one step, approximate). It's hard
-      //        for sure with the smarter generators.
-      //        putting white-space: nowrap into the container solves this
-      //        when we keep the :before{display: block} for lines.
-      //        We may need exception for elements that are skipped by
-      //        justification. Luckily there's the :not() selector, which
-      //        could help.
       , readUnusedWhiteSpace =()=>{
             // This will be called a lot and it's *very* expensive!
-            //return availableLineLength - lineRange.getBoundingClientRect().width;
+            // lineRange.getBoundingClientRect() includes also the hyphens
+            // added with :after if any!
             return rightStop  - lineRange.getBoundingClientRect().right;
         }
       ;
