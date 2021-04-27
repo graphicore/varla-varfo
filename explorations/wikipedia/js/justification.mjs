@@ -204,7 +204,8 @@ function _getContainingRect(lineRangeOrNode,
     // to break (what we do). The first rect is the breaking rect with a
     // width of zero. The lineRange.getClientRects() don't have this issue.
     let lineRect = lineRangeOrNode.getBoundingClientRect()
-      // , i=0
+      , i=0
+      , logs = []
       ;
     for(let rect of parentRects) {
 
@@ -226,17 +227,20 @@ function _getContainingRect(lineRangeOrNode,
         // TODO: since this still sometimes goes wring, below
         // is very helpful debugging output, which I would uncomment when
         // needed. Once this heuristic stabilizes we may remove that stuff.
-        // console.log('did not fit', i++, 'lineRect', lineRect ,
-        //     '\nrect', rect, '\n',
-        //     parentRects, '\n', lineParent,
-        //     lineRangeOrNode.getClientRects()
-        //     );
-        // console.log('top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top);
-        // console.log('bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom);
-        // console.log('lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left);
-        // console.log('rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right);
+        logs.push(['did not fit', i++, 'lineRect', lineRect ,
+            '\nrect', rect, '\n',
+            parentRects, '\n', lineParent,
+            lineRangeOrNode.getClientRects()
+            ]);
+        logs.push(['top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top]);
+        logs.push(['bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom]);
+        logs.push(['lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left]);
+        logs.push(['rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right]);
     }
-    throw new Error('_getContainingRect could\'n identify a containing rect.');
+    for(let line of logs)
+        console.log(...line);
+    throw new Error(`_getContainingRect couldn't identify a containing rect`
+                  + ` for: ${lineRangeOrNode.textContent || lineRangeOrNode.toString()}`);
 }
 
 // see: https://developer.mozilla.org/en-US/docs/Web/CSS/position
@@ -482,9 +486,9 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
       , filtered = []
       , lineElements = []
       ;
-    let randBG = `rgb(${(Math.random() / 2 + .5) * 255}, `
-                   + `${(Math.random() / 2 + .5) * 255}, `
-                   + `${(Math.random() / 2 + .5) * 255})`;
+    let randBG = `hsl(${Math.round((Math.random() * 70)) + 90}, `  // 90 to 160
+                   + `${Math.round((Math.random() * 30)) + 60}%, ` // 55 to 90
+                   + `${Math.round((Math.random() * 20)) + 70}%)`; // 70 to 90
 
     for(let node of nodes) {
         let startIndex = node === range.startContainer
@@ -1505,7 +1509,12 @@ function getJustificationTolerances(font, targetsize, targetweight) {
 
 // for development:
 export function justify(elem, options) {
+
+    var t0,t1;
+    t0 = performance.now();
     let lines = Array.from(findLines(elem));
+    t1 = performance.now();
+    console.log(`findLines took ${(t1 - t0) / 1000} seconds. Found ${lines.length} lines.`);
 
     let relweight
         // FIXME: there are e.g. <strong> elements!
@@ -1531,7 +1540,7 @@ export function justify(elem, options) {
 
 
     let tolerances = getJustificationTolerances(fontfamily, fontSize, relweight);
-    console.log('fontSize', fontSize, 'relweight', relweight, 'tolerances:', tolerances);
+    console.log('justification tolerances:', 'fontSize', fontSize, 'relweight', relweight, 'tolerances:', tolerances);
     // > fontSize 12 relweight 100 tolerances: {
     //                // All these appear a bit low/narrow for the current AmstelVar
     //                // all values: [min, default, max]
@@ -1541,8 +1550,9 @@ export function justify(elem, options) {
     // > }
 
 
-    // Do it from end to start, so all offsets stay valid.
 
+    t0 = performance.now();
+    // Do it from end to start, so all offsets stay valid.
     // FIXME: this nextLineTextContent is not exactly beautiful, can I do better?
     // It's rather robust though, look at the next line as well to determine
     // if a hyphen is needed. Maybe, I should collect inter-line white space.
@@ -1562,18 +1572,54 @@ export function justify(elem, options) {
         nextLinePrecedingWhiteSpace = precedingWhiteSpace;
         nextLineTextContent = textContent;
     }
+    t1 = performance.now();
+    console.log(`markupLine(s) took ${(t1 - t0) / 1000} seconds.`);
 
     //for(let [i, lineElements] of elementLines.entries()){
     //    if(i > 100)
     //       break;
     //    justifyLine(elem, lineElements);
     //}
+
     async function* justifyLineGenerator() {
+
+        // FIXME: for Firefox and Chrome in the Section "Citations" I get an
+        //              Error: _getContainingRect couldn't identify a
+        //              containing rect for:
+        //              enze Morali, Rom 1881], "Topografia di
+        //  But, there are more similar to the above, seems like some
+        //  lines  are wider in this context than we would expect in
+        //  _getContainingRect.
+        //      Chrome: rig 533.890625 <= 530.546875 false
+        //      Firefox: rig 546.7333374023438 <= 542.3999938964844 false
+        //  and for Firefox a really much too wide justified:
+        //              "Sons. pp. 4, 123."
+        //
+        // In the following line range
+        //      let devStart = 830
+        //        , devCount = 60
+        //        ;
+        let devStart = 0
+          , devCount = 3050
+          ;
+        let jtAll = 0, jtCount = 0;
         for(let [i, lineElements] of elementLines.entries()) {
-            justifyLine(elem, lineElements, fontSizePx, tolerances);
-            if(i === 51) {
-                console.log('STOPING justifyLine due to dev iterations limit', i);
-                return;
+            if(i < devStart)
+                continue;
+            let j0 = performance.now();
+            try {
+                justifyLine(elem, lineElements, fontSizePx, tolerances);
+            }
+            catch(e){
+                console.error(e);
+                continue;
+            }
+            let j1 = performance.now();
+            jtCount += 1;
+            jtAll += j1 - j0;
+            if(jtCount >= devCount) {
+                console.log('STOPPING justifyLine due to dev iterations limit', devCount);
+                break;
             }
             // This does not render the progress as setTimout, look up
             // "clamping" and "setTimeout".
@@ -1581,8 +1627,8 @@ export function justify(elem, options) {
             yield await new Promise((resolve /*, reject */)=>{
                 setTimeout(()=>resolve(true), 0);
             });
-
         }
+        console.log(`justifyLine(s) took ${jtAll / 1000} seconds for ${jtCount} lines.`);
     }
     let runJustifyLine = (async function() {
         let gen = justifyLineGenerator();
