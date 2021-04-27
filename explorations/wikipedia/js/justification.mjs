@@ -239,6 +239,33 @@ function _getContainingRect(lineRangeOrNode,
     throw new Error('_getContainingRect could\'n identify a containing rect.');
 }
 
+// see: https://developer.mozilla.org/en-US/docs/Web/CSS/position
+// it's unlikely taht simple, but these are the main cases.
+const _OUT_OF_FLOW_POSITIONS = new Set(['absolute', 'fixed']);
+// FIXME: Turns out that this is very, very expensive in FireFox,
+// not so much in Chrome. This method is to replace:
+// return elem.offsetParent === null;
+// So we should test each call of it against elem.offsetParent === null;
+function _isOutOfFlowContext(elem) {
+    let getComputedStyle = elem.ownerDocument.defaultView.getComputedStyle;
+    let node = elem;
+    while(node) {
+        let style = getComputedStyle(elem);
+        if(style.display === "none") {
+            return true;
+        }
+        if(_OUT_OF_FLOW_POSITIONS.has(style.position)) {
+            return true;
+        }
+        // FIXME: don't iterate all the way to the top, pass useful
+        // stop elements to this method!
+        if(node.parentElement === node.ownerDocument.body
+                || node.parentElement.classListe.contains('runion-01'))
+            return false;
+        node = node.parentElement;
+    }
+    return true;
+}
 
 /**
  * Find lines that the browser has composed by using Range objects
@@ -280,7 +307,7 @@ function* findLines(elem) {
         //
         // If parentNode.offsetParent === null it's likely in a
         // display:none context, we back up with _hasNoSizeTextNode
-        if(endNode.parentNode.offsetParent === null && _hasNoSizeTextNode(endNode))
+        if(_hasNoSizeTextNode(endNode) && endNode.parentNode.offsetParent === null)
             continue;
         // this is only done initialy once
         if(!currentLine) {
@@ -409,6 +436,8 @@ function* findLines(elem) {
 }
 
 
+// The check in here finds elements where the inline behavior is like
+// a block, e.g. display: inline block would match as well.
 function getClosestBlockParent(node) {
   // if node is a block it will be returned
   let elem;
@@ -417,7 +446,7 @@ function getClosestBlockParent(node) {
   else
     elem = node.parentElement;
 
-  while(true){
+  while(elem){
       // Used to identify a block element, elem.clientWidth is 0 for inline
       // elements. To futher distinguish, elem.getBoundlingClientRect()
       // would return for an inline and a block element a width, that is
@@ -427,6 +456,20 @@ function getClosestBlockParent(node) {
       return elem;
     elem = elem.parentNode;
   }
+  return undefined;
+}
+
+// This tries to identify elements who have an outer block behavior,
+// i.e. breaking line flow. I'm not sure if this and the heuristic
+// getClosestBlockParent must be differentiated.
+function _isBlock(elem) {
+    let style = elem.ownerDocument.defaultView.getComputedStyle(elem)
+      , display = style.getPropertyValue('display')
+      ;
+    // CAUTION: Yet we only do "display: block" and everything else
+    // is considered "display: inline", but CSS has a much more complex
+    // model nowadays.
+    return display === 'block';
 }
 
 function* reverseArrayIterator(array) {
@@ -523,9 +566,7 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
         // If the previous sibling is a comment, we should skip that
         // but it could be <h2><comment><whitespace><comment><this node whitespace>
         // ... so, catching some cases here:
-        let cur = node
-          , getComputedStyle = node.ownerDocument.defaultView.getComputedStyle
-          ;
+        let cur = node;
         while(true) {
             if(cur.nodeType === Node.TEXT_NODE) {
                 if(!_isWhiteSpaceTextNode(cur))
@@ -538,20 +579,20 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
                 return true;
             cur = cur.previousSibling;
             if(cur.nodeType === Node.ELEMENT_NODE) {
-                let display = getComputedStyle(cur).getPropertyValue('display');
-                if(display === 'block') {
+                if(_isOutOfFlowContext(cur)) /* i.e. when display: none*/
+                    // FIXME: cur could also be position absolute to be a `continue`!
+                    // But this would mess up other things in the line finding
+                    // as well, so too edgy for now.
+                    // The white space matters probably, could be the space
+                    // between two <a>s.
+                    continue;
+                if(_isBlock(cur)){
                     // found it
                     // FIXME: I don't think this filter is needed anymore!
-                    console.log('Filtered a whitespace line.');
+                    console.log('Filtered a whitespace line, due to being a block:',
+                                cur, 'via node:', node, `in: ${nodes.map(n=>n.data).join(' ')}` );
                     return false;
                 }
-                if(display === 'none')
-                    continue;
-                // FIXME: cur could also be position absolute to be a `continue`!
-                // But this would mess up other things in the line finding
-                // as well, so too edgy for now.
-                // The white space matters probably, could be the space
-                // between two <a>s.
                 return true;
             }
             if(cur.nodeType === Node.COMMENT_NODE)
@@ -593,6 +634,202 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
         r.surroundContents(span);
     }
     return lineElements;
+}
+
+
+const _LINE_BREAKING_SIBLING_TAGS = new Set(['br']);
+function _isLineBreakingSiblingTag(elem){
+    return _LINE_BREAKING_SIBLING_TAGS.has(elem.tagName.toLowerCase());
+}
+
+const _TYPICAL_INLINE_TAGS = new Set(['a', 'sup', 'sub', 'strong', 'b', 'em', 'i', 'span']);
+function _isTypicalInlineElemTag(elem){
+    return _TYPICAL_INLINE_TAGS.has(elem.tagName.toLowerCase());
+}
+
+const _TYPICAL_BLOCK_TAGS = new Set(['div', 'p', 'ul', 'li' /*stretch*/, 'h1', 'h2', 'h3']);
+function _isTypicalBlockElemTag(elem){
+    return _TYPICAL_BLOCK_TAGS.has(elem.tagName.toLowerCase());
+}
+
+// Find lines that text would indent. Lines after soft breaks/<br /> are
+// not included in here.
+function _isBlockFirstLine(lineElements) {
+    let [elemOne, ] = lineElements
+        // getting this lazily
+      , blockParent = null// = getClosestBlockParent(elemOne)
+      , node = elemOne
+      ;
+    while(node) {
+        // Not looking at non-element nodes (elem.previousSibling) here,
+        // because we already filtered them in findLines/markupLine if
+        // they are irrelevant and otherwise put them into span line
+        // containers.
+        let previousElementSibling = node.previousElementSibling;
+        if(previousElementSibling) {
+
+            if(previousElementSibling.classList.contains('runion-line')) {
+                return false
+            }
+
+            // Handle cases that don't count.
+            // Is getting offsetParent expensive, if so, we can
+            // maybe use other heurisitcs before checking this.
+            if(_isOutOfFlowContext(previousElementSibling)) {
+                // Is not visible or irrelevant.
+                node = previousElementSibling;
+                continue;
+            }
+
+            // Even if the relevant element before is display: block
+            // this is not treated as a first line, it must be the first
+            // line of a block. Also, <br /> is not creating a new paragraph
+            // line after it.
+            return false;
+        }
+        // it's the first relevant child
+        let parentElement = node.parentElement;
+        if(!parentElement)
+            // This doesn't happen ever, just for completeness.
+            return false;
+
+        if(_isTypicalInlineElemTag(parentElement)){
+            node = parentElement;
+            continue;
+        }
+        if(_isTypicalBlockElemTag(parentElement))
+            return true;
+
+
+        if(blockParent === null)
+            // doing this lazily, we may never need it if the
+            // conditions before hit.
+            // If this is the big performance hit, we could
+            // easily before this  e.g. check for pretty sure element tags
+            // of parentElement, like <p> but that can be altered by CSS.
+            blockParent = getClosestBlockParent(elemOne);
+        // We're out of previous element siblings, if the parent is a
+        // block, this is a first line:
+        if(blockParent === parentElement)
+            return true;
+        // Alternatively:
+        if(_isBlock(parentElement))
+            return true;
+
+        // It's not a block, i.e. inline.
+        // Now, we must check if the parent (inline) element is the first
+        // relevant element in a block.
+        node = parentElement;
+    }
+    return false;
+}
+
+/**
+ * Returns True if line is the last line of a block
+ * or breaks because it's followed by a block or a soft break,
+ * like <br />. These are two rather separate things, but for the
+ * moment I only need this to not justify the line.
+ */
+function _isLastLine(lineElements) {
+    let elemN = lineElements[lineElements.length-1]
+      , blockParent = null // evaluated lazily
+      , node = elemN
+      ;
+    while(node) {
+        let nextElementSibling = node.nextElementSibling;
+        if(nextElementSibling) {
+            if(_isOutOfFlowContext(nextElementSibling)){
+                node = nextElementSibling;
+                continue;
+            }
+
+            // We add these so the nature is expected to be inline.
+            if(nextElementSibling.classList.contains('runion-line')) {
+                return false;
+            }
+
+            if(_isLineBreakingSiblingTag(nextElementSibling)) {
+                return true;
+            }
+
+            if(_isBlock(nextElementSibling)) {
+                return true;
+            }
+
+            if(nextElementSibling.childNodes.length)
+                // There are sometimes empty spans at the end of lines
+                // in our wikipedia example, e.g. in the "Citations" section.
+                return false;
+        }
+        //it's the last relevant child.
+        let parentElement = node.parentElement;
+        if(!parentElement)
+            // This doesn't happen ever, just for completeness.
+            return false;
+
+        if(_isTypicalInlineElemTag(parentElement)) {
+            node = parentElement;
+            continue;
+        }
+        if(_isTypicalBlockElemTag(parentElement))
+            return true;
+
+
+        if(blockParent === null)
+            // doing this lazily, we may never need it if the
+            // conditions before hit.
+            // If this is the big performance hit, we could
+            // easily before this  e.g. check for pretty sure element tags
+            // of parentElement, like <p> but that can be altered by CSS.
+            blockParent = getClosestBlockParent(elemN);
+        // We're out of previous element siblings, if the parent is a
+        // block, this is a first line:
+        if(blockParent === parentElement)
+            return true;
+        // Alternatively:
+        if(_isBlock(parentElement))
+            return true;
+
+        // it's an inline parent, look at its surroundings.
+        node = parentElement;
+    }
+    return false;
+}
+
+
+// FIXME: Still slow in Firefox:
+//          _markLogicalLinePosition(s) took 19.514 seconds.
+// while in Chromium:
+//          _markLogicalLinePosition(s) took 2.1909149999992223 seconds.
+// Note that markupLines is a bit faster in Firefox.
+function _markLogicalLinePosition(lineElements /*, index*/) {
+    let classes = [];
+
+    // seems to slow things down a lot! Maybe because of getClosestBlockParent
+    // because everything else is IMHO quick.
+    if(_isBlockFirstLine(lineElements)) {
+        classes.push('r00-first-line');
+        // FIXME/TODO: if(_isInitialLine(lineElements)){
+                // TODO: we don't identify outline/sections yet but
+                // should add a class to identify initial under what
+                // kind of section (h1=toplevel,h2=section,h3=subsection)
+                // r00-initial-h1, r00-initial-h2, r00-initial-h3
+                // just use the closest heading to determine
+        //        elem.classList.add('r00-initial-line');
+        // }
+    }
+    if(_isLastLine(lineElements)) {
+        // is the last line of a block
+        // or breaks because it's followed by a block or a soft break,
+        // like <br />. These are two rather separate things, but for the
+        // moment I only need this to not justify the line.
+        classes.push('r00-last-line');
+    }
+    for(let klass of classes) {
+        for(let elem of lineElements) {
+            elem.classList.add(klass);
+        }
+    }
 }
 
 function _approachZero(min, max, value, control) {
