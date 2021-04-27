@@ -252,7 +252,7 @@ function setDefaultFontSize(document) {
     var root = document.querySelector(':root')
       , fontSizePT = getElementFontSizePt(root)
       ;
-    root.style.setProperty('--default-font-size', fontSizePT);
+    root.style.setProperty('--default-font-size', `${fontSizePT}`);
 }
 
 function getELementLineWidthAndEmInPx(elem) {
