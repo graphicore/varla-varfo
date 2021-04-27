@@ -251,24 +251,7 @@ const _OUT_OF_FLOW_POSITIONS = new Set(['absolute', 'fixed']);
 // return elem.offsetParent === null;
 // So we should test each call of it against elem.offsetParent === null;
 function _isOutOfFlowContext(elem) {
-    let getComputedStyle = elem.ownerDocument.defaultView.getComputedStyle;
-    let node = elem;
-    while(node) {
-        let style = getComputedStyle(elem);
-        if(style.display === "none") {
-            return true;
-        }
-        if(_OUT_OF_FLOW_POSITIONS.has(style.position)) {
-            return true;
-        }
-        // FIXME: don't iterate all the way to the top, pass useful
-        // stop elements to this method!
-        if(node.parentElement === node.ownerDocument.body
-                || node.parentElement && node.parentElement.classList.contains('runion-01'))
-            return false;
-        node = node.parentElement;
-    }
-    return true;
+    return elem.offsetParent === null;
 }
 
 /**
@@ -571,8 +554,6 @@ function _isBlockFirstLine(lineElements) {
             }
 
             // Handle cases that don't count.
-            // Is getting offsetParent expensive, if so, we can
-            // maybe use other heurisitcs before checking this.
             if(_isOutOfFlowContext(previousElementSibling)) {
                 // Is not visible or irrelevant.
                 node = previousElementSibling;
@@ -585,19 +566,21 @@ function _isBlockFirstLine(lineElements) {
             // line after it.
             return false;
         }
+
         // it's the first relevant child
         let parentElement = node.parentElement;
         if(!parentElement)
             // This doesn't happen ever, just for completeness.
             return false;
 
+
         if(_isTypicalInlineElemTag(parentElement)){
             node = parentElement;
             continue;
         }
+
         if(_isTypicalBlockElemTag(parentElement))
             return true;
-
 
         if(blockParent === null)
             // doing this lazily, we may never need it if the
@@ -695,12 +678,8 @@ function _isLastLine(lineElements) {
 }
 
 
-// FIXME: Still slow in Firefox:
-//          _markLogicalLinePosition(s) took 19.514 seconds.
-// while in Chromium:
-//          _markLogicalLinePosition(s) took 2.1909149999992223 seconds.
-// Note that markupLines is a bit faster in Firefox.
-function _markLogicalLinePosition(lineElements /*, index*/) {
+
+function _findLogicalLinePosition(lineElements /*, index*/) {
     let classes = [];
 
     // seems to slow things down a lot! Maybe because of getClosestBlockParent
@@ -723,12 +702,32 @@ function _markLogicalLinePosition(lineElements /*, index*/) {
         // moment I only need this to not justify the line.
         classes.push('r00-last-line');
     }
-    for(let klass of classes) {
-        for(let elem of lineElements) {
-            elem.classList.add(klass);
+    return classes;
+}
+
+
+function _markLogicalLinePositions(elementLines) {
+    let toMark = [];
+    // Important for performance is here to first collect all classes
+    // then apply them in a second pass, because adding the classes
+    // had Firefox re-evaluate some of it's caches for each iteration
+    // resulting slowing it down a lot.
+    for(let [index, lineElements] of elementLines.entries()) {
+        let classes = _findLogicalLinePosition(lineElements, index);
+        if(classes.length)
+            toMark.push([index, classes]);
+    }
+    // 2. pass apply classes.
+    for(let[index, classes] of toMark) {
+        let lineElements = elementLines[index];
+        for(let klass of classes) {
+            for(let elem of lineElements) {
+                elem.classList.add(klass);
+            }
         }
     }
 }
+
 
 function _approachZero(min, max, value, control) {
     // More nextValue/value means control gets smaller, eventually it
@@ -1406,9 +1405,9 @@ function getJustificationTolerances(font, targetsize, targetweight) {
  * END OF vabro.js copy.
  ****/
 
+
 // for development:
 export function justify(elem, options) {
-
     var t0,t1;
     t0 = performance.now();
     let lines = Array.from(findLines(elem));
@@ -1480,15 +1479,9 @@ export function justify(elem, options) {
 
 
     t0 = performance.now();
-    for(let [index, lineElements] of elementLines.entries()) {
-    //     // this seems to have a penalty of 15 to 25 secconds depending
-    //     // on which method is used to determine if an element is a
-    //     // block-parent. need to investigate!
-    //     // and that only for the first-line detection
-        _markLogicalLinePosition(lineElements, index);
-    }
+    _markLogicalLinePositions(elementLines);
     t1 = performance.now();
-    console.log(`_markLogicalLinePosition(s) took ${(t1 - t0) / 1000} seconds.`);
+    console.log(`_markLogicalLinePositions took ${(t1 - t0) / 1000} seconds.`);
 
     //for(let [i, lineElements] of elementLines.entries()){
     //    if(i > 100)
