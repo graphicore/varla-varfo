@@ -692,10 +692,13 @@ label.user_preferences-user_distance::after {
 
 /* --font choice/variation settings*/
 --font-family: AmstelVar;
+--grad-animation-name: AmstelVar-grad-by-font-size;
+
 --font-style: normal; /* oblique is basically broken */
 --font-slant: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
+--font-grade-generic: 0;
 /* used to be 520 but making it narrow to work out justification */
 /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
  * was 440 and I thought it was tight.
@@ -759,7 +762,7 @@ word-spacing: calc(1em * var(--word-space));
  * --x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
  */
 --x-line-height: max(1, min(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05))));
---x-font-grade: calc(var(--font-grade) + var(--font-grade-color-scheme-adjust, 0));
+--x-font-grade: calc(var(--font-grade, 0) + var(--font-grade-generic));
 
 --x-font-stretch: calc(var(--font-stretch) + var(--font-stretch-change, 0));
 
@@ -808,7 +811,32 @@ b, strong {
 :root {
     --dark-background: #202122;
     --dark-color: #fff;
-    --font-grade-color-scheme-adjust-dark: .5;
+
+    /* Only in dark mode, but it depends on font-size and weight
+     * where font-size selects 2 optically chosen grade adjustments
+     * for weights between 400 and 700 and those must be interpolated
+     * by the actual weight value.
+     *
+     * The values by font size could also be interpolated, but since
+     * they are 1pt apart, they could also be chosen by to integer
+     * rounded font-size, between 10 and 18.
+     *
+     * Also, doing a grep on this document, we only use --font-weight 400, 600, 700
+     * so, in our case interpolating is not necessary and just looking up
+     * values by font-size would suffice. Note though, that looking up values
+     * is the hard part.
+     *
+     * Maybe a lookup table could be created using @keyframes>???
+     * one dimension is chosen by the animation name
+     * one dimension is chosen by the animation position
+     * since the font-size is has optically/arbitrary selected values,
+     * it should probably be the animation name, BUT, for it's the less
+     * controlled value, it may better be the position! ....
+     *
+     * maybe the custom properties set by the keyframes do not interpolate
+     * but with enough keyframes, it could be good enough!
+     */
+
     --light-background: #fff;
     --light-color: #202122;
 
@@ -822,6 +850,169 @@ b, strong {
 
 }
 
+
+/* at least for debugging, these help immensely as the properties show
+ * up calc()-ulated! in the developer tools of Chromium under computed values!
+ */
+
+@property --grad-400 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --grad-700 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --grad-animation-progression {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --font-grade {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Works together with the @properties nicely in Chromium, but Firefox
+ * support is not soon to expect. A solution seems to be to set
+ * --grad-400 and --grad-700 by hand, whenever --font-size, --font-family,
+ * or --font-weight is set, but it wouldn't  take into account the final
+ * absolute --x-font-size, which makes it rather unusable. So probably
+ * JavaScript has to walk through all elements and set those --grad-X00
+ * variables where one of the three input variables changes compared to
+ * the parent.
+ * I keep this though, because it's impressive what can be done with the
+ * new CSS stuff and it's a good actual working example. Javascript will
+ * be a fallback, need to feature detect.
+ */
+@keyframes RobotoFlex-grad-by-font-size {
+    /* From 10 to 18 and a step size of 1 we have 8 steps: 12.5 % each.*/
+    0% { /* 10 pt*/
+      --grad-400: 0;
+      --grad-700: 0;
+    }
+    12.5% { /* 11 pt*/
+      --grad-400: -6;
+      --grad-700: -6;
+    }
+    25% { /* 12 pt*/
+      --grad-400: -9;
+      --grad-700: -10;
+    }
+    37.5% { /* 13 pt*/
+      --grad-400: -12;
+      --grad-700: -15;
+    }
+    50% { /* 14 pt*/
+      --grad-400: -14;
+      --grad-700: -20;
+    }
+    62.5% { /* 15 pt*/
+      --grad-400: -16;
+      --grad-700: -30;
+    }
+    75% { /* 16 pt*/
+      --grad-400: -18;
+      --grad-700: -38;
+    }
+    87.5% { /* 17 pt*/
+      --grad-400: -22;
+      --grad-700: -43;
+    }
+    100% { /*18 ot */
+      --grad-400: -24;
+      --grad-700: -54;
+    }
+}
+@keyframes AmstelVar-grad-by-font-size {
+    /* From 10 to 18 and a step size of 1 we have 8 steps: 12.5 % each.*/
+    0% { /* 10 pt*/
+      --grad-400: -3;
+      --grad-700: -80;
+    }
+    12.5% { /* 11 pt*/
+      --grad-400: -6;
+      --grad-700: -90;
+    }
+    25% { /* 12 pt*/
+      --grad-400: -10;
+      --grad-700: -95;
+    }
+    37.5% { /* 13 pt*/
+      --grad-400: -12;
+      --grad-700: -100;
+    }
+    50% { /* 14 pt*/
+      --grad-400: -14;
+      --grad-700: -105;
+    }
+    62.5% { /* 15 pt*/
+      --grad-400: -16;
+      --grad-700: -110;
+    }
+    75% { /* 16 pt*/
+      --grad-400: -18;
+      --grad-700: -115;
+    }
+    87.5% { /* 17 pt*/
+      --grad-400: -22;
+      --grad-700: -120;
+    }
+    100% { /*18 ot */
+      --grad-400: -24;
+      --grad-700: -125;
+    }
+}
+
+
+/* Font-Grade/GRAD setting
+ *
+ * Use this to turn all of this on, see dark-mode settings:
+ *          animation-name: var(--grad-animation-name);
+ *
+ * It's a pity we can't synthesize the animation name, as in `content` e.g.:
+ *      animation-name: var(--font-family) "-grad-by-font-size";
+ *      OR
+ *      --grad-animation-name: var(--font-family) "-grad-by-font-size";
+ * Which is a bummer, because it basically means we must set
+ * animation-name next to --font-family everywhere.
+ */
+* {
+    animation-play-state: paused;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    /* depends on font-size:
+     *      10 and lower than = 0
+     *      18 and greater than = 1
+     */
+    --grad-min-font-size: 10;
+    --grad-max-font-size: 18;
+    --grad-actual-font-size: clamp(
+            var(--grad-min-font-size),
+            var(--x-font-size),
+            var(--grad-max-font-size)
+            );
+    --grad-animation-progression: calc(
+              (var(--grad-actual-font-size) - var(--grad-min-font-size))
+            / (var(--grad-max-font-size) - var(--grad-min-font-size))
+            );
+    animation-duration: 1s;
+    animation-delay: calc(-1s * var(--grad-animation-progression));
+    /* --font-grade:
+     * Must be only applied in dark mode!
+     * There's no other grade changing rule, however, this property
+     * is already set so that it only switches on in dark mode
+     */
+    --font-grade: calc(
+              (var(--grad-700) - var(--grad-400))
+            * ( (clamp(400, var(--font-weight), 700) - 400) / (700 - 400))
+            + var(--grad-400)
+            );
+}
+
 @media (prefers-color-scheme: dark) {
     :root{
         /*
@@ -829,7 +1020,9 @@ b, strong {
         --color: var(--dark-color);
         */
         --mode-invert: var(--dark-mode-invert);
-        --font-grade-color-scheme-adjust: var(--font-grade-color-scheme-adjust-dark, 0);
+    }
+    * {
+        animation-name: var(--grad-animation-name);
     }
     .user_preferences-color_scheme-default:after{
         content: " (dark)";
@@ -841,7 +1034,9 @@ b, strong {
         --color: var(--dark-color);
     */
     --mode-invert: var(--dark-mode-invert);
-    --font-grade-color-scheme-adjust: var(--font-grade-color-scheme-adjust-dark, 0);
+}
+.explicit-dark-mode * {
+    animation-name: var(--grad-animation-name);
 }
 
 @media (prefers-color-scheme: light){
@@ -875,6 +1070,7 @@ img {
 #mw-head,
 #mw-panel {
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-stretch: 400;
 }
 .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
@@ -885,6 +1081,7 @@ img {
 
 h1, h2 {
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-stretch: 400;
 }
 h1 {
@@ -898,6 +1095,7 @@ h2 {
 
 .mw-body-content h3, .mw-body-content h4 {
     --font-family: AmstelVar;
+    --grad-animation-name: AmstelVar-grad-by-font-size;
     --font-stretch: 400;
     --font-size: calc(6/5 * var(--default-font-size));
     --font-weight: 600;
@@ -905,6 +1103,7 @@ h2 {
 
 .vector-menu-portal h3 {
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-size: calc(3/4 * var(--default-font-size));
     --font-weight: 400;
 }
