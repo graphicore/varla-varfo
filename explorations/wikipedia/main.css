@@ -974,6 +974,10 @@ b, strong {
     }
 }
 
+/* this is a placeholder to switch on/off existing aninmation
+ * using custom properties in animation-name.
+ */
+@keyframes no-animation {}
 
 /* Font-Grade/GRAD setting
  *
@@ -1008,6 +1012,8 @@ b, strong {
             );
     animation-duration: 1s;
     animation-delay: calc(-1s * var(--grad-animation-progression));
+    --grad-active-animation: no-animation;
+    animation-name: var(--grad-active-animation);
     /* --font-grade:
      * Must be only applied in dark mode!
      * There's no other grade changing rule, however, this property
@@ -1020,6 +1026,7 @@ b, strong {
             );
 }
 
+
 @media (prefers-color-scheme: dark) {
     :root{
         /*
@@ -1029,7 +1036,7 @@ b, strong {
         --mode-invert: var(--dark-mode-invert);
     }
     * {
-        animation-name: var(--grad-animation-name);
+        --grad-active-animation: var(--grad-animation-name);
     }
     .user_preferences-color_scheme-default:after{
         content: " (dark)";
@@ -1043,7 +1050,7 @@ b, strong {
     --mode-invert: var(--dark-mode-invert);
 }
 .explicit-dark-mode * {
-    animation-name: var(--grad-animation-name);
+    --grad-active-animation: var(--grad-animation-name);
 }
 
 @media (prefers-color-scheme: light){
@@ -1133,7 +1140,7 @@ h2 {
  * for 8 pt = .65,
  * for 144 pt. .25
  */
-@keyframes scale-sub-and-super-script {
+@keyframes synth-sub-and-super-script {
     0% { /* 8pt */
         --sup-scale: .65
     }
@@ -1146,18 +1153,18 @@ h2 {
 }
 
 sup, sup *,
-sub, sub * {
+sub, sub *{
     /*This is a copy of the original --x-font-size, will always have
      * to follow the original. */
     --xo-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
     /* the redefines --x-font-size, with our scaling factor that way,
      * it goes directly into OPSZ etc., without us changing the definitions
      */
-
-    animation-name: scale-sub-and-super-script;
-    animation-play-state: paused;
-    animation-fill-mode: both;
-    animation-timing-function: linear;
+    --no-animation: no-animation;
+    animation-name: synth-sub-and-super-script, var(--grad-active-animation);
+    animation-play-state: paused, paused;
+    animation-fill-mode: both, both;
+    animation-timing-function: linear, linear;
     /* depends on font-size:
      *      10 and lower than = 0
      *      18 and greater than = 1
@@ -1173,8 +1180,10 @@ sub, sub * {
               (var(--sup-actual-base-font-size) - var(--sup-min-base-font-size))
             / (var(--sup-max-base-font-size) - var(--sup-min-base-font-size))
             );
-    animation-duration: 1s;
-    animation-delay: calc(-1s * var(--sup-animation-progression));
+    animation-duration: 1s, 1s;
+    animation-delay: calc(-1s * var(--sup-animation-progression)),
+                     calc(-1s * var(--grad-animation-progression));
+    ;
 
     /* "(undefined)" will be used as a means to feature detect if the
      * @keyframes interpolation is working. Otherwise JavaScript can step
