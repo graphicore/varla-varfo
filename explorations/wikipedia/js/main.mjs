@@ -382,8 +382,6 @@ function runion_01 (elem) {
     elem.style.setProperty('--padding-right-en', `${paddingRightEn}`);
     elem.style.setProperty('--line-height', `${lineHeight}`);
 
-
-
     // Debugging stuff:
     // elem.style.setProperty('--available-width-en', `${availableWidthEn}`);
     // elem.style.setProperty('--mesured-width-px', `${widthPx}`);
@@ -394,6 +392,200 @@ function runion_01 (elem) {
 
     // NOTE: classes may need to be removed if a runion changes its type!
     elem.classList.add('runion-01');
+}
+
+function _interpolatePiecewise(stops, indexValue) {
+    let [min, ] = stops[0]
+      , [max, ] = stops[stops.length - 1]
+      , normalized = Math.min(max, Math.max(min, indexValue))
+      , lower, lowerValues, upper, upperValues
+      ;
+    for(let [stopIndex, ...values] of stops) {
+        if(normalized === stopIndex)
+            // shortcut, direct hit
+            return [normalized, values];
+        if(normalized > stopIndex) {
+            lower = stopIndex;
+            lowerValues = values;
+            continue;
+        }
+        else if(normalized < stopIndex) {
+            upper = stopIndex;
+            upperValues = values;
+            break;
+        }
+    }
+    // interpolate
+    let factor = (normalized - lower) / (upper - lower)
+      , values = []
+      ;
+    for(let i=0,l=Math.min(lowerValues.length, upperValues.length); i<l; i++){
+        let lower = lowerValues[i]
+          , upper = upperValues[i]
+          ;
+        values.push( (upper - lower) * factor + lower );
+    }
+    return [normalized, values];
+}
+
+class IsSupported {}
+
+
+const stopsGradeRobotoFlex = [
+    /* [fontSize, --grad-400, --grad-700] */
+    [10,   0,   0]
+  , [11,  -6,  -6]
+  , [12,  -9, -10]
+  , [13, -12, -15]
+  , [14, -14, -20]
+  , [15, -16, -30]
+  , [16, -18, -38]
+  , [17, -22, -43]
+  , [18, -24, -54]
+];
+
+const stopsGradeAmstelVar = [
+    /* [fontSize, --grad-400, --grad-700] */
+    [10,  -3,  -80]
+  , [11,  -6,  -90]
+  , [12, -10,  -95]
+  , [13, -12, -100]
+  , [14, -14, -105]
+  , [15, -16, -110]
+  , [16, -18, -115]
+  , [17, -22, -120]
+  , [18, -24, -125]
+];
+
+const stopsSynthSup = [
+    /* [fontSize, --sup-scale] */
+    [  8, 0.65]
+  , [ 14, 0.57]
+  , [144, 0.25]
+];
+
+
+function _fixGrade(stops, elem, style, cache) {
+    // Here's a problem when testing for e.g. "--grad-400": once we have
+    // set this on a parent element, it will return a value for each child.
+    // The workaround is a new property --grad-supported, that we don't
+    // set to an element.style.
+    // ...if not set, returns the empty string.
+    if(style.getPropertyValue('--grad-supported') !== '') {
+        // the @keyframe animation is actually supported
+        // FIXME: we should not call this anymore for the whole tree traversal.
+        throw new IsSupported();
+    }
+    let fontSizePt = parseFloat(style.getPropertyValue('font-size')) * 0.75;
+
+    // Generally, as a rule, we can skip applying these if font-size didn't
+    // change between a parent that has these and a child, because the
+    // custom properties do inherit.
+    // The cache is specific per @keyframe substitution, hence shoudn't get
+    // mixups between AmstelVar and RobotoFlex here. In other words, if
+    // elem.parentElement is not in the cache, because it uses another
+    // @keyframe animation, these changes will be applied.
+    cache.set(elem, {fontSizePt: fontSizePt});
+    let parentFontSize = (cache.get(elem.parentElement)||{}).fontSizePt;
+    if( parentFontSize !== undefined && fontSizePt === parentFontSize)
+        return;
+
+    let [/*normalizedFontSize*/, [grad400, grad700]
+                           ] = _interpolatePiecewise(stops, fontSizePt);
+    elem.style.setProperty('--grad-400', grad400);
+    elem.style.setProperty('--grad-700', grad700);
+}
+
+function _fixGradeRobotoFlex(...args) {
+    return _fixGrade(stopsGradeRobotoFlex, ...args);
+}
+
+function _fixGradeAmstelVar(...args) {
+    return _fixGrade(stopsGradeAmstelVar, ...args);
+}
+
+function _fixSynthSub(elem, style/*, cache*/) {
+    // CAUTION: --sup-scale must be removed prior to calling this, but
+    // it's done by the caller. This is because --sup-scale itself affects
+    // font-size which must be the initial/original value when calculating these.
+
+    // ...if not set, returns the empty string.
+    if(style.getPropertyValue('--sup-scale') !== '') {
+        // the @keyframe animation is actually supported
+        throw new IsSupported();
+    }
+    let fontSizePt = parseFloat(style.getPropertyValue('font-size')) * 0.75
+      , [/*normalizedFontSize*/, [supScale]] = _interpolatePiecewise(stopsSynthSup, fontSizePt)
+      ;
+    elem.style.setProperty('--sup-scale', supScale);
+}
+
+const _fixCssKeyFramesFunctions = [
+    // synth-sub must be first, as grade depends on
+    // font-size and this changes font-size.
+    ['synth-sub-and-super-script', _fixSynthSub, ['--grad-400', '--grad-700']]
+  , ['AmstelVar-grad-by-font-size', _fixGradeAmstelVar, ['--grad-400', '--grad-700']]
+  , ['RobotoFlex-grad-by-font-size', _fixGradeRobotoFlex, ['--sup-scale']]
+];
+
+function fixCSSKeyframes(document) {
+    let getComputedStyle = document.defaultView.getComputedStyle
+      , treeWalker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_ELEMENT
+            // All we need to determine whether to show the node, we need
+            // also to process it further, so I think filtering is done
+            // better in the action directly.
+            // {acceptNode: elem=>{ return NodeFilter.FILTER_ACCEPT; }}
+        )
+      , elem = treeWalker.currentNode
+      , skip = new Set()
+      , caches = new Map()
+      , cleanup = elem=> {
+            for(let[,,removeProps] of _fixCssKeyFramesFunctions)
+                for(let prop of removeProps)
+                    elem.style.removeProperty(prop);
+        }
+      ;
+    while(elem) {
+        let style = getComputedStyle(elem)
+          , elemAnimationNames = new Set(style.getPropertyValue('animation-name')
+                                              .split(',')
+                                              .map(n=>n.trim()))
+          ;
+        // These must be removed always, so that we don't
+        // apply a keyframe substitute when it is actually disabled.
+        cleanup(elem);
+        for(let [animationName, applyFixFunc] of _fixCssKeyFramesFunctions) {
+            if(skip.has(animationName))
+                continue;
+            // animation-name does not inherit, so we can address
+            // exactly the elements that have these animations applied.
+            // LOL, that the grad animation applies to *.
+            // An optimization is to remember (see usage of cache) the
+            // relevant properties of the parent and only apply the
+            // fix, if the properties have changed.
+            if(elemAnimationNames.has(animationName)) {
+                let cache = caches.get(animationName);
+                if(!cache)
+                    caches.set(animationName, cache = new Map());
+                try {
+                    applyFixFunc(elem, style, cache);
+                }
+                catch(err) {
+                    if(err instanceof IsSupported) {
+                        // The @keyframeanimation is supported.
+                        // Do not call this anymore for the whole tree
+                        // traversal.
+                        skip.add(animationName);
+                        break;
+                    }
+                    throw err;
+                }
+            }
+        }
+        elem = treeWalker.nextNode();
+    }
 }
 
 // temporary global exposure to run directly via dev-tool.
@@ -424,7 +616,7 @@ function main() {
     // changes. User-Zoom changes should also trigger resize, so our own
     // user settings are most important here!
     var updateViewportScheduled
-      , updateViewport = (e)=>{
+      , updateViewport = (evt)=>{
             if(updateViewportScheduled !== null) {
                 clearTimeout(updateViewportScheduled);
                 updateViewportScheduled = null;
@@ -432,6 +624,7 @@ function main() {
             // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
             for(let elem of document.querySelectorAll('.runify-01, .mw-parser-output'))
                 runion_01(elem);
+            fixCSSKeyframes(document);
         }
       ;
     // This will most likely be executed by the USER_SETTINGS_EVENT handler
