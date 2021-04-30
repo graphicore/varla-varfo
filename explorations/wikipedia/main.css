@@ -806,9 +806,6 @@ table{
     border-spacing: 0;
 }
 
-
-
-
 b, strong {
   --font-weight: 700;
 }
@@ -854,12 +851,11 @@ b, strong {
     --background: var(--light-background);
     --color: var(--light-color);
     --mode-invert: var(--light-mode-invert);
-
 }
 
-
-/* at least for debugging, these help immensely as the properties show
- * up calc()-ulated! in the developer tools of Chromium under computed values!
+/* At least for debugging, these help immensely as the properties show
+ * up calc()-ulated! in the developer tools of Chromium under computed
+ * values! But foremost, @properties make the animations interpolate.
  */
 
 @property --grad-400 {
@@ -893,12 +889,12 @@ b, strong {
 
 /* Works together with the @properties nicely in Chromium, but Firefox
  * support is not soon to expect. A solution seems to be to set
- * --grad-400 and --grad-700 by hand, whenever --font-size, --font-family,
- * or --font-weight is set, but it wouldn't  take into account the final
- * absolute --x-font-size, which makes it rather unusable. So probably
- * JavaScript has to walk through all elements and set those --grad-X00
- * variables where one of the three input variables changes compared to
- * the parent.
+ * --grad-400 and --grad-700 by hand/directly in CSS, whenever --font-size,
+ * --font-family, or --font-weight is set, but it wouldn't take into
+ * account the final absolute --x-font-size, which makes it rather unusable.
+ * So probably JavaScript has to walk through all elements and set those
+ * --grad-X00 variables where one of the three input variables changes
+ * compared to  the parent.
  * I keep this though, because it's impressive what can be done with the
  * new CSS stuff and it's a good actual working example. Javascript will
  * be a fallback, need to feature detect.
@@ -986,7 +982,7 @@ b, strong {
     }
 }
 
-/* this is a placeholder to switch on/off existing aninmation
+/* This is a placeholder to switch on/off existing animation
  * using custom properties in animation-name.
  */
 @keyframes no-animation {}
@@ -994,7 +990,7 @@ b, strong {
 /* Font-Grade/GRAD setting
  *
  * Use this to turn all of this on, see dark-mode settings:
- *          animation-name: var(--grad-animation-name);
+ *          --grad-active-animation: var(--grad-animation-name);
  *
  * It's a pity we can't synthesize the animation name, as in `content` e.g.:
  *      animation-name: var(--font-family) "-grad-by-font-size";
@@ -1149,7 +1145,6 @@ h2 {
     --line-height: 1;
 }
 
-
 @property --sup-scale {
   syntax: '<number>';
   inherits: true;
@@ -1292,8 +1287,6 @@ i, cite, em, var, dfn {
      * There are it seem related properties to configure hyphenation
      * hyphenate-limit-last, hyphenate-limit-zone etc.
      * Safari 5+ requires -webkit-, Firefox 6+ requires -moz-, IE 10+ requires -ms-, iOS 4.2+ requires -webkit-.
-     *
-     *
      */
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -1305,9 +1298,9 @@ i, cite, em, var, dfn {
     text-align: left;
     text-indent: 2em;
     /* text-align: justify;
-     * We'll do the justification ourselves, initially, left-aligned is
-     * required, because we can use it to measure the empty that is
-     * left on the line.
+     * We're doing the justification ourselves, initially, left-aligned
+     * is required, because we can use it to measure the empty space that
+     * is left on the line.
      */
     /*text-justify: inter-word;   auto is OK so far as well*/
 
@@ -1348,83 +1341,37 @@ i, cite, em, var, dfn {
  * wrapping the text-nodes into the .runion-line spans, line breaking
  * changes.
  * Firefox keeps the same layout without any trouble, but, since we plan
- * to change the font-spec for each line to fit better, this should a
+ * to change the font-spec for each line to fit better, this must be a
  * bomb-proof way to ensure each line stays where it is.
- *
- *
- * NOTE: there may be fringe cases where this assumption is not good
- * but it looks good so far.
-
-Now set directly as element style in line containment protocol...
  */
 .runion-line {
-    /* FIXME: could be a keeper but just for now this is good for
-     * not having to check if a line breaks while doing justification
-     *
-     * Also done by inactive "line-containment", which checks if a line breaks.)
-     */
+    /* This is forcing the browser.*/
     white-space: nowrap;
     /* with small line-heights and color coded line backgrounds, we
      * tend to clip descenders.
+     * FXME: must be removed when no line color coding is desired,
+     * especially Chromium has little rendering errors in column layout
+     * here.
      */
     mix-blend-mode: darken;
 }
 
-
-
-
-
-
 /**
- * introduce explicit wrapping before each line
+ * Introduce explicit wrapping before each line
  * This normalizes the behavior of Chrome and Firefox, both loose
  * their hyphenation with the first line ::before display: block rule
  * now, we need to mark elements in JS explicitly that require hyphens!.
-
-FIXME: 2 problems:
-*    - Lines that are either the first child of a block <p> element don't text-indent.
-*    - lines in li-elements break and create an empty line before.
-*      e.g. this fixes it:
-*                   li .runion-line.r00-l-first::before {
-*                       content: unset;
-*                       display: unset;
-*                   }
 */
-.runion-line.r00-l-first::before,
-.line-containment::before{
+.runion-line.r00-l-first::before{
     content: '';
     display: block;
 }
 
-/* works surprisingly well so far, even though I would think
- * e.g. html is always a first child, and hence it's likely that an
- * element is the child of a first-child
- *
- * the main reason for this was <li> elements that had bad line breaks due
- * to this.
- *
- * Ah, it is indeed problematic!
- *
- * All bad if we do .runion-01{white-space: nowrap} which we must!
- * need a .r00-first-line (and ideally .r00-first-section-line or
- * .r00-initial-line for the first line after a h1, h2, h3)
- *
- */
-
-.runion-line.r00-first-line.r00-l-first::before,
-xxxli :first-child.runion-line.r00-l-first::before,
-xxxli .runion-line.r00-l-first:first-child::before
+.runion-line.r00-first-line.r00-l-first::before
 {
     content: unset;
     display: unset;
 }
-
-
-/* --line-info-data
-.r00-l-first:hover::before {
-    content: var(--line-info-data);
-}
-*/
 
 /*
  * This fixes line wrapping, not changing in Chrome (nor Firefox). This
@@ -1432,10 +1379,6 @@ xxxli .runion-line.r00-l-first:first-child::before
  * and the other lines are justified by word-space, exactly what we are
  * looking for.
  * The heuristic that the adds the hyphen class may still have flaws!
- *
- * One problem I see here, if I want to break the line intentionally
- * or if it just happens for some reason, the hyphen will stay within
- * the word.
  */
 .runion-line.r00-l-hyphen::after {
     content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
