@@ -769,7 +769,7 @@ word-spacing: calc(1em * var(--word-space));
 
 --x-font-stretch: calc(var(--font-stretch) + var(--font-stretch-change, 0));
 
---x-font-weight: calc(var(--font-weight) + var(--font-weigt-change, 0));
+--x-font-weight: calc(var(--font-weight) + var(--font-weight-change, 0));
 
 font-weight: var(--x-font-weight);
 
@@ -992,6 +992,15 @@ b, strong {
  * animation-name next to --font-family everywhere.
  */
 * {
+    /* (undefined) will tell us in the fallback javascript that
+     * the @keyframes are not supported.
+     *     --grad-400: (undefined);
+     *     --grad-700: (undefined);
+     * NOTE: can't use this as in Firefox, without @property, it breaks
+     * all of the font-variation-settings. Instead we'll just check:
+     * if(getComputedStyle(elem).getPropertyValue('--grad-400') === '') ...;
+     */
+
     animation-play-state: paused;
     animation-fill-mode: both;
     animation-timing-function: linear;
@@ -1020,9 +1029,9 @@ b, strong {
      * is already set so that it only switches on in dark mode
      */
     --font-grade: calc(
-              (var(--grad-700) - var(--grad-400))
+              (var(--grad-700, 0) - var(--grad-400, 0))
             * ( (clamp(400, var(--font-weight), 700) - 400) / (700 - 400))
-            + var(--grad-400)
+            + var(--grad-400, 0)
             );
 }
 
@@ -1152,8 +1161,7 @@ h2 {
     }
 }
 
-sup, sup *,
-sub, sub *{
+sup, sub{
     /*This is a copy of the original --x-font-size, will always have
      * to follow the original. */
     --xo-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
@@ -1184,12 +1192,6 @@ sub, sub *{
     animation-delay: calc(-1s * var(--sup-animation-progression)),
                      calc(-1s * var(--grad-animation-progression));
     ;
-
-    /* "(undefined)" will be used as a means to feature detect if the
-     * @keyframes interpolation is working. Otherwise JavaScript can step
-     * in and set --sup-scale directly in the element-style.
-     */
-    --sup-scale: "(undefined)";
     --x-font-size: calc(var(--xo-font-size) * var(--sup-scale));
 
 
@@ -1204,7 +1206,12 @@ sub, sub *{
      * or * 1.125 if wght is a non-standard value
      *          FIXME: In which case would it be a non-standard value?
      */
-    --font-weigt-change: calc(var(--font-weight) * 0.125);
+    --font-weight-change: calc(var(--font-weight) * 0.125);
+}
+
+sup *, sub *{
+    font-size: inherit;
+    --x-font-size: inherit;
 }
 
 sup, sup * {
