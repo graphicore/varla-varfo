@@ -804,7 +804,6 @@ p, ul, ol{
     margin-block: 0;
 }
 
-
 h2 + p,
 h3 + p {
     margin-block-start: 0;
@@ -1344,7 +1343,7 @@ i, cite, em, var, dfn {
     white-space: nowrap;
 }
 
-
+/* these are sectioning elements */
 .runion-01 h1,
 .runion-01 h2,
 .runion-01 h3 {
@@ -1356,8 +1355,8 @@ i, cite, em, var, dfn {
     float:none;
     margin-left:0;
     margin-right: 0;
-    /* FIXME: this stuff distracts from the column layout, needs resolution. */
-    display: none;
+    /* FIXME: this stuff distracts from the column layout, needs resolution.
+    display: none;*/
 }
 
 

@@ -596,6 +596,27 @@ window.justify = () =>{
 
 function massageWikipediaMarkup(document) {
     document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
+    // These "thumbs" with ".tright" are originally "float: right" but in column
+    // layout, there's not much use of floating elements, because we strive
+    // to make columns narrow, so there's not enough space for floating.
+    // Further, they are located at the beginning of each section, which
+    // is not ideal when they don't float right.
+    // Hence, for ease now, float: right items are moved to the end of the
+    // section they would originally float: right.
+    // Also, in books, it's often that figures are at the end of a section,
+    // CAUTION: This only needs to be good enough for the demo document,
+    //          it will likely fail on other wikipedia articles.
+    let selectorSectioningStuff = '#toc, h1, h2, h3';
+    for(let tright of document.querySelectorAll('.thumb.tright')){
+        let sibling = tright.nextElementSibling;
+        while(sibling){
+            if(sibling.matches(selectorSectioningStuff)) {
+                tright.parentNode.insertBefore(tright, sibling);
+                break;
+            }
+            sibling = sibling.nextElementSibling;
+        }
+    }
 }
 
 function main() {
