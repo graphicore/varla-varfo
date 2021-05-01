@@ -1410,6 +1410,12 @@ i, cite, em, var, dfn {
     mix-blend-mode: darken;
 }
 
+.skip-justify {
+    white-space: normal;
+}
+
+
+
 /**
  * Introduce explicit wrapping before each line
  * This normalizes the behavior of Chrome and Firefox, both loose

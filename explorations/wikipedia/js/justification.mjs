@@ -5,15 +5,19 @@ import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
  * Justification
  * to port https://variablefonts.typenetwork.com/topics/spacing/justification
  ***/
-function _deepText(node) {
+function _deepText(node, [skipSelector, skipClass]) {
     var all = [];
-    if(node) {
+    if(node && skipSelector && node.nodeType === Node.ELEMENT_NODE && node.matches(skipSelector)){
+        if(skipClass)
+            node.classList.add(skipClass);
+    }
+    else if(node) {
         node = node.firstChild;
         while(node !== null) {
             if(node.nodeType === Node.TEXT_NODE)
                 all.push(node);
             else
-                  all.push(..._deepText(node));
+                  all.push(..._deepText(node, [skipSelector, skipClass]));
             node = node.nextSibling;
         }
     }
@@ -256,8 +260,8 @@ function _isOutOfFlowContext(elem) {
  *       pipeline with the following transformations, if we keep doing
  *       those from back to front.
  */
-function* findLines(elem) {
-    var textNodes = _deepText(elem)
+function* findLines(elem, skip) {
+    var textNodes = _deepText(elem, skip)
       , currentLine = null
       , last = null
       ;
@@ -1386,10 +1390,10 @@ function getJustificationTolerances(font, targetsize, targetweight) {
 
 
 // for development:
-export function justify(elem, options) {
+export function justify(elem, skip, options) {
     var t0,t1;
     t0 = performance.now();
-    let lines = Array.from(findLines(elem));
+    let lines = Array.from(findLines(elem, skip));
     t1 = performance.now();
     console.log(`findLines took ${(t1 - t0) / 1000} seconds. Found ${lines.length} lines.`);
 
@@ -1537,12 +1541,13 @@ export function justify(elem, options) {
     let abort = ()=>console.warn('Not implemented justify->abort().')
       , unjustify = ()=>{
             abort();
-            _unjustify(elem, elementLines);
+            let [, skipClass] = skip;
+            _unjustify(elem, elementLines, skipClass);
     };
     return {unjustify: unjustify, abort: abort};
 }
 
-function _unjustify(container, elementLines) {
+function _unjustify(container, elementLines, skipClass) {
     console.log('unjustify');
     for(let line of elementLines){
         for(let elem of line) {
@@ -1550,6 +1555,13 @@ function _unjustify(container, elementLines) {
         }
     }
     container.classList.remove('runion-activated');
+
+    for(let elem of container.querySelectAll(skipClass)) {
+        elem.classList.remove(skipClass);
+    }
+
+    // IMPORTANT:
+    //
     // From MDN:
     //   > The Node.normalize() method puts the specified node and all of its
     //   > sub-tree into a "normalized" form. In a normalized sub-tree, no text

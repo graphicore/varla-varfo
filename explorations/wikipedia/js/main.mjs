@@ -589,9 +589,15 @@ function fixCSSKeyframes(document) {
 }
 
 // temporary global exposure to run directly via dev-tool.
-window.justify = () =>{
-    let elem = document.querySelector('.runion-01');
-    return justify(elem);
+window.justify = () => {
+    let elem = document.querySelector('.runion-01')
+      , skip = [
+            /* skipSelector selects elements to skip*/
+            '.hatnote, #toc, h1, h2, h3, ul, ol, blockquote, table, .do-not-jsutify',
+            /* skipClass: added to skipped elements */
+            'skip-justify'
+        ];
+    return justify(elem, skip);
 };
 
 function massageWikipediaMarkup(document) {
