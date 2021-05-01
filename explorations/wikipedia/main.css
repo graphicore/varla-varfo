@@ -38,11 +38,11 @@ body {
 
 
 div.thumb {
-    margin-bottom: 0.5em;
     width: auto;
     background-color: transparent;
 }
 
+/*
 div.tright, div.floatright, table.floatright {
     clear: right;
     float: right;
@@ -53,21 +53,43 @@ div.tleft, div.floatleft, table.floatleft {
 }
 
 div.tright {
-    margin: 0.5em 0 1.3em 1.4em;
+    margin: 0.5em 0 1.3em 0;
 }
 div.tleft {
-    margin: 0.5em 1.4em 1.3em 0;
+    margin: 0.5em 0 1.3em 0;
+}
+*/
+div.thumbinner {
+    /* FIXME: With this border and padding, the element is not neutral
+     * to the base line grid, however, we don't control the size of
+     * the content either in that respect, so being conscious here would
+     * not *yet* resolve the problem.
+
+
+    padding: 0.1875em;
+    */
+    /* text-align: center; */
+    border: 0.0625em solid #c8ccd1;
+    overflow: hidden;
+    display: block;
 }
 
-div.thumbinner {
-    border: 1px solid #c8ccd1;
-    padding: 3px;
-    background-color: #f8f9fa;
-    text-align: center;
-    overflow: hidden;
+div.thumbinner > * {
+    background-color: #f1f2f3;
+    padding: 0.1875em;
 }
+
+div.thumbinner a.image{
+    display: block
+}
+
 .thumbinner {
     min-width: 100px;
+}
+
+.thumbinner img.thumbimage {
+    display: block;
+    margin: auto;
 }
 
 .thumbcaption {
@@ -791,12 +813,14 @@ font-weight: var(--x-font-weight);
 /* All about line raster/grid consistency across columns. */
 /* no longer for p, ul, as we use text-indent and ul has it's own indent style.*/
 
-table {
+table,
+.thumb {
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
 }
 .runion-01 .hatnote,
-table {
+table,
+.thumb {
     margin-block-end: calc(1pt * var(--x-font-size) * var(--x-line-height));
 }
 
