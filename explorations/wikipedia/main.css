@@ -2,6 +2,9 @@
     /* can't use this per @font-face rule */
     font-synthesis: none;
     --fine-user-zoom: 0;
+
+    --link-color: #0645ad;
+    --layout-border-color: #a7d7f9;
 }
 body {
     font-size: calc(100% + 1pt * var(--fine-user-zoom, 0));
@@ -144,7 +147,7 @@ html body.mediawiki .mbox-small {
 
 .mw-body {
     margin-top: -1px;
-    border: 1px solid #a7d7f9;
+    border: 1px solid var(--layout-border-color);
     border-right-width: 1px;
     border-right-width: 0;
     background-color: var(--background);
@@ -172,7 +175,7 @@ html body.mediawiki .mbox-small {
 
 .vector-menu-tabs, .vector-menu-tabs a, #mw-head .vector-menu-dropdown h3 {
     background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-separator.png?09d4b);
-    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,#a7d7f9 100%);
+    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,var(--layout-border-color) 100%);
     background-repeat: no-repeat;
     background-size: 1px 100%;
 }
@@ -264,7 +267,7 @@ ul {
 
 a {
     text-decoration: none;
-    color: #0645ad;
+    color: var(--link-color);
     background: none;
 }
 
@@ -309,7 +312,7 @@ a {
 
 .vector-menu-tabs, .vector-menu-tabs a, #mw-head .vector-menu-dropdown h3 {
     background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-separator.png?09d4b);
-    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,#a7d7f9 100%);
+    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,var(--layout-border-color) 100%);
     background-repeat: no-repeat;
     background-size: 1px 100%;
 }
@@ -323,9 +326,10 @@ a {
 .vector-menu-tabs .selected {
     background: #ffffff;
 }
+
 .vector-menu-tabs li {
     background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-normal-fade.png?1cc52);
-    background-image: linear-gradient(to top,#77c1f6 0,#e8f2f8 1px,#ffffff 100%);
+    background-image: linear-gradient(to top,var(--layout-border-color) 0,#e8f2f8 1px,#ffffff 100%);
     background-position: left bottom;
     background-repeat: repeat-x;
     float: left;
@@ -343,7 +347,7 @@ a {
 }
 .vector-menu-tabs li a {
     background-position: right bottom;
-    color: #0645ad;
+    color: var(--link-color);
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -1085,6 +1089,11 @@ b, strong {
         --background: var(--dark-background);
         --color: var(--dark-color);
         */
+        /* This is actually the inverted color of what we really want:
+         * a nice light sky blue (according to the color-picker: #7b91d4)
+         * */
+        --link-color: #6f5608;
+        --layout-border-color: #a06b27;
         --mode-invert: var(--dark-mode-invert);
     }
     * {
@@ -1099,6 +1108,8 @@ b, strong {
         --background: var(--dark-background);
         --color: var(--dark-color);
     */
+    --link-color: #6f5608;
+    --layout-border-color: #a06b27;
     --mode-invert: var(--dark-mode-invert);
 }
 .explicit-dark-mode * {
