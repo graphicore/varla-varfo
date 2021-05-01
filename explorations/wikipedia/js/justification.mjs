@@ -332,7 +332,7 @@ function* findLines(elem, skip) {
               , firstRect =rects[0]
               , lastRect = rects[rects.length - 1]
               , withinHorizontalBounds = false
-              , touchingBottom = false
+              , withinVerticalBounds = false
               , changed = false
               ;
 
@@ -350,21 +350,20 @@ function* findLines(elem, skip) {
                 // one rect.
             }
             else if(rects.length > 1) {
-                // new heuristic, to overcome the :before/:after{content: 'abc'}
-                // issue:
-                // as in justifyLine: use the parent box to identify the
-                // correct column rect
-                // then only ensure that the items are on the same "height"
-                // e.g. touchingBottom should be sufficient, but touchingLeft
-                // is replaced:
+                // New heuristic, to overcome the :before/:after{content: 'abc'}
+                // issue: as in justifyLine: use the parent box to
+                // identify the correct column rect then only ensure that
+                // the items are on the same "height".
                 if(lastRect.left >= currentLine.columnRect.left && lastRect.right <= currentLine.columnRect.right) {
                     withinHorizontalBounds = true;
                 }
 
-                if (Math.floor(lastRect.bottom - firstRect.bottom) < 1) {
-                    touchingBottom = true;
+                if (Math.floor(lastRect.bottom - firstRect.bottom) < 1
+                        // e.g. our <sup> tags are not touching on bottom
+                        || Math.floor(lastRect.top - firstRect.top) < 1) {
+                    withinVerticalBounds = true;
                 }
-                changed = !(withinHorizontalBounds && touchingBottom);
+                changed = !(withinHorizontalBounds && withinVerticalBounds);
             }
             let [lastEndNode, lastEndNodeIndex] = last || [null, null];
             last = [endNode, endNodeIndex];
