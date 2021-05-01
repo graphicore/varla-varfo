@@ -1388,11 +1388,6 @@ i, cite, em, var, dfn {
 }
 
 
-.runion-line {
-    /*text-decoration: underline red;*/
-    background: bisque;
-}
-
 /* Control line-wrapping.
  *
  * Chrome cannot do it's hyphenation between two spans, so after
@@ -1405,6 +1400,11 @@ i, cite, em, var, dfn {
 .runion-line {
     /* This is forcing the browser.*/
     white-space: nowrap;
+    /* This is the cool when we toggle the color-coded-lines class*/
+    transition: background 3s;
+}
+
+.color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
      * tend to clip descenders.
      * FXME: must be removed when no line color coding is desired,
@@ -1412,7 +1412,10 @@ i, cite, em, var, dfn {
      * here.
      */
     mix-blend-mode: darken;
+    background: var(--line-color-code, bisque);
+    transition: background .5s;
 }
+
 
 .skip-justify {
     white-space: normal;

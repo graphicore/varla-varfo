@@ -502,7 +502,7 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
             if(addHyphen)
                 span.classList.add('r00-l-hyphen');
         }
-        span.style.background = randBG;
+        span.style.setProperty('--line-color-code', randBG);
 
         // try letting range wrap here ...
         // works awesomely great so far.
@@ -876,7 +876,7 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
             // === how to get the full line length????
           , hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`
           ;
-        setPropertyToLine('background', hslColor);
+        setPropertyToLine('--line-color-code', hslColor);
     }
 
 
@@ -1391,6 +1391,8 @@ function getJustificationTolerances(font, targetsize, targetweight) {
 
 // for development:
 export function justify(elem, skip, options) {
+    elem.classList.add('color-coded-lines');
+
     var t0,t1;
     t0 = performance.now();
     let lines = Array.from(findLines(elem, skip));
