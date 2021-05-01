@@ -102,10 +102,10 @@ div.thumbinner a.image{
 
 html body.mediawiki .mbox-small {
     clear: right;
-    float: right;
+    /*float: right;*/
     margin: 4px 0 4px 1em;
     box-sizing: border-box;
-    width: 238px;
+    width: auto/*238px;*/
     font-size: 88%;
     line-height: 1.25em;
 }
@@ -814,17 +814,21 @@ font-weight: var(--x-font-weight);
 /* no longer for p, ul, as we use text-indent and ul has it's own indent style.*/
 
 table,
-.thumb {
+.thumb,
+ul, ol,
+.templatequote{
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
 }
 .runion-01 .hatnote,
 table,
-.thumb {
+.thumb,
+ul, ol,
+.templatequote {
     margin-block-end: calc(1pt * var(--x-font-size) * var(--x-line-height));
 }
 
-p, ul, ol{
+p, ul ul{
     margin-block: 0;
 }
 
