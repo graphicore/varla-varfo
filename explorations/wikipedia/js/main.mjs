@@ -149,6 +149,7 @@ class CheckboxWidget {
 const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
     , AMPLIFY_GRADE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-amplify'
     , JUSTIFICATION_ACTIVE_STORAGE_KEY = 'varla-varfo-justification-active'
+    , LINE_COLOR_CODING_STORAGE_KEY = 'varla-varfo-line-color-coding'
     ;
 
 const PORTAL_AUGMENTATION_TEMPLATE = `
@@ -187,6 +188,20 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 (isOn)=> {
                     console.log(`${JUSTIFICATION_ACTIVE_STORAGE_KEY}:`, isOn);
                     this._justificationController.setRunning(isOn);
+                }
+            ],
+            // [checkbox] turn on/off line-color-coding default:on
+            [   CheckboxWidget, {
+                      klass: `${klass}-toggle_line_color_coding`
+                    , label: 'Line&nbsp;Color-Coding'
+                },
+                true, /* checked: bool */
+                true, /* buttonStyle: bool */
+                LINE_COLOR_CODING_STORAGE_KEY,
+                (isOn)=> {
+                    console.log(`${LINE_COLOR_CODING_STORAGE_KEY}:`, isOn);
+                    let action = isOn ? 'add' : 'remove';
+                    this._domTool.documentElement.classList[action]('color-coded-lines');
                 }
             ],
             // [checkbox] grade in dark-mode: on/off default: on

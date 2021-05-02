@@ -1440,9 +1440,6 @@ function* _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances) {
 
 // for development:
 function* _justifyGenerator(elem, skip, options) {
-    // FIXME: do from external
-    elem.classList.add('color-coded-lines');
-
     var t0, t1;
     t0 = performance.now();
     let lines = Array.from(findLines(elem, skip));
