@@ -140,7 +140,9 @@ class CheckboxWidget {
 }
 
 
-const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade_dark_mode';
+const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
+    , AMPLIFY_GRADE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-amplify'
+    ;
 
 const PORTAL_AUGMENTATION_TEMPLATE = `
 <fieldset>
@@ -168,7 +170,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
         let widgetsConfig = [
             // [checkbox] grade in dark-mode: on/off default: on
             [   CheckboxWidget, {
-                      klass: `${klass}-switch-grade-checkbox`
+                      klass: `${klass}-switch_grade_checkbox`
                     , label: 'Switch&nbsp;Grade in Dark Color Scheme'
                 },
                 true, /* checked: bool */
@@ -176,13 +178,21 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 GRADE_DARK_MODE_LOCAL_STORAGE_KEY,
                 (isOn)=> {
                     console.log(`${GRADE_DARK_MODE_LOCAL_STORAGE_KEY}:`, isOn);
-                    let action = isOn ?  'remove' : 'add';
-                    this._domTool.documentElement.classList[action]('turn-off-grade');
-                    // Must trigger updateViewport, because that runs
-                    // the fallbacks for @keyframes.
-                    // FIXME: this must not reset the justification.
-                    this._handleUserSettingsChange('switch-grade', isOn);
+                    let value = isOn ?  '1' : '0';
+                    this._domTool.documentElement.style.setProperty(
+                                                '--toggle-grade', value);
                 }
+            ],
+            [   SliderWidget, {
+                      klass: `${klass}-amplify_grade`
+                    , label: 'Amplify&nbsp;Grade'
+                    , min: '1'
+                    , max: '15'
+                    , value: '1'
+                    , step: '1'
+                },
+                AMPLIFY_GRADE_LOCAL_STORAGE_KEY, '--amplify-grade',
+                ()=>{}// onChange
             ],
         ];
 
@@ -219,7 +229,7 @@ class SliderWidget {
                     evt.target.parentNode.setAttribute('data-value', evt.target.value);
                 }
               , onChange = evt=> {
-                    evt.target.ownerDocument.documentElement.style.setProperty(
+                    this._domTool.documentElement.style.setProperty(
                                                 customProperty, evt.target.value);
                     this._domTool.window.localStorage.setItem(localStorageKey, evt.target.value);
                     this._onChange(evt.target.value);

@@ -685,13 +685,13 @@ label.user_preferences-user_distance::after {
 }
 
 
-.portal_augmentation-switch-grade-checkbox > input{
+.portal_augmentation-switch_grade_checkbox > input{
     visibility: hidden;
     position: absolute;
     cursor: pointer;
 }
 
-.portal_augmentation-switch-grade-checkbox > input ~ span:after {
+.portal_augmentation-switch_grade_checkbox > input ~ span:after {
     display: inline-block;
     background: #f5f4f3;
     border: 0.0625em solid #edebe9;
@@ -699,18 +699,21 @@ label.user_preferences-user_distance::after {
     padding: 0.4em;
     border-radius: .2em;
 }
-.portal_augmentation-switch-grade-checkbox > input ~ span:hover:after {
+.portal_augmentation-switch_grade_checkbox > input ~ span:hover:after {
     background: #f9f8f7;
 }
 
-.portal_augmentation-switch-grade-checkbox > input ~ span:after {
+.portal_augmentation-switch_grade_checkbox > input ~ span:after {
   content: "turn on";
 }
 
-.portal_augmentation-switch-grade-checkbox > input:checked ~ span:after {
+.portal_augmentation-switch_grade_checkbox > input:checked ~ span:after {
   content: "turn off";
 }
 
+label.portal_augmentation-amplify_grade::after {
+    content: "×" attr(data-value);
+}
 
 /* use :root for custom properties
  * "*" destroys inheritance!
@@ -749,7 +752,6 @@ label.user_preferences-user_distance::after {
 --font-slant: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
---font-grade-generic: 0;
 /* used to be 520 but making it narrow to work out justification */
 /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
  * was 440 and I thought it was tight.
@@ -816,7 +818,8 @@ word-spacing: calc(1em * var(--word-space));
  * --x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
  */
 --x-line-height: max(1, min(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05))));
---x-font-grade: calc(var(--font-grade, 0) + var(--font-grade-generic));
+--x-font-grade: calc(var(--font-grade, 0) * var(--amplify-grade, 1) * var(--toggle-grade, 1));
+
 
 --x-font-stretch: calc(var(--font-stretch) + var(--font-stretch-change, 0));
 
@@ -1104,7 +1107,7 @@ b, strong {
      */
     --font-grade: calc(
               (var(--grad-700, 0) - var(--grad-400, 0))
-            * ( (clamp(400, var(--font-weight), 700) - 400) / (700 - 400))
+            * ( (clamp(400, var(--x-font-weight), 700) - 400) / (700 - 400))
             + var(--grad-400, 0)
             );
 }
@@ -1141,11 +1144,6 @@ b, strong {
 }
 .explicit-dark-mode * {
     --grad-active-animation: var(--grad-animation-name);
-}
-
-.turn-off-grade .explicit-dark-mode *,
-.turn-off-grade * {
-    --grad-active-animation: no-animation;
 }
 
 @media (prefers-color-scheme: light){
