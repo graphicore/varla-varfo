@@ -1536,23 +1536,41 @@ export class JustificationController{
         this._elementLines = null;
         this._timeout = null;
         this._running = false;
+        this._statusReporters = new Set();
+        this._lastReportedStatus = null;
     }
     get running() {
         return this._running;
+    }
+
+    addStatusReporter(reporterCallback) {
+        this._statusReporters.add(reporterCallback);
+        if(this._lastReportedStatus !== null)
+            reporterCallback(this._lastReportedStatus);
+    }
+    _reportStatus(status) {
+        this._lastReportedStatus = status;
+        for(let reporterCallback of this._statusReporters)
+            reporterCallback(status);
     }
     setRunning(isRunning) {
         if(this._running === !!isRunning) // jshint ignore:line
             return;
         console.log('JustificationController.setRunning', isRunning);
         this._running = !!isRunning;
+
         if(this._running) {
             if(!this._gen) {
+                this._reportStatus('init');
                 this._unjustify();
                 this._gen = _justifyGenerator(this._elem, this._skip, this._options);
             }
+            else
+                this._reportStatus('continue');
             this._scheduleIterate();
         }
         else {
+            this._reportStatus('paused');
             this._unscheduleIterate();
         }
     }
@@ -1567,6 +1585,7 @@ export class JustificationController{
         this._gen = null;
         this._unjustify();
         this.setRunning(false);
+        this._reportStatus('inactive');
     }
     restart() {
         this.cancel();
@@ -1625,6 +1644,7 @@ export class JustificationController{
 
         let yieldVal = this._gen.next();
         if(yieldVal.done) {
+            this._reportStatus('Done!');
             return;
         }
         let [stepName, data] = yieldVal.value;
@@ -1633,6 +1653,9 @@ export class JustificationController{
                 this._elementLines = data;
                 this._elem.classList.add(this._runionActivatedClass);
                 break;
+            case 'justifyLine':
+                let [justifiedCount , total, ] = data;
+                this._reportStatus(`${((justifiedCount/total) * 100).toFixed(1)}%`);
         }
         // schedule next round
         this._scheduleIterate();
