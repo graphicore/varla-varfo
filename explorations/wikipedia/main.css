@@ -905,9 +905,6 @@ b, strong {
 /* LIGHT/DARK MODE CHOLOR-SCHEME */
 
 :root {
-    --dark-background: #202122;
-    --dark-color: #fff;
-
     /* Only in dark mode, but it depends on font-size and weight
      * where font-size selects 2 optically chosen grade adjustments
      * for weights between 400 and 700 and those must be interpolated
@@ -934,10 +931,13 @@ b, strong {
      */
 
     --light-background: #fff;
-    --light-color: #202122;
+    --light-color: #000;
 
     --light-mode-invert: 0;
     --dark-mode-invert: 1;
+
+    --dark-link-color: #6f5608;
+    --dark-layout-border-color: #a06b27;
 
     /* default */
     --background: var(--light-background);
@@ -1138,15 +1138,11 @@ b, strong {
 
 @media (prefers-color-scheme: dark) {
     :root{
-        /*
-        --background: var(--dark-background);
-        --color: var(--dark-color);
-        */
         /* This is actually the inverted color of what we really want:
          * a nice light sky blue (according to the color-picker: #7b91d4)
          * */
-        --link-color: #6f5608;
-        --layout-border-color: #a06b27;
+        --link-color: var(--dark-link-color);
+        --layout-border-color: var(--dark-layout-border-color);
         --mode-invert: var(--dark-mode-invert);
     }
     * {
@@ -1157,12 +1153,8 @@ b, strong {
     }
 }
 :root.explicit-dark-mode{
-    /*
-        --background: var(--dark-background);
-        --color: var(--dark-color);
-    */
-    --link-color: #6f5608;
-    --layout-border-color: #a06b27;
+    --link-color: var(--dark-link-color);
+    --layout-border-color: var(--dark-layout-border-color);
     --mode-invert: var(--dark-mode-invert);
 }
 .explicit-dark-mode * {
