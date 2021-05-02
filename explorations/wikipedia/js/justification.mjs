@@ -1526,10 +1526,8 @@ function* _justifyGenerator(elem, skip, options) {
 }
 
 
-
 export class JustificationController{
-    constructor(elem, skip, options){
-        console.log('init JustificationController', elem, skip, options);
+    constructor(elem, skip, options) {
         this._runionActivatedClass = 'runion-activated';
         this._elem = elem;
         this._skip = skip;
@@ -1575,7 +1573,6 @@ export class JustificationController{
         this.run();
     }
     _unjustify() {
-        console.log('unjustify');
         let [, skipClass] = this._skip;
         if(this._elementLines) {
             for(let line of this._elementLines) {
@@ -1631,7 +1628,6 @@ export class JustificationController{
             return;
         }
         let [stepName, data] = yieldVal.value;
-        console.log(`justify ${stepName}`);
         switch(stepName){
             case 'elementLines':
                 this._elementLines = data;

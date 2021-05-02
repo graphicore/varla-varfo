@@ -53,18 +53,10 @@ class _ContainerWidget {
     }
 }
 
-
-// maybe [checkbox] sup/sub
-
 // justification
     // [checkbox][button] * start/on/run-on-load/run-on-change
     //          * pause/stop/don't run-on-load/don't run on change(default)
     //    BUT! with hourclass indicator
-    //  It's play/pause.
-
-    // [checkbox] turn on/off line-color-coding default:on
-    //          action toggle a class
-
 
     // maybe: turn off xtra
     // maybe instead of start/on  stop/pause:
@@ -75,9 +67,6 @@ class _ContainerWidget {
     // without stop, because then it has to restard again just after unjustify.
     //          [button] cancel: unjustify + pause
     // OK, so then unjustify is the same as a layout change
-    // (onResize/updateViewport)has to perform:
-    //      stop, unjustify (wait for layout changing to settle?) start.
-    //
     //
     // the algorithm only knows pause/play
     // cancel sets pause + runs unjustify
@@ -840,28 +829,55 @@ function main() {
     // Must be executed on viewport changes as well as on userSettings
     // changes. User-Zoom changes should also trigger resize, so our own
     // user settings are most important here!
-    var updateViewportScheduled
+    var updateViewportScheduled = null
+      , scheduleUpdateViewport = (time)=> {
+            if(updateViewportScheduled !== null) {
+                clearTimeout(updateViewportScheduled);
+            }
+            updateViewportScheduled = setTimeout(updateViewport,
+                                    time !== undefined ? time : 100);
+        }
       , updateViewport = (evt)=>{
+            let cancelJustification = true
+                // Don't cancel justification when color mode changes
+                // it's not supposed to change layput at all. However
+                // there may be subtle line-length differences due to
+                // grade, but insignificant.
+              , keepJustificationState = new Set(['color-scheme'])
+              ;
+            if(evt && evt.type === 'user-settings') {
+                if(evt.detail) {
+                    // all sub events in detail must be in keepJustificationState
+                    for(let [subEventType, ] of evt.detail) {
+                        if(!keepJustificationState.has(subEventType)){
+                            break;
+                        }
+                    }
+                    cancelJustification = false;
+                }
+            }
+
             if(updateViewportScheduled !== null) {
                 clearTimeout(updateViewportScheduled);
                 updateViewportScheduled = null;
             }
             // do not cancel on color-scheme change
             let  justificationWasRunning = justificationController.running;
-            justificationController.cancel();
+            if(cancelJustification)
+                justificationController.cancel();
             // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
             for(let elem of document.querySelectorAll(runionTargetSelector))
                 runion_01(elem);
             fixCSSKeyframes(document);
             // only run if it is not paused by the user.
-            if(justificationWasRunning)
+            if(cancelJustification && justificationWasRunning)
                 justificationController.run();
         }
       ;
     // This will most likely be executed by the USER_SETTINGS_EVENT handler
     // so here's a way to cancel this fail-safe initial call.
-    updateViewportScheduled = setTimeout(updateViewport, 0);
-    window.addEventListener('resize', updateViewport);
+    scheduleUpdateViewport();
+    window.addEventListener('resize', scheduleUpdateViewport);
     window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
 }
 window.onload = main;
