@@ -3,13 +3,14 @@ import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
 import {JustificationController} from './justification.mjs';
 
-
+const ID = Symbol('id');
 class _ContainerWidget {
     constructor(baseElement) {
         this._baseElement = baseElement;
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
         this._collectedChanges = null;
-
+        this._widgetsById = null;
+        this._widgets = null;
     }
 
     /* lol, not so sure that this should be in the super class*/
@@ -44,49 +45,43 @@ class _ContainerWidget {
 
     _initWidgets(widgetsConfig) {
         let widgets = [];
-        for(let [Ctor, ...args] of widgetsConfig) {
+        for(let conf of widgetsConfig) {
+            if(typeof conf === 'string') {
+                this._domTool.appendHTML(this._widgetsContainer, conf);
+                continue;
+            }
+            let [Ctor, ...args] = conf;
             let widget = new Ctor(this._domTool, this._widgetsContainer, ...args);
             // could do activate/close with these, but it's not yet necessary
             widgets.push(widget);
         }
         return widgets;
     }
+    getWidgetById(id) {
+        if(!this._widgetsById){
+            this._widgetsById = new Map();
+            for(let widget of this._widgets) {
+                if(!(ID in widget))
+                    continue;
+                if(this._widgetsById.has(widget[ID]))
+                    throw new Error(`Widget-ID already in use: ${widget[ID]}`);
+                this._widgetsById.set(widget[ID], widget);
+            }
+        }
+        let widget = this._widgetsById.get(id);
+        if(!widget)
+            throw new Error(`KeyError getWidgetById not found: ${id}`);
+        return widget;
+    }
 }
 
-// justification
-    // [checkbox][button] * start/on/run-on-load/run-on-change
-    //          * pause/stop/don't run-on-load/don't run on change(default)
-    //    BUT! with hourclass indicator
-
-    // maybe: turn off xtra
-    // maybe instead of start/on  stop/pause:
-    //          active/inactive
-    //          which will be paused if stopped, without column change,
-    //          and will restart wherever it was
-    // an extension of pause is unjustify, which doesn't make much sense
-    // without stop, because then it has to restard again just after unjustify.
-    //          [button] cancel: unjustify + pause
-    // OK, so then unjustify is the same as a layout change
-    //
-    // the algorithm only knows pause/play
-    // cancel sets pause + runs unjustify
-    //
-
-
-    // While justifying, can I have a spinning hourglass?
-    // While justifying: pick the next line from all unjustified lines
-    // by how central it is to the viewport!!!
-    //
-    //
-
-    // trim algorithm:
-    //      [checkbox] stop after find lines
-    //          like a breakpoint debugger1
-    //              when we have a start/pause button, this can just pause
-    //              after find lines, easy!
-    //
-
+// justification maybe option:
+//          turn off xtra
+//          turn off word-spacing
 //
+// TODO: Nice to have: while justifying: pick the next line from all
+// unjustified lines by how central it is to the viewport!
+
 const CHECKBOX_TEMPLATE = `
     <label class="{klass}">{label}:
         <input type="checkbox" checked="{*checked*}"/>
@@ -100,6 +95,9 @@ class CheckboxWidget {
         this._domTool = domTool;
         this.container = container;
         var template = CHECKBOX_TEMPLATE;
+
+        if(ID in templateVars)
+            this[ID] = templateVars[ID];
 
         let _templateVars = [...Object.entries(templateVars)];
 
@@ -115,6 +113,7 @@ class CheckboxWidget {
         this._localStorageKey = localStorageKey;
         // parent change propagation
         this._onChange = onChange;
+        this._elem = this.container.querySelector(`.${templateVars.klass} input[type="checkbox"]`);
         {
             let onChange = evt=> {
                     this._domTool.window.localStorage.setItem(localStorageKey,
@@ -122,14 +121,69 @@ class CheckboxWidget {
                     this._onChange(evt.target.checked);
                 }
               ;
-            let elem = this.container.querySelector(`.${templateVars.klass} input[type="checkbox"]`)
-              , storedValue = this._domTool.window.localStorage.getItem(localStorageKey)
+            let storedValue = this._domTool.window.localStorage.getItem(localStorageKey)
               ;
             if(storedValue !== null)
-                elem.checked = storedValue === 'true' ? true : false;
+                this._elem.checked = storedValue === 'true' ? true : false;
 
-            elem.addEventListener('change', onChange);
-            onChange({target: elem});
+            this._elem.addEventListener('change', onChange);
+            onChange({target: this._elem});
+        }
+    }
+    setChecked(checked) {
+        this._elem.checked = checked;
+        _dispatchChangeEvent(this._elem);
+    }
+}
+
+const SIMPLE_LABEL_TEMPLATE = `
+    <{tag} class="{klass}">{text}</{tag}>
+`;
+
+class SimpleLabelWidget {
+    constructor(domTool, container, templateVars) {
+        this._domTool = domTool;
+        this.container = container;
+        var template = SIMPLE_LABEL_TEMPLATE;
+
+        if(ID in templateVars)
+            this[ID] = templateVars[ID];
+
+        for(let [k,v] of Object.entries(templateVars)) {
+            if(k === 'text')
+                // see below: this.setText(templateVars.text)
+                continue;
+            template = template.replaceAll('{' + k + '}', v);
+        }
+        {
+            let frag = this._domTool.createFragmentFromHTML(template);
+            this.container.appendChild(frag);
+        }
+        this._elem = container.querySelector(`${templateVars.tag}.${templateVars.klass}`);
+        this.setText(templateVars.text);
+    }
+    setText(text) {
+        this._elem.textContent = text;
+    }
+}
+
+const SIMPLE_BUTTON_TEMPLATE = `<button class="{klass}">{text}</button>`;
+class SimpleButtonWidget {
+    constructor(domTool, container, templateVars, onClick) {
+        this._domTool = domTool;
+        this.container = container;
+        var template = SIMPLE_BUTTON_TEMPLATE;
+
+        for(let [k,v] of Object.entries(templateVars))
+            template = template.replaceAll('{' + k + '}', v);
+        {
+            let frag = this._domTool.createFragmentFromHTML(template);
+            this.container.appendChild(frag);
+        }
+        this._onClick = onClick;
+        {
+            let elem = this.container.querySelector(`button.${templateVars.klass}`);
+            elem.addEventListener('click', ()=>this._onClick());
         }
     }
 }
@@ -164,21 +218,28 @@ class PortalAugmentationWidget extends _ContainerWidget {
         this._domTool.insertAtMarkerComment(this.container,
                             'insert: widgets', this._widgetsContainer);
 
-
         let widgetsConfig = [
             // [checkbox] play/pause justification
             [   CheckboxWidget, {
                       klass: `${klass}-run_justification_checkbox`
                     , label: 'Justification'
+                    , [ID]: 'justificationRunning'
                 },
                 true, /* checked: bool */
                 true, /* buttonStyle: bool */
                 JUSTIFICATION_ACTIVE_STORAGE_KEY,
                 (isOn)=> {
-                    console.log(`${JUSTIFICATION_ACTIVE_STORAGE_KEY}:`, isOn);
                     this._justificationController.setRunning(isOn);
                 }
             ],
+            [   SimpleLabelWidget, {
+                      klass: `${klass}-reset-justification`
+                    , text: ''
+                    , tag: 'span'
+                    , [ID]: 'justify-status'
+                },
+            ],
+            '<br />',
             // [checkbox] turn on/off line-color-coding default:on
             [   CheckboxWidget, {
                       klass: `${klass}-toggle_line_color_coding`
@@ -188,21 +249,32 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 true, /* buttonStyle: bool */
                 LINE_COLOR_CODING_STORAGE_KEY,
                 (isOn)=> {
-                    console.log(`${LINE_COLOR_CODING_STORAGE_KEY}:`, isOn);
                     let action = isOn ? 'add' : 'remove';
                     this._domTool.documentElement.classList[action]('color-coded-lines');
                 }
             ],
+            '<br />',
+            [   SimpleButtonWidget, {
+                      klass: `${klass}-reset-justification`
+                    , text: 'unjustify'
+                },
+                () => {
+                    this._justificationController.cancel();
+                    //.setChecked(this._justificationController);
+                    this.getWidgetById('justificationRunning')
+                        .setChecked(this._justificationController.running);
+                }
+            ],
+            '<hr />',
             // [checkbox] grade in dark-mode: on/off default: on
             [   CheckboxWidget, {
                       klass: `${klass}-switch_grade_checkbox`
-                    , label: 'Switch&nbsp;Grade in Dark Color Scheme'
+                    , label: 'Grade (in Dark Color Scheme)'
                 },
                 true, /* checked: bool */
                 true, /* buttonStyle: bool */
                 GRADE_DARK_MODE_LOCAL_STORAGE_KEY,
                 (isOn)=> {
-                    console.log(`${GRADE_DARK_MODE_LOCAL_STORAGE_KEY}:`, isOn);
                     let value = isOn ?  '1' : '0';
                     this._domTool.documentElement.style.setProperty(
                                                 '--toggle-grade', value);
@@ -220,9 +292,18 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 ()=>{}// onChange
             ],
         ];
-
         this._widgets = this._initWidgets(widgetsConfig);
+        {
+            let justifyStatus = this.getWidgetById('justify-status');
+            this._justificationController.addStatusReporter(status=>justifyStatus.setText(status));
+        }
     }
+}
+
+function _dispatchChangeEvent(elem) {
+    let evt = document.createEvent("HTMLEvents");
+    evt.initEvent("change", false, true);
+    elem.dispatchEvent(evt);
 }
 
 const USER_SETTINGS_EVENT = 'user-settings';
@@ -272,9 +353,7 @@ class SliderWidget {
             elem.addEventListener('change', onChange);
             reset.addEventListener('click', ()=>{
                 elem.value = templateVars.value;
-                let evt = document.createEvent("HTMLEvents");
-                evt.initEvent("change", false, true);
-                elem.dispatchEvent(evt);
+                _dispatchChangeEvent(elem);
             });
             onChange({target: elem});
         }
