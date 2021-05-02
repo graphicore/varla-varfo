@@ -3,24 +3,182 @@ import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
 import {justify} from './justification.mjs';
 
-const PORTAL_AUGMENTATION_TEMPLATE = `
-<fieldset>
-    <legend>Portal Augmentation</legend>
-    <em>nothing yet</en>
-</fieldset>
-`;
-/* We may not use this now */
-class PortalAugmentationWidget{
-    /* Set information about the portal that we can't determine yet ourselves. */
+
+class _ContainerWidget {
     constructor(baseElement) {
         this._baseElement = baseElement;
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
+        this._collectedChanges = null;
+
+    }
+
+    /* lol, not so sure that this should be in the super class*/
+    _handleUserSettingsChange(type, value) {
+        // A simple debouncing scheme: This collects all events that
+        // come in synchronously, usually right after initialization,
+        // then dispatches all together asynchronously, using a generic
+        // promise for the delay.
+        if(this._collectedChanges === null) {
+            this._collectedChanges = [];
+            // dispatch async
+            Promise.resolve(true)
+            .then(()=>{
+                var event = new CustomEvent(USER_SETTINGS_EVENT,
+                        { detail: this._collectedChanges, bubbles: true });
+                // reset
+                this._collectedChanges = null;
+                this._domTool.window.dispatchEvent(event);
+            });
+        }
+        this._collectedChanges.push([type, value]);
+    }
+
+    // the subclass must define this.
+    get _widgetsContainer(){
+        throw new Error('Not Implemented: _widgetsContainer');
+    }
+
+    set _widgetsContainer(v){
+        Object.defineProperty(this, '_widgetsContainer', {value: v});
+    }
+
+    _initWidgets(widgetsConfig) {
+        let widgets = [];
+        for(let [Ctor, ...args] of widgetsConfig) {
+            let widget = new Ctor(this._domTool, this._widgetsContainer, ...args);
+            // could do activate/close with these, but it's not yet necessary
+            widgets.push(widget);
+        }
+        return widgets;
+    }
+}
+
+//  [checkbox] grades in dark-mode: on/off default: on
+//          action: set a class.
+//                  which sets a css custom property
+// maybe [checkbox] sup/sub
+
+// justification
+    // [checkbox][button] * start/on/run-on-load/run-on-change
+    //          * pause/stop/don't run-on-load/don't run on change(default)
+    //    BUT! with hourclass indicator
+    //  It's play/pause.
+
+    // [checkbox] turn on/off line-color-coding default:on
+    //          action toggle a class
+
+    // maybe instead of start/on  stop/pause:
+    //          active/inactive
+    //          which will be paused if stopped, without column change,
+    //          and will restart wherever it was
+    // an extension of pause is unjustify, which doesn't make much sense
+    // without stop, because then it has to restard again just after unjustify.
+    //          [button] cancel: unjustify + pause
+    // OK, so then unjustify is the same as a layout change
+    // (onResize/updateViewport)has to perform:
+    //      stop, unjustify (wait for layout changing to settle?) start.
+    //
+    // While justifying, can I have a spinning hourglass?
+    // While justifying: pick the next line from all unjustified lines
+    // by how central it is to the viewport!!!
+    //
+    //
+
+    // trim algorithm:
+    //      [checkbox] stop after find lines
+    //          like a breakpoint debugger1
+    //              when we have a start/pause button, this can just pause
+    //              after find lines, easy!
+    //
+
+//
+const CHECKBOX_TEMPLATE = `
+    <label class="{klass}">{label}:
+        <input type="checkbox" checked="{*checked*}"/>
+        {*button style*}
+    </label>
+`;
+
+class CheckboxWidget {
+    constructor(domTool, container, templateVars, checked, buttonStyle,
+                localStorageKey, onChange) {
+        this._domTool = domTool;
+        this.container = container;
+        var template = CHECKBOX_TEMPLATE;
+
+        let _templateVars = [...Object.entries(templateVars)];
+
+        _templateVars.push(['*button style*', buttonStyle ? '<span></span>' : '']);
+        _templateVars.push(['checked', checked ? 'checked' : '']);
+
+        for(let [k,v] of _templateVars)
+            template = template.replaceAll('{' + k + '}', v);
+        {
+            let frag = this._domTool.createFragmentFromHTML(template);
+            this.container.appendChild(frag);
+        }
+        this._localStorageKey = localStorageKey;
+        // parent change propagation
+        this._onChange = onChange;
+        {
+            let onChange = evt=> {
+                    this._domTool.window.localStorage.setItem(localStorageKey,
+                                    evt.target.checked ? 'true' : 'false');
+                    this._onChange(evt.target.checked);
+                }
+              ;
+            let elem = this.container.querySelector(`.${templateVars.klass} input[type="checkbox"]`)
+              , storedValue = this._domTool.window.localStorage.getItem(localStorageKey)
+              ;
+            if(storedValue !== null)
+                elem.checked = storedValue === 'true' ? true : false;
+
+            elem.addEventListener('change', onChange);
+            onChange({target: elem});
+        }
+    }
+}
+
+
+const PORTAL_AUGMENTATION_TEMPLATE = `
+<fieldset>
+    <legend>Demo Control Center</legend>
+    <!-- insert: widgets -->
+</fieldset>
+`;
+/* We may not use this now */
+class PortalAugmentationWidget extends _ContainerWidget {
+    /* Set information about the portal that we can't determine yet ourselves. */
+    constructor(baseElement) {
+        super(baseElement);
+        var klass = 'portal_augmentation';
         var dom = this._domTool.createElementfromHTML(
-            'div', {'class': 'portal_augmentation'},
+            'div', {'class': klass},
             PORTAL_AUGMENTATION_TEMPLATE
         );
         this.container = dom;
         this._baseElement.appendChild(dom);
+        this._widgetsContainer = this._domTool.createElement('div');
+        this._domTool.insertAtMarkerComment(this.container,
+                            'insert: widgets', this._widgetsContainer);
+
+
+        let widgetsConfig = [
+            [   CheckboxWidget, {
+                      klass: `${klass}-any-checkbox`
+                    , label: 'Generic&nbsp;Checkbox'
+                },
+                false, /* checked: bool */
+                false, /* buttonStyle: bool */
+                'varla-varfo-generic-checkbox-test',//USER_DISTANCE_LOCAL_STORAGE_KEY
+                (v)=>{
+                    console.log('generic-checkbox:', v);
+                    // this._handleUserSettingsChange('user-distance', v)
+                }
+            ],
+        ];
+
+        this._widgets = this._initWidgets(widgetsConfig);
     }
 }
 
@@ -163,12 +321,10 @@ const USER_PREFERENCES_TEMPLATE = `
 `;
 
 
-class UserPreferencesWidget{
-    /* SLIDER +- 4PT  in 0.01 steps */
+class UserPreferencesWidget extends _ContainerWidget{
     constructor(baseElement) {
-        this._baseElement = baseElement;
-        this._domTool = new DOMTool(this._baseElement.ownerDocument);
-        this._collectedChanges = null;
+        super(baseElement);
+
         var klass = 'user_preferences';
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': klass},
@@ -218,32 +374,7 @@ class UserPreferencesWidget{
 
         ];
 
-        this._widgets = [];
-        for(let [Ctor, ...args] of widgetsConfig) {
-            let widget = new Ctor(this._domTool, this._widgetsContainer, ...args);
-            // could do activate/close with these, but it's not yet necessary
-            this._widgets.push(widget);
-        }
-    }
-
-    _handleUserSettingsChange(type, value) {
-        // A simple debouncing scheme: This collects all events that
-        // come in synchronously, usually right after initialization,
-        // then dispatches all together asynchronously, using a generic
-        // promise for the delay.
-        if(this._collectedChanges === null) {
-            this._collectedChanges = [];
-            // dispatch async
-            Promise.resolve(true)
-            .then(()=>{
-                var event = new CustomEvent(USER_SETTINGS_EVENT,
-                        { detail: this._collectedChanges, bubbles: true });
-                // reset
-                this._collectedChanges = null;
-                this._domTool.window.dispatchEvent(event);
-            });
-        }
-        this._collectedChanges.push([type, value]);
+        this._widgets = this._initWidgets(widgetsConfig);
     }
 }
 
