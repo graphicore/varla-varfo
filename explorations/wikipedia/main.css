@@ -689,12 +689,14 @@ label.user_preferences-user_distance::after {
 }
 
 
+.portal_augmentation-run_justification_checkbox > input,
 .portal_augmentation-switch_grade_checkbox > input{
     visibility: hidden;
     position: absolute;
     cursor: pointer;
 }
 
+.portal_augmentation-run_justification_checkbox > input ~ span:after,
 .portal_augmentation-switch_grade_checkbox > input ~ span:after {
     display: inline-block;
     background: #f5f4f3;
@@ -703,8 +705,21 @@ label.user_preferences-user_distance::after {
     padding: 0.4em;
     border-radius: .2em;
 }
+
+.portal_augmentation-run_justification_checkbox > input ~ span:hover:after,
 .portal_augmentation-switch_grade_checkbox > input ~ span:hover:after {
     background: #f9f8f7;
+}
+
+
+.portal_augmentation-run_justification_checkbox > input ~ span:before,
+.portal_augmentation-switch_grade_checkbox > input ~ span:before {
+  content: "is off ";
+}
+
+.portal_augmentation-run_justification_checkbox > input:checked ~ span:before,
+.portal_augmentation-switch_grade_checkbox > input:checked ~ span:before {
+  content: "is on ";
 }
 
 .portal_augmentation-switch_grade_checkbox > input ~ span:after {
@@ -717,6 +732,13 @@ label.user_preferences-user_distance::after {
 
 label.portal_augmentation-amplify_grade::after {
     content: "×" attr(data-value);
+}
+
+.portal_augmentation-run_justification_checkbox > input ~ span:after{
+    content: "▶ run";
+}
+.portal_augmentation-run_justification_checkbox > input:checked ~ span:after{
+    content: "▮▮ pause";
 }
 
 /* use :root for custom properties
@@ -1339,6 +1361,7 @@ i, cite, em, var, dfn {
      * Too this from original markup, I'm not sure this is the best way.*/
     --line-height:1.3;
 }
+
 
 .runion-01 {
     /*

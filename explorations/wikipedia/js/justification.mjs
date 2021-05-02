@@ -1387,12 +1387,63 @@ function getJustificationTolerances(font, targetsize, targetweight) {
  * END OF vabro.js copy.
  ****/
 
+function* _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances) {
+    // FIXME: for Firefox and Chrome in the Section "Citations" I get an
+    //              Error: _getContainingRect couldn't identify a
+    //              containing rect for:
+    //              enze Morali, Rom 1881], "Topografia di
+    //  But, there are more similar to the above, seems like some
+    //  lines  are wider in this context than we would expect in
+    //  _getContainingRect.
+    //      Chrome: rig 533.890625 <= 530.546875 false
+    //      Firefox: rig 546.7333374023438 <= 542.3999938964844 false
+    //  and for Firefox a really much too wide justified:
+    //              "Sons. pp. 4, 123."
+    //
+    // In the following line range
+    //      let devStart = 830
+    //        , devCount = 60
+    //        ;
+    let devStart = 0
+    , devCount = Infinity
+    ;
+    let jtAllTime = 0, justifiedCount = 0
+    , total = elementLines.length
+    ;
+    for(let [i, lineElements] of elementLines.entries()) {
+        if(i < devStart)
+            continue;
+        if(lineElements[0].classList.contains('r00-last-line'))
+            continue;
+        let j0 = performance.now();
+        try {
+            justifyLine(elem, lineElements, fontSizePx, tolerances);
+        }
+        catch(e){
+            console.error(e);
+            total -= 1;
+            continue;
+        }
+        let j1 = performance.now();
+        justifiedCount += 1;
+        jtAllTime += j1 - j0;
+
+        yield [justifiedCount , total, i];
+
+        if(justifiedCount >= devCount) {
+            console.log('STOPPING justifyLine due to dev iterations limit', devCount);
+            break;
+        }
+    }
+    console.log(`justifyLine(s) took ${jtAllTime / 1000} seconds for ${justifiedCount} lines.`);
+}
 
 // for development:
-export function justify(elem, skip, options) {
+function* _justifyGenerator(elem, skip, options) {
+    // FIXME: do from external
     elem.classList.add('color-coded-lines');
 
-    var t0,t1;
+    var t0, t1;
     t0 = performance.now();
     let lines = Array.from(findLines(elem, skip));
     t1 = performance.now();
@@ -1431,8 +1482,6 @@ export function justify(elem, skip, options) {
     // >        'word-spacing': [-0.20500000000000002, 0, 0.20500000000000002]
     // > }
 
-
-
     t0 = performance.now();
     // Do it from end to start, so all offsets stay valid.
     // FIXME: this nextLineTextContent is not exactly beautiful, can I do better?
@@ -1458,14 +1507,13 @@ export function justify(elem, skip, options) {
     console.log(`markupLine(s) took ${(t1 - t0) / 1000} seconds.`);
 
     // This is required to make text-indents on first lines work
-    elem.classList.add('runion-activated');
-
-
 
     t0 = performance.now();
     _markLogicalLinePositions(elementLines);
     t1 = performance.now();
     console.log(`_markLogicalLinePositions took ${(t1 - t0) / 1000} seconds.`);
+
+    yield ['elementLines', elementLines];
 
     //for(let [i, lineElements] of elementLines.entries()){
     //    if(i > 100)
@@ -1475,141 +1523,125 @@ export function justify(elem, skip, options) {
     //    justifyLine(elem, lineElements);
     //}
 
-    async function* justifyLineGenerator() {
+    let gen = _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances);
+    for(let data of gen)
+        yield ['justifyLine', data];
+}
 
-        // FIXME: for Firefox and Chrome in the Section "Citations" I get an
-        //              Error: _getContainingRect couldn't identify a
-        //              containing rect for:
-        //              enze Morali, Rom 1881], "Topografia di
-        //  But, there are more similar to the above, seems like some
-        //  lines  are wider in this context than we would expect in
-        //  _getContainingRect.
-        //      Chrome: rig 533.890625 <= 530.546875 false
-        //      Firefox: rig 546.7333374023438 <= 542.3999938964844 false
-        //  and for Firefox a really much too wide justified:
-        //              "Sons. pp. 4, 123."
+
+
+export class JustificationController{
+    constructor(elem, skip, options){
+        console.log('init JustificationController', elem, skip, options);
+        this._runionActivatedClass = 'runion-activated';
+        this._elem = elem;
+        this._skip = skip;
+        this._options = options;
+        this._gen = null;
+        this._elementLines = null;
+        this._timeout = null;
+        this._running = false;
+    }
+    get running() {
+        return this._running;
+    }
+    setRunning(isRunning) {
+        if(this._running === !!isRunning) // jshint ignore:line
+            return;
+        console.log('JustificationController.setRunning', isRunning);
+        this._running = !!isRunning;
+        if(this._running) {
+            if(!this._gen) {
+                this._unjustify();
+                this._gen = _justifyGenerator(this._elem, this._skip, this._options);
+            }
+            this._scheduleIterate();
+        }
+        else {
+            this._unscheduleIterate();
+        }
+    }
+    run() {
+        this.setRunning(true);
+    }
+    pause() {
+        this.setRunning(false);
+    }
+    cancel() {
+        this._unscheduleIterate();
+        this._gen = null;
+        this._unjustify();
+        this.setRunning(false);
+    }
+    restart() {
+        this.cancel();
+        this.run();
+    }
+    _unjustify() {
+        console.log('unjustify');
+        let [, skipClass] = this._skip;
+        if(this._elementLines) {
+            for(let line of this._elementLines) {
+                for(let elem of line) {
+                    elem.replaceWith(...elem.childNodes);
+                }
+            }
+            this._elementLines = null;
+        }
+        this._elem.classList.remove(this._runionActivatedClass);
+
+        for(let elem of this._elem.querySelectorAll(skipClass)) {
+            elem.classList.remove(skipClass);
+        }
+        // IMPORTANT:
         //
-        // In the following line range
-        //      let devStart = 830
-        //        , devCount = 60
-        //        ;
-        let devStart = 0
-          , devCount = 50
-          ;
-        let jtAll = 0, jtCount = 0;
-        for(let [i, lineElements] of elementLines.entries()) {
-            if(i < devStart)
-                continue;
-            if(lineElements[0].classList.contains('r00-last-line'))
-                continue;
-            let j0 = performance.now();
-            try {
-                justifyLine(elem, lineElements, fontSizePx, tolerances);
-            }
-            catch(e){
-                console.error(e);
-                continue;
-            }
-            let j1 = performance.now();
-            jtCount += 1;
-            jtAll += j1 - j0;
-            if(jtCount >= devCount) {
-                console.log('STOPPING justifyLine due to dev iterations limit', devCount);
+        // From MDN:
+        //   > The Node.normalize() method puts the specified node and all of its
+        //   > sub-tree into a "normalized" form. In a normalized sub-tree, no text
+        //   > nodes in the sub-tree are empty and there are no adjacent text nodes.
+        //
+        // Without this, running unjustify seems to fix the markup, but
+        // re-running justify afterwards creates lines as if each span of
+        // the previous run is on it's own line. could be an internal browser
+        // caching thing, however, it appears in Firefox and Chromium.
+        //
+        // This is likely due to the fact that we check if client-rects are
+        // touching and that we don't include line separating whitespace
+        // in the lines, which become fragment whitespace nodes eventually.
+        // There could be a fix in the findLines algorithm as well. Running
+        // `container.normalize()` always before findLines on the other hand
+        // would likely make it more resilient.
+        this._elem.normalize();
+    }
+    _scheduleIterate() {
+        if(this._timeout !== null)
+            // is already scheduled
+            return;
+        this._timeout = setTimeout(()=>this._iterate(), 0);
+    }
+    _unscheduleIterate() {
+        clearTimeout(this._timeout);
+        this._timeout = null;
+    }
+    _iterate() {
+        // clean up for _scheduleIterate
+        this._unscheduleIterate();
+
+        if(!this._gen) return;
+
+        let yieldVal = this._gen.next();
+        if(yieldVal.done) {
+            return;
+        }
+        let [stepName, data] = yieldVal.value;
+        console.log(`justify ${stepName}`);
+        switch(stepName){
+            case 'elementLines':
+                this._elementLines = data;
+                this._elem.classList.add(this._runionActivatedClass);
                 break;
-            }
-            // This does not render the progress as setTimout, look up
-            // "clamping" and "setTimeout".
-            // yield await Promise.resolve(true);
-            yield await new Promise((resolve /*, reject */)=>{
-                setTimeout(()=>resolve(true), 0);
-            });
         }
-        console.log(`justifyLine(s) took ${jtAll / 1000} seconds for ${jtCount} lines.`);
+        // schedule next round
+        this._scheduleIterate();
     }
-    let runJustifyLine = (async function() {
-        let gen = justifyLineGenerator();
-        // we could abort
-        //for await (let val of justifyLineGenerator()) {
-        //    pass; console.log(num);
-        //}
-        while(!(await gen.next()).done);
-    });
-
-    runJustifyLine();
-    // TODO: if  justify is still running (async execution mode)
-    //       it must be possible to abort it. Therefore, the caller
-    //       must provide an `abort` function
-    let abort = ()=>console.warn('Not implemented justify->abort().')
-      , unjustify = ()=>{
-            abort();
-            let [, skipClass] = skip;
-            _unjustify(elem, elementLines, skipClass);
-    };
-    return {unjustify: unjustify, abort: abort};
 }
-
-function _unjustify(container, elementLines, skipClass) {
-    console.log('unjustify');
-    for(let line of elementLines){
-        for(let elem of line) {
-            elem.replaceWith(...elem.childNodes);
-        }
-    }
-    container.classList.remove('runion-activated');
-
-    for(let elem of container.querySelectAll(skipClass)) {
-        elem.classList.remove(skipClass);
-    }
-
-    // IMPORTANT:
-    //
-    // From MDN:
-    //   > The Node.normalize() method puts the specified node and all of its
-    //   > sub-tree into a "normalized" form. In a normalized sub-tree, no text
-    //   > nodes in the sub-tree are empty and there are no adjacent text nodes.
-    //
-    // Without this, running unjustify seems to fix the markup, but
-    // re-running justify afterwards creates lines as if each span of
-    // the previous run is on it's own line. could be an internal browser
-    // caching thing, however, it appears in Firefox and Chromium.
-    //
-    // This is likely due to the fact that we check if client-rects are
-    // touching and that we don't include line separating whitespace
-    // in the lines, which become fragment whitespace nodes eventually.
-    // There could be a fix in the findLines algorithm as well. Running
-    // `container.normalize()` always before findLines on the other hand
-    // would likely make it more resilient.
-    container.normalize();
-}
-
-// TODO before doing actual justification:
-//  * collect whitespace and empty nodes between lines
-//    probably in ranges and possibly as charData, though, range.toString()
-//    produces the char data needed ... BUT: the ranges may become unusable
-//    during markupLine and there we need info about the chardata between
-//    lines.
-//    DONE!
-//  * filter empty lines (I would  expect the step before makes this unneccessary)
-//    DONE // yes unnecessary
-//  * Gather line length information. Looking for actualLineLength and
-//    maxLineLength, then excessSpace === maxLineLength - actualLineLength
-//    (we want to minimize excessSpace). We can then also calculate how big
-//    a wordSpace is on that line. Therefore
-//    DONE (even color coded)
-//  * Get wordSpace of a line. We need to get wordCount for that and the
-//    above. (could also measure using ranges between each word) would
-//    likely be most accurate, since the default word-space depends on
-//    the font/font spec
-//  * maxLineLength can be done by getting the clientRects of the
-//    closest block parent element, choose the clientRect that contains
-//    the line, get it's line width by subtracting padding-left and padding-right\
-//    DONE
-//  * For cases like text-indent: the start of the line must be its first
-//    clientRects "left" value. This must be subtracted from maxLineLength.
-//  * Identify lines that can't have justification, e.g. because of a <br />
-//    or a following block element or because it's the last line of a block.
-//    In a way, figure if the reason of the
-//    line break is caused by something different than the line becoming
-//    too wide.
-//
-// See where we are THEN and start the actual justification implementation.

@@ -1,7 +1,7 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
 import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
-import {justify} from './justification.mjs';
+import {JustificationController} from './justification.mjs';
 
 
 class _ContainerWidget {
@@ -53,9 +53,7 @@ class _ContainerWidget {
     }
 }
 
-//  [checkbox] grades in dark-mode: on/off default: on
-//          action: set a class.
-//                  which sets a css custom property
+
 // maybe [checkbox] sup/sub
 
 // justification
@@ -67,6 +65,8 @@ class _ContainerWidget {
     // [checkbox] turn on/off line-color-coding default:on
     //          action toggle a class
 
+
+    // maybe: turn off xtra
     // maybe instead of start/on  stop/pause:
     //          active/inactive
     //          which will be paused if stopped, without column change,
@@ -78,6 +78,12 @@ class _ContainerWidget {
     // (onResize/updateViewport)has to perform:
     //      stop, unjustify (wait for layout changing to settle?) start.
     //
+    //
+    // the algorithm only knows pause/play
+    // cancel sets pause + runs unjustify
+    //
+
+
     // While justifying, can I have a spinning hourglass?
     // While justifying: pick the next line from all unjustified lines
     // by how central it is to the viewport!!!
@@ -142,6 +148,7 @@ class CheckboxWidget {
 
 const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
     , AMPLIFY_GRADE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-amplify'
+    , JUSTIFICATION_ACTIVE_STORAGE_KEY = 'varla-varfo-justification-active'
     ;
 
 const PORTAL_AUGMENTATION_TEMPLATE = `
@@ -153,8 +160,9 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(baseElement) {
+    constructor(baseElement, justificationController) {
         super(baseElement);
+        this._justificationController = justificationController;
         var klass = 'portal_augmentation';
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': klass},
@@ -168,6 +176,19 @@ class PortalAugmentationWidget extends _ContainerWidget {
 
 
         let widgetsConfig = [
+            // [checkbox] play/pause justification
+            [   CheckboxWidget, {
+                      klass: `${klass}-run_justification_checkbox`
+                    , label: 'Justification'
+                },
+                true, /* checked: bool */
+                true, /* buttonStyle: bool */
+                JUSTIFICATION_ACTIVE_STORAGE_KEY,
+                (isOn)=> {
+                    console.log(`${JUSTIFICATION_ACTIVE_STORAGE_KEY}:`, isOn);
+                    this._justificationController.setRunning(isOn);
+                }
+            ],
             // [checkbox] grade in dark-mode: on/off default: on
             [   CheckboxWidget, {
                       klass: `${klass}-switch_grade_checkbox`
@@ -743,18 +764,6 @@ function fixCSSKeyframes(document) {
     }
 }
 
-// temporary global exposure to run directly via dev-tool.
-window.justify = () => {
-    let elem = document.querySelector('.runion-01')
-      , skip = [
-            /* skipSelector selects elements to skip*/
-            '.hatnote, #toc, h1, h2, h3, ul, ol, blockquote, table, .do-not-jsutify',
-            /* skipClass: added to skipped elements */
-            'skip-justify'
-        ];
-    return justify(elem, skip);
-};
-
 function massageWikipediaMarkup(document) {
     document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
     // These "thumbs" with ".tright" are originally "float: right" but in column
@@ -784,15 +793,34 @@ function main() {
     massageWikipediaMarkup(document);
     setDefaultFontSize(document);
 
+    let runionTargetSelector = '.runify-01, .mw-parser-output';
+
+    // FIXME: we should be able to use this with more than one element.
+    //        as runion_01 is applied to all matching elements as well
+    // FIXME:
+    //      run this only always after runion_01 is finished!
+    let runion01Elem = document.querySelector(runionTargetSelector)
+      , skip = [
+            /* skipSelector selects elements to skip*/
+            '.hatnote, #toc, h1, h2, h3, ul, ol, blockquote, table, .do-not-jsutify',
+            /* skipClass: added to skipped elements */
+            'skip-justify'
+        ]
+      , justificationController = new JustificationController(runion01Elem, skip)
+      ;
+
+
+
     let userSettingsWidget = new WidgetsContainerWidget(
                     document.querySelector('.insert_user_settings'),
                     [
-                        PortalAugmentationWidget,
+                        [PortalAugmentationWidget, justificationController],
                         UserPreferencesWidget
                     ]);
     let toggle = ()=>userSettingsWidget.toggle();
     for(let elem of document.querySelectorAll('.toggle-user_settings'))
         elem.addEventListener('click', toggle);
+
 
     // Must be executed on viewport changes as well as on userSettings
     // changes. User-Zoom changes should also trigger resize, so our own
@@ -803,10 +831,16 @@ function main() {
                 clearTimeout(updateViewportScheduled);
                 updateViewportScheduled = null;
             }
+            // do not cancel on color-scheme change
+            let  justificationWasRunning = justificationController.running;
+            justificationController.cancel();
             // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
-            for(let elem of document.querySelectorAll('.runify-01, .mw-parser-output'))
+            for(let elem of document.querySelectorAll(runionTargetSelector))
                 runion_01(elem);
             fixCSSKeyframes(document);
+            // only run if it is not paused by the user.
+            if(justificationWasRunning)
+                justificationController.run();
         }
       ;
     // This will most likely be executed by the USER_SETTINGS_EVENT handler
