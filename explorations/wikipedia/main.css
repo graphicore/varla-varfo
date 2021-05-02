@@ -259,10 +259,14 @@ vector-menu-tabs h3 {
     list-style: none none;
     margin: 0;
 }
-ul {
-    margin: 0.3em 0 0 1.6em;
+ul, ol {
+    margin: 0 0 0 1em;
     padding: 0;
-        padding-left: 0px;
+    padding-left: 0px;
+}
+
+#toc ul{
+    list-style: none;
 }
 
 a {
@@ -496,13 +500,6 @@ a {
 .mw-editsection, .mw-editsection-like {
     margin-left: 1em;
     vertical-align: baseline;
-}
-
-.mw-references-columns {
-    -webkit-column-width: 30em;
-    -moz-column-width: 30em;
-    column-width: 30em;
-    margin-top: 0.3em;
 }
 
 /* hidden for now, complex stuff, SEO/Screenreader content */
@@ -875,7 +872,7 @@ font-weight: var(--x-font-weight);
 
 table,
 .thumb,
-ul, ol,
+ul, ol.not(:first-child),
 .templatequote{
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
