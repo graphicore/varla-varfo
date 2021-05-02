@@ -618,6 +618,10 @@ button.toggle-user_settings{
     margin: .5em 0;
     display: block;
 }
+.widgets_container label {
+    margin-bottom: .3em;
+    display: inline-block;
+}
 
 .widgets_container button.close{
     margin-left: auto;
@@ -1410,6 +1414,14 @@ i, cite, em, var, dfn {
 
 .runion-01.runion-activated {
     white-space: nowrap;
+}
+
+/* FIXME: Apply the class .fix-short-section automatically, it's
+ * currently set manually on the <p> of the sub-section "Etymology".
+ */
+.runion-01.runion-activated .fix-short-section {
+    column-span: all;
+    width: calc(.5em * var(--column-width-en, 0));
 }
 
 /* these are sectioning elements */
