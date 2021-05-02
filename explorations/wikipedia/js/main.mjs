@@ -29,8 +29,9 @@ const USER_SETTINGS_EVENT = 'user-settings';
 const SLIDER_TEMPLATE = `
     <label class="{klass}">{label}:
         <input type="range" min="{min}" max="{max}" value="{value}" step="{step}" />
-    </label>
+    </label>&nbsp;<button class="{klass}-reset">reset</button>
 `;
+
 class SliderWidget {
     constructor(domTool, container, templateVars, localStorageKey,
                                             customProperty, onChange) {
@@ -60,19 +61,24 @@ class SliderWidget {
                 }
               ;
 
-            let elem = this.container.querySelector(`.${templateVars.klass} input[type="range"]`);
+            let elem = this.container.querySelector(`.${templateVars.klass} input[type="range"]`)
+              , reset = this.container.querySelector(`.${templateVars.klass}-reset`);
             var storedValue = this._domTool.window.localStorage.getItem(localStorageKey);
             if(storedValue !== null)
                 elem.value = storedValue;
 
-
             elem.addEventListener('input', onInput);
             elem.addEventListener('change', onChange);
+            reset.addEventListener('click', ()=>{
+                elem.value = templateVars.value;
+                let evt = document.createEvent("HTMLEvents");
+                evt.initEvent("change", false, true);
+                elem.dispatchEvent(evt);
+            });
             onChange({target: elem});
         }
     }
 }
-
 
 const COLOR_SCHEME_SWITCH_TEMPLATE = `
 <form class="{klass}">
