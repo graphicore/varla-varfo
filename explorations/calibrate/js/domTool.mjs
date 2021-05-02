@@ -25,6 +25,10 @@ export default class DOMTool {
       return this.document.defaultView; // fancy way to do this
   }
 
+  get documentElement() {
+      return this.document.documentElement; // fancy way to do this
+  }
+
   static appendChildren(elem, contents, cloneChildNodes) {
       var _contents = (contents === undefined || contents === null)
               ? []

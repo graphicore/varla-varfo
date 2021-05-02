@@ -601,7 +601,7 @@ button.toggle-user_settings{
 }
 
 .widgets_container {
-    width: 25rem;
+    max-width: 27rem;
     border: 1px solid lightgray;
     background: #ffffdef0;
     padding: .5em 1em;
@@ -682,6 +682,33 @@ label.user_preferences-user_distance::after {
 .portal_properties-set_orientation:checked ~ span:before {
   width: .5em;
   height: 1em;
+}
+
+
+.portal_augmentation-switch-grade-checkbox > input{
+    visibility: hidden;
+    position: absolute;
+    cursor: pointer;
+}
+
+.portal_augmentation-switch-grade-checkbox > input ~ span:after {
+    display: inline-block;
+    background: #f5f4f3;
+    border: 0.0625em solid #edebe9;
+    border: 0.0625em outset ThreeDLightShadow;
+    padding: 0.4em;
+    border-radius: .2em;
+}
+.portal_augmentation-switch-grade-checkbox > input ~ span:hover:after {
+    background: #f9f8f7;
+}
+
+.portal_augmentation-switch-grade-checkbox > input ~ span:after {
+  content: "turn on";
+}
+
+.portal_augmentation-switch-grade-checkbox > input:checked ~ span:after {
+  content: "turn off";
 }
 
 
@@ -1114,6 +1141,11 @@ b, strong {
 }
 .explicit-dark-mode * {
     --grad-active-animation: var(--grad-animation-name);
+}
+
+.turn-off-grade .explicit-dark-mode *,
+.turn-off-grade * {
+    --grad-active-animation: no-animation;
 }
 
 @media (prefers-color-scheme: light){

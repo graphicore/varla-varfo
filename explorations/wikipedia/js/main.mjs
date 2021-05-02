@@ -140,6 +140,8 @@ class CheckboxWidget {
 }
 
 
+const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade_dark_mode';
+
 const PORTAL_AUGMENTATION_TEMPLATE = `
 <fieldset>
     <legend>Demo Control Center</legend>
@@ -164,16 +166,22 @@ class PortalAugmentationWidget extends _ContainerWidget {
 
 
         let widgetsConfig = [
+            // [checkbox] grade in dark-mode: on/off default: on
             [   CheckboxWidget, {
-                      klass: `${klass}-any-checkbox`
-                    , label: 'Generic&nbsp;Checkbox'
+                      klass: `${klass}-switch-grade-checkbox`
+                    , label: 'Switch&nbsp;Grade in Dark Color Scheme'
                 },
-                false, /* checked: bool */
-                false, /* buttonStyle: bool */
-                'varla-varfo-generic-checkbox-test',//USER_DISTANCE_LOCAL_STORAGE_KEY
-                (v)=>{
-                    console.log('generic-checkbox:', v);
-                    // this._handleUserSettingsChange('user-distance', v)
+                true, /* checked: bool */
+                true, /* buttonStyle: bool */
+                GRADE_DARK_MODE_LOCAL_STORAGE_KEY,
+                (isOn)=> {
+                    console.log(`${GRADE_DARK_MODE_LOCAL_STORAGE_KEY}:`, isOn);
+                    let action = isOn ?  'remove' : 'add';
+                    this._domTool.documentElement.classList[action]('turn-off-grade');
+                    // Must trigger updateViewport, because that runs
+                    // the fallbacks for @keyframes.
+                    // FIXME: this must not reset the justification.
+                    this._handleUserSettingsChange('switch-grade', isOn);
                 }
             ],
         ];
@@ -186,8 +194,8 @@ const USER_SETTINGS_EVENT = 'user-settings';
 
 const SLIDER_TEMPLATE = `
     <label class="{klass}">{label}:
-        <input type="range" min="{min}" max="{max}" value="{value}" step="{step}" />
-    </label>&nbsp;<button class="{klass}-reset">reset</button>
+        <input type="range" min="{min}" max="{max}" value="{value}" step="{step}"
+    /> </label>&nbsp;<button class="{klass}-reset">reset</button>
 `;
 
 class SliderWidget {
