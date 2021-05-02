@@ -610,7 +610,7 @@ button.toggle-user_settings{
 }
 
 .page_content-item .widgets_container{
-    z-index: 1;
+    z-index: 999;
     position: absolute;
 }
 
