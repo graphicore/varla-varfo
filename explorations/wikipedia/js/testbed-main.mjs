@@ -113,7 +113,6 @@ function _portalsToOptionElements(PORTALS) {
 }
 
 const PORTAL_PROPERTIES_TEMPLATE = `
-<em>Will navigate through portal space.</em>
 <datalist id="portal_properties-px-sizes">
     ${_flattenPortalsToNumbers(PORTALS).map(v=> '<option value="' + v +'" />').join('\n    ')}
 </datalist>
@@ -161,6 +160,10 @@ const PORTAL_PROPERTIES_TEMPLATE = `
         <input class="portal_properties-set_orientation"
                type="checkbox"
                value="true" "/><span></span></label>
+    </p>
+
+    <p>
+        <button class="portal_properties-go_fullscreen">go fullscreen</button>
     </p>
 </fieldset>
 
@@ -242,6 +245,11 @@ class PortalPropertiesWidget {
             for(let size of [this._uiWidth , this._uiHeight])
                 size.addEventListener('change', setSizes);
         }
+
+         this.container.querySelector('.portal_properties-go_fullscreen')
+            .addEventListener('click', ()=>{
+                this._portalElement.parentElement.requestFullscreen();
+            });
     }
 
     setOrientation(setToPortrait) {
