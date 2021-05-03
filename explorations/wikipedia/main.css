@@ -591,7 +591,9 @@ h1, h2 {
 
 button.toggle-user_settings{
     z-index: 999;
-    position: absolute;
+    position: sticky;
+    left: 0;
+    top: 0;
     border: 1px solid lightgray;
     background: #ffffff82;
     border-radius: .25em;
@@ -608,7 +610,7 @@ button.toggle-user_settings{
 }
 
 .page_content-item .widgets_container{
-    z-index: 999;
+    z-index: 998;
     position: absolute;
 }
 

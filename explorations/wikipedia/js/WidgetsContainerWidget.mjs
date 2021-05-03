@@ -44,7 +44,9 @@ export default class WidgetsContainerWidget {
         this._domTool.insertAtMarkerComment(
                         this.container, 'insert: child widgets', children);
     }
-
+    get isActive() {
+        return this._isActive;
+    }
     activate() {
         if(this._isActive)
             return;

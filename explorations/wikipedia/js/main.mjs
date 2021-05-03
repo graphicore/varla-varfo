@@ -943,7 +943,20 @@ function main() {
                         [PortalAugmentationWidget, justificationController],
                         UserPreferencesWidget
                     ]);
-    let toggle = ()=>userSettingsWidget.toggle();
+    let toggle = (evt)=>{
+        let top = `${window.scrollY}px`
+          , setTop = true
+          ;
+
+        if(!userSettingsWidget.isActive ||
+                top === userSettingsWidget.container.style.getPropertyValue('top'))
+            // If it is active and in view we turn if off.
+            userSettingsWidget.toggle();
+
+        if(userSettingsWidget.isActive)
+            userSettingsWidget.container.style.setProperty('top', top);
+
+    }
     for(let elem of document.querySelectorAll('.toggle-user_settings'))
         elem.addEventListener('click', toggle);
 
