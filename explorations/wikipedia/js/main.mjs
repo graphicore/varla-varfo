@@ -943,11 +943,8 @@ function main() {
                         [PortalAugmentationWidget, justificationController],
                         UserPreferencesWidget
                     ]);
-    let toggle = (evt)=>{
-        let top = `${window.scrollY}px`
-          , setTop = true
-          ;
-
+    let toggle = (/*evt*/)=>{
+        let top = `${window.scrollY}px`;
         if(!userSettingsWidget.isActive ||
                 top === userSettingsWidget.container.style.getPropertyValue('top'))
             // If it is active and in view we turn if off.
@@ -956,7 +953,7 @@ function main() {
         if(userSettingsWidget.isActive)
             userSettingsWidget.container.style.setProperty('top', top);
 
-    }
+    };
     for(let elem of document.querySelectorAll('.toggle-user_settings'))
         elem.addEventListener('click', toggle);
 
@@ -982,13 +979,14 @@ function main() {
               ;
             if(evt && evt.type === 'user-settings') {
                 if(evt.detail) {
+                    cancelJustification = false;
                     // all sub events in detail must be in keepJustificationState
                     for(let [subEventType, ] of evt.detail) {
                         if(!keepJustificationState.has(subEventType)){
+                            cancelJustification = true;
                             break;
                         }
                     }
-                    cancelJustification = false;
                 }
             }
 
