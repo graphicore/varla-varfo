@@ -822,7 +822,7 @@ function _whiteSpaceNormalize( txt ) {
     return txt;
 }
 
-function justifyLine(container, lineElements, fontSizePx, tolerances) {
+function justifyLine(container, lineElements, fontSizePx, tolerances, options=null) {
     let lineRange = new Range()
       , firstNode = lineElements[0]
       , lastNode = lineElements[lineElements.length-1]
@@ -910,22 +910,30 @@ function justifyLine(container, lineElements, fontSizePx, tolerances) {
       , setXTRA = val=>setPropertyToLine('--font-stretch', val)
       , readXTRA = ()=>parseFloat(getPropertyFromLine('--font-stretch'))
       , [xtraMin, ,xtraMax] = tolerances.XTRA
-      , generators = [
-
-            _justifyByGenerator(setXTRA, readXTRA, xtraMin,xtraMax),
+      , generators = []
+      ;
+    if(!options || options.XTRA !== false) {
+        generators.push(
+            _justifyByGenerator(setXTRA, readXTRA, xtraMin,xtraMax));
+    }
+    if(!options || options.letterSpacing !== false) {
+        generators.push(
             _justifyByLetterSpacingGenerator    (setLetterSpacingEm, lineGlyphsLength,
-                              fontSizePx, tolerances['letter-spacing']),
+                              fontSizePx, tolerances['letter-spacing']));
+    }
+    if(!options || options.wordSpacing !== false) {
             // We had some good results with this not used at all,
             // But if it can do some reduced word-spacing, optionally
             // not fully justified, it could still be an option.
-            _fullyJustifyByWordSpacingGenerator(setWordSpacingPx, lineWordSpaces),
-
+        generators.push(
+            _fullyJustifyByWordSpacingGenerator(setWordSpacingPx, lineWordSpaces));
+    }
         //   // NOTE: these are different to the vabro way, but could be possible!
         //   // letter-space
         // , _justifyByGenerator(setLetterSpacingEm, readLetterSpacingEm, originalMin, originalMax)
         //   // word-space (there's a rule that this must stay smaller than line space I think)
         // , _justifyByGenerator(setWordSpacingPx, readWordSpacingPx, originalMin, originalMax)
-    ];
+
     // run the actual justification
     justifyControlLoop(readUnusedWhiteSpace, generators);
 }
@@ -1387,7 +1395,7 @@ function getJustificationTolerances(font, targetsize, targetweight) {
  * END OF vabro.js copy.
  ****/
 
-function* _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances) {
+function* _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances, options) {
     // FIXME: for Firefox and Chrome in the Section "Citations" I get an
     //              Error: _getContainingRect couldn't identify a
     //              containing rect for:
@@ -1417,7 +1425,7 @@ function* _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances) {
             continue;
         let j0 = performance.now();
         try {
-            justifyLine(elem, lineElements, fontSizePx, tolerances);
+            justifyLine(elem, lineElements, fontSizePx, tolerances, options);
         }
         catch(e){
             console.error(e);
@@ -1512,15 +1520,7 @@ function* _justifyGenerator(elem, skip, options) {
 
     yield ['elementLines', elementLines];
 
-    //for(let [i, lineElements] of elementLines.entries()){
-    //    if(i > 100)
-    //       break;
-    //    if(lineElements[0].classList.contains('r00-last-line'))
-    //        continue;
-    //    justifyLine(elem, lineElements);
-    //}
-
-    let gen = _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances);
+    let gen = _justifyLineGenerator(elem, elementLines, fontSizePx, tolerances, options);
     for(let data of gen)
         yield ['justifyLine', data];
 }
@@ -1531,7 +1531,7 @@ export class JustificationController{
         this._runionActivatedClass = 'runion-activated';
         this._elem = elem;
         this._skip = skip;
-        this._options = options;
+        this._options = options || {};
         this._gen = null;
         this._elementLines = null;
         this._timeout = null;
@@ -1541,6 +1541,31 @@ export class JustificationController{
     }
     get running() {
         return this._running;
+    }
+    setOption(name, value) {
+        // Has no restart usesetOptions instead.
+        this._options[name] = value;
+    }
+    /* usage: ctrl.setOption(false, ['XTRA', false]);
+     *
+     *    'XTRA', bool default: true
+     *    'letterSpacing', bool default: true
+     *    'wordSpacing', bool default: true
+     */
+
+    setOptions(restart, ...name_value) {
+        for(let [name, value] of name_value)
+            this.setOption(name, value);
+        if(restart)
+            this.restart();
+    }
+    getOption(name) {
+        return name in this._options
+            ? this._options[name]
+            // Not set options are currently treated as true by the
+            // algorithm, may change!
+            : true
+            ;
     }
 
     addStatusReporter(reporterCallback) {

@@ -83,7 +83,7 @@ class _ContainerWidget {
 // unjustified lines by how central it is to the viewport!
 
 const CHECKBOX_TEMPLATE = `
-    <label class="{klass}">{label}:
+    <label class="{klass} {extra-classes}">{label}:
         <input type="checkbox" checked="{*checked*}"/>
         {*button style*}
     </label>
@@ -193,6 +193,9 @@ const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
     , AMPLIFY_GRADE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-amplify'
     , JUSTIFICATION_ACTIVE_STORAGE_KEY = 'varla-varfo-justification-active'
     , LINE_COLOR_CODING_STORAGE_KEY = 'varla-varfo-line-color-coding'
+    , JUSTIFICATION_OPTION_XTRA_STORAGE_KEY = 'varla-varfo-justification-option-XTRA'
+    , JUSTIFICATION_OPTION_LETTERSPACING_STORAGE_KEY = 'varla-varfo-justification-option-letterspacing'
+    , JUSTIFICATION_OPTION_WORDSPACING_STORAGE_KEY = 'varla-varfo-justification-option-wordspacing'
     ;
 
 const PORTAL_AUGMENTATION_TEMPLATE = `
@@ -246,21 +249,61 @@ class PortalAugmentationWidget extends _ContainerWidget {
                     , label: 'Line&nbsp;Color-Coding'
                 },
                 true, /* checked: bool */
-                true, /* buttonStyle: bool */
+                false, /* buttonStyle: bool */
                 LINE_COLOR_CODING_STORAGE_KEY,
                 (isOn)=> {
                     let action = isOn ? 'add' : 'remove';
                     this._domTool.documentElement.classList[action]('color-coded-lines');
                 }
             ],
-            '<br />',
+            '<h3>Justification Options:</h3>',
+            [   CheckboxWidget, {
+                      klass: `${klass}-justification_use_xtra`
+                    ,'extra-classes': `${klass}-justification_option`
+                    , label: 'Use XTRA'
+                },
+                true, /* checked: bool */
+                false, /* buttonStyle: bool */
+                JUSTIFICATION_OPTION_XTRA_STORAGE_KEY,
+                (isOn)=> {
+                    this._justificationController.setOption('XTRA', isOn);
+                }
+            ],
+            [   CheckboxWidget, {
+                      klass: `${klass}-justification_use_letter-spacing`
+                    , 'extra-classes': `${klass}-justification_option`
+                    , label: 'Use Letter-Spacing'
+                },
+                true, /* checked: bool */
+                false, /* buttonStyle: bool */
+                JUSTIFICATION_OPTION_LETTERSPACING_STORAGE_KEY,
+                (isOn)=> {
+                    this._justificationController.setOption('letterSpacing', isOn);
+                }
+            ],
+            [   CheckboxWidget, {
+                      klass: `${klass}-justification_use_word-spacing`
+                    , 'extra-classes': `${klass}-justification_option`
+                    , label: 'Use Word-Spacing'
+                },
+                true, /* checked: bool */
+                false, /* buttonStyle: bool */
+                JUSTIFICATION_OPTION_WORDSPACING_STORAGE_KEY,
+                (isOn)=> {
+                    this._justificationController.setOption('wordSpacing', isOn);
+                }
+            ],
+            '<br / >',
             [   SimpleButtonWidget, {
                       klass: `${klass}-reset-justification`
-                    , text: 'unjustify'
+                    , text: 'reset'
                 },
                 () => {
-                    this._justificationController.cancel();
-                    //.setChecked(this._justificationController);
+                    if(this._justificationController.running)
+                        this._justificationController.restart();
+                    else
+                        this._justificationController.cancel();
+
                     this.getWidgetById('justificationRunning')
                         .setChecked(this._justificationController.running);
                 }

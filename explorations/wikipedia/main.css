@@ -599,11 +599,12 @@ button.toggle-user_settings{
 
 .widgets_container {
     max-width: 27rem;
-    border: 1px solid lightgray;
-    background: #ffffdef0;
+    border: 1px solid black;
+    background: #fffffff4;
     padding: .5em 1em;
-    margin: 1em 0;
+    margin: 1em;
     border-radius: 0.4em;
+    box-shadow: -2px 2px 10px black;
 }
 
 .page_content-item .widgets_container{
@@ -630,8 +631,19 @@ button.toggle-user_settings{
     --font-weight: 600;
 }
 
+.widgets_container h3 {
+    font-family: AmstelVar;
+    margin: .5em 0;
+    --font-weight: 500;
+}
+
 label.user_preferences-fine_user_zoom::after {
     content: attr(data-value) 'pt';
+}
+
+.widgets_container label.portal_augmentation-justification_option{
+    display: block;
+    margin-left: 1.5em;
 }
 
 label.user_preferences-user_distance::after {
@@ -708,13 +720,10 @@ label.user_preferences-user_distance::after {
     background: #f9f8f7;
 }
 
-
-.portal_augmentation-run_justification_checkbox > input ~ span:before,
 .portal_augmentation-switch_grade_checkbox > input ~ span:before {
   content: "is off ";
 }
 
-.portal_augmentation-run_justification_checkbox > input:checked ~ span:before,
 .portal_augmentation-switch_grade_checkbox > input:checked ~ span:before {
   content: "is on ";
 }
