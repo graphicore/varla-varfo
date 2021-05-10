@@ -161,12 +161,7 @@ const PORTAL_PROPERTIES_TEMPLATE = `
                type="checkbox"
                value="true" "/><span></span></label>
     </p>
-
-    <p>
-        <button class="portal_properties-go_fullscreen">go fullscreen</button>
-    </p>
 </fieldset>
-
 <fieldset>
     <legend>Select Page</legend>
     <select class="testbed_subject-select_pages">
@@ -228,9 +223,10 @@ class PortalPropertiesWidget {
 
 
         this._uiSelectPage = this.container.querySelector('.testbed_subject-select_pages');
-        this._uiSelectPage.addEventListener('change',()=>{
-            this._portalElement.src = this._uiSelectPage.value;
-        });
+        if(this._uiSelectPage)
+            this._uiSelectPage.addEventListener('change',()=>{
+                this._portalElement.src = this._uiSelectPage.value;
+            });
 
         this._uiAllOrientation = this.container.querySelectorAll('input.portal_properties-set_orientation');
 
@@ -245,11 +241,6 @@ class PortalPropertiesWidget {
             for(let size of [this._uiWidth , this._uiHeight])
                 size.addEventListener('change', setSizes);
         }
-
-         this.container.querySelector('.portal_properties-go_fullscreen')
-            .addEventListener('click', ()=>{
-                this._portalElement.parentElement.requestFullscreen();
-            });
     }
 
     setOrientation(setToPortrait) {
@@ -291,8 +282,12 @@ function main() {
                     [
                         [PortalPropertiesWidget, document.getElementById('testbed-subject')]
                     ],
-                    true
+                    false
                     );
-    userSettingsWidget.activate();
+    let toggle = (/*evt*/)=>{
+        userSettingsWidget.toggle();
+    };
+    for(let elem of document.querySelectorAll('.toggle-user_settings'))
+        elem.addEventListener('click', toggle);
 }
 window.onload = main;

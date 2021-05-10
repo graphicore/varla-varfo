@@ -589,7 +589,7 @@ h1, h2 {
 
 /* widgets */
 
-.container-toggle-user_settings{
+.container-toggle-user_settings:not(#page_portal-testbed *){
     z-index: 999;
     /* FIXME: on Firefox the filter property on :root makes
      * "position: fixed" effectively into "position: absolute"
@@ -598,8 +598,12 @@ h1, h2 {
     left: 0;
     top: 0;
 }
-button.toggle-user_settings{
+
+
+button.toggle-user_settings:not(#page_portal-testbed *) {
     position: absolute;
+}
+button.toggle-user_settings {
     border: 1px solid lightgray;
     background: #ffffff82;
     border-radius: .25em;
@@ -673,16 +677,16 @@ label.user_preferences-user_distance::after {
     --background: darkgrey;
 }
 
-:fullscreen{
-    display: flex;
-}
-
 .page_portal-testbed body{
     background: none;
 }
 
-:fullscreen .insert_user_settings{
-    display: none;
+.testbed-subject_container {
+
+}
+
+.page_portal-testbed .widgets_container{
+    margin: 1em;
 }
 #testbed-subject {
     width: 1024px;
