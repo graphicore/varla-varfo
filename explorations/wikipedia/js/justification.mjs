@@ -1526,6 +1526,144 @@ function* _justifyGenerator(elem, skip, options) {
 }
 
 
+/**
+ * The concept here is, that a column layout with growing number of columns
+ * has big performance problems when justifying. With one column it's
+ * much fast (but not fast) than with four columns. This element is
+ * intended to make it simpler for the browser to calculate line length,
+ * line breaks and hyphenation by removing a lot of the surrounding context
+ * of the line from the equation, especially a possible column layout, but
+ * also other sibling elements, that don't have influence on the line breaking.
+ *
+ * We want to keep though the CSS-inherited type-spec and CSS-properties
+ * so we justify using the same settings as in the target document. Ideally
+ * the isolated block is also removed from the parent flow (position: absolute)
+ * and not rendering (visibility: hidden), so that we don't have the browser
+ * do things that we are not interested in.
+ *
+ * This is experimental and a theory at the moment.
+ */
+function _createIsolatedBlockContextElement(notBlockNodes) {
+    // What I don't like is the extensive, repeated copying of child
+    // block elements.
+    let block = notBlockNodes[0].parentElement
+      , cloned = block.cloneNode(false/*deep*/)
+      ;
+
+    // .justification-context-block {
+    //     position: absolute;
+    //     visibility: hidden;
+    //     column-span: all /* Take out of column layout. */
+    //     padding: 0; width: calc(0.5em * '--column-width');
+    // }
+
+    cloned.classList.add('justification-context-block');
+
+    /**
+     * MAYBE: Add some element.style to ensure we  have the same line
+     * length and not a multi column layout!
+     */
+
+    for(let node of notBlockNodes){
+        cloned.appendChild(node.cloneNode(true));
+    }
+
+    // insert at the same position, so we get the same CSS-rules to apply
+    // to the container. CAUTION: this can become problematic where we have
+    // e.g. position related CSS selectors (first-child, ~ etc.)
+    block.parentNode.insertBefore(cloned, block);
+    return cloned;
+}
+
+function _justifyInlines(notBlockNodes) {
+    // The first line we have in here should be treated as a first line.
+    //    CAUTION: seems like only the first line *of* a block should be
+    //    treated as first line, NOT the first *after* a block!.
+    // We still have e.g. <br /> elements in here, so last lines still
+    // require detection, as they can happen anywhere.
+    let firstNotBlock = notBlockNodes[0]
+      , lastNotBlock = notBlockNodes[notBlockNodes.length-1]
+      , parent = firstNotBlock.parentElement
+      , range = new Range()
+      ;
+    range.setStartBefore(firstNotBlock);
+    range.setEndAfter(lastNotBlock);
+
+    // There's time saving potential when skipping this
+    // entire function if there are no lines to justify!.
+    // But sadly, using range.getBoundingClientRect() makes it rather
+    // slower:
+    // let bcr = range.getBoundingClientRect();
+    // if(bcr.width === 0)
+    //    return;
+
+    // ... insert magic here ...
+    // I wonder if the general find lines would be a good start, but actually
+    // all lines of a block are invalid after the first iteration. Hence,
+    // find lines for the next one or two lines at each time must be enough.
+
+    let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
+
+    // hmm this is likely rather happening within _findNextLines
+    // let inlineNodes = _flatFindInlineNodes(block);
+    // let lastLine = null;
+    // for(let [firstLineRange, secondLineRange] of _findNextLines(block, blockContextElement, lastLine, inlineNodes)) {
+    //     lastLine = _justifyLine(lastLineElements, firstLineRange, secondLineRange);
+    // }
+
+    let newFragment = firstNotBlock.ownerDocument.createDocumentFragment();
+    carryOverElement.parentElement.removeChild(carryOverElement);
+    newFragment.append(...carryOverElement.childNodes);
+    parent.insertBefore(newFragment, lastNotBlock.nextSibling);
+    range.deleteContents();
+}
+
+function _justifyBlockElement(elem, skipSelector, options) {
+    let notBlocks = []
+        // This way we don't create confusion in the iterator about
+        // which nodes to visit, after we changed the element, it may
+        // also work otherwise, but this is very explicit.
+      , childNodes = [...elem.childNodes]
+      , total = 0
+      ;
+    for(let node of childNodes) {
+        if(node.nodeType === Node.ELEMENT_NODE) {
+            let skip = node.matches(skipSelector);
+            if(skip || _isBlock(node)) {
+                if(notBlocks.length) {
+                    // also change the elements in place...
+                    let t0 = performance.now();
+                    _justifyInlines(notBlocks);
+                    total += (performance.now() - t0);
+                    notBlocks = [];
+                }
+                if(!skip)
+                    // changes the node in place
+                    total += _justifyBlockElement(node, skipSelector, options);
+                continue;
+            }
+        }
+        // all the others
+        notBlocks.push(node);
+    }
+    if(notBlocks.length){
+        let t0 = performance.now();
+        _justifyInlines(notBlocks);
+        total += (performance.now() - t0);
+    }
+    return total;
+}
+
+
+function* _neoJustifyLineGenerator(elem, skip, options) {
+    let t0 = performance.now();
+    let total = _justifyBlockElement(elem, skip, options);
+    let t1 = performance.now();
+    console.log(`time in _justifyBlockElement ${(t1-t0) /1000} s`);
+    console.log(`time in _justifyInlines ${total/1000} s`);
+    yield ['did _justifyBlockElement'];
+}
+
 export class JustificationController{
     constructor(elem, skip, options) {
         this._runionActivatedClass = 'runion-activated';
@@ -1588,7 +1726,7 @@ export class JustificationController{
             if(!this._gen) {
                 this._reportStatus('init');
                 this._unjustify();
-                this._gen = _justifyGenerator(this._elem, this._skip, this._options);
+                this._gen = _neoJustifyLineGenerator(this._elem, this._skip, this._options);
             }
             else
                 this._reportStatus('continue');

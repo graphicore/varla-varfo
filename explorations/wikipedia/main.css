@@ -1460,6 +1460,15 @@ i, cite, em, var, dfn {
 }
 
 
+.runion-01.justification-context-block,
+.runion-01 .justification-context-block {
+    position: absolute;
+    visibility: hidden;
+    column-span: all;/* Take out of column layout. */
+    padding: 0;
+    width: calc(0.5em * var(--column-width-en));
+}
+
 .runion-01.runion-activated {
     white-space: nowrap;
 }
