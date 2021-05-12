@@ -4,24 +4,31 @@ import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 /***
  * Justification
  * to port https://variablefonts.typenetwork.com/topics/spacing/justification
+ *
+ *
+ *
  ***/
-function _deepText(node, [skipSelector, skipClass]) {
-    var all = [];
+function* _deepTextGen(node, [skipSelector, skipClass]) {
     if(node && skipSelector && node.nodeType === Node.ELEMENT_NODE && node.matches(skipSelector)){
         if(skipClass)
             node.classList.add(skipClass);
     }
     else if(node) {
-        node = node.firstChild;
+        // Only if node is an element, otherwise, assert it's a text
+        // node and continue with it and then it's nextSiblinds...
+        // this way we can start the generator in the middle of an element.
+        if(node.nodeType === Node.ELEMENT_NODE)
+            node = node.firstChild;
         while(node !== null) {
             if(node.nodeType === Node.TEXT_NODE)
-                all.push(node);
-            else
-                  all.push(..._deepText(node, [skipSelector, skipClass]));
+                yield node;
+            else if(node.nodeType === Node.ELEMENT_NODE) {
+                yield* _deepTextGen(node, [skipSelector, skipClass]);
+            }
+            // else: skip, is COMMENT_NODE or such
             node = node.nextSibling;
         }
     }
-    return all;
 }
 
 /**
@@ -50,6 +57,10 @@ function _deepText(node, [skipSelector, skipClass]) {
 function _isWhiteSpaceTextNode(node) { // jshint ignore:line
   // Use ECMA-262 Edition 3 String and RegExp features
   return !(/[^\t\n\r ]/.test(node.data));
+}
+function _isWhiteSpaceText(text) { // jshint ignore:line
+  // Use ECMA-262 Edition 3 String and RegExp features
+  return !(/[^\t\n\r ]/.test(text));
 }
 
 function _hasNoSizeTextNode(node) {
@@ -196,10 +207,10 @@ function _getContainingRect(lineRangeOrNode,
 
     // FIXME: This may make sense in the justifyLine context but can be optional
     // in findLines, I've never seen this trigger, but it is a possibility!
-    if(container && lineParent === container) {
-        console.log('FIXME: DON\'T KNOW (yet) what to do: lineParent === container', lineParent, container);
-        return;
-    }
+    //if(container && lineParent === container) {
+    //    console.log('FIXME: DON\'T KNOW (yet) what to do: lineParent === container', lineParent, container);
+    //    return;
+    //}
     let parentRects = lineParent.getClientRects();
     // expect all of the line to be
 
@@ -260,16 +271,33 @@ function _isOutOfFlowContext(elem) {
  *       pipeline with the following transformations, if we keep doing
  *       those from back to front.
  */
-function* findLines(elem, skip) {
-    var textNodes = _deepText(elem, skip)
+function* findLines(elem, skip=[null, null]) {
+    var textNodesGen
+      , container // = elem.nodeType === Node.ELEMENT_NODE ? elem : elem.parentElement
       , currentLine = null
       , last = null
       ;
+
+    if(Array.isArray(elem)){
+        [container, elem] = elem;
+    }
+    else
+        container = elem;
+
+    console.log('starting _deepTextGen with:', elem, elem.textContent);
+    textNodesGen = _deepTextGen(elem, skip);
+
     // NOTE: i/maxI is for development and debugging only to limit
     // the algorithm.
-    var i=0, maxI = Infinity;//3000;
-    for(let ti=0, tl=textNodes.length;ti<tl && i<maxI;ti++) {
-        let endNode = textNodes[ti];
+    let i=0
+      , maxI = Infinity;//3000;
+    while(i<maxI) {
+        let rv = textNodesGen.next();
+        if(rv.done){
+            console.log('textNodesGen is done!', rv);
+            break;
+        }
+        let endNode = rv.value;
         let endNodeIndex = 0;
 
         // Seems necessary to keep/not filter some of these e.g.
@@ -339,7 +367,7 @@ function* findLines(elem, skip) {
             // get the column, each line has only one column, so, we
             // need tp get it only once.
             if(!currentLine.columnRect)
-                [currentLine.columnRect, ] = _getContainingRect(currentLine.range, elem);
+                [currentLine.columnRect, ] = _getContainingRect(currentLine.range, container);
 
             if(rects.length <= 1) {
                 // Pass; line breaks and column breaks create new client
@@ -1550,13 +1578,16 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
       , cloned = block.cloneNode(false/*deep*/)
       ;
 
+
+    // FIXME: the width/padding is not correct for all cases,
+    // rather use actual clientRects width minus padding to determine
+    // the available space for the line in the block.
     // .justification-context-block {
     //     position: absolute;
     //     visibility: hidden;
     //     column-span: all /* Take out of column layout. */
     //     padding: 0; width: calc(0.5em * '--column-width');
     // }
-
     cloned.classList.add('justification-context-block');
 
     /**
@@ -1573,6 +1604,122 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
     // e.g. position related CSS selectors (first-child, ~ etc.)
     block.parentNode.insertBefore(cloned, block);
     return cloned;
+}
+
+/*
+ * Here we have a couple of unknowns:
+ * What is the nature of lastLine ?
+ *     I would expect it to be in the type of lineElements, i.e.
+ *     lowest level spans that wrap the textNodes of the line.
+ * This means however, we cannot do lastLine[lastElementIndex].nextSibling,
+ * instead, we must dig up the lastLine[lastElementIndex].parentElements
+ * until we find a node of which the parentElement === carryOverElement
+ * and of *that* use use its .nextSibling
+ *
+ * If lastLine is null this is the first line. We must use carryOverElement.
+ */
+function _getStartNode(carryOverElement, lastLine) {
+    if(lastLine === null)
+        return carryOverElement;
+
+    let node = lastLine[lastLine.length-1];
+    while(node.parentElement !== carryOverElement){
+        node = node.parentElement;
+        if(!node)
+            throw new Error(` lastLine ${lastLine} appears not to be a `
+                            + `descendant of ${carryOverElement}`);
+    }
+    return node.nextSibling;
+}
+
+function _justifyLine(firstLine, secondLine) {
+    let spans = [], nodes;
+
+    {
+
+        let seen = new Set();
+        nodes = [...firstLine.nodes,
+                 ...secondLine.wsNodes,
+                 ...secondLine.nodes
+        ].filter(node=>{  // remove nodes overlapping between the ranges
+            if(seen.has(node)) return false;
+            seen.add(node);
+            return true;
+        });
+    }
+
+    for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
+        let span = node.ownerDocument.createElement('span')
+          , startIndex = node === firstLine.range.startContainer
+                    ? firstLine.range.startOffset
+                    : 0
+          , endIndex = node === secondLine.range.endContainer
+                    ? secondLine.range.endOffset
+                    : node.data.length // -1???
+          , r = new Range()
+          ;
+        r.setStart(node, startIndex);
+        r.setEnd(node, endIndex);
+        r.surroundContents(span);
+        spans.unshift(span);
+    }
+
+
+    // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
+    // until something from the second line jumps onto the first line, OR,
+    // until we run of negative [--font-stretch, ...] adjustment potential.
+    let adjust = (val)=> {
+        for(let node of spans) {
+            console.log(node);
+            node.style.setProperty('--font-stretch', val);
+        }
+    }
+    console.log(adjust);
+
+    return spans;
+}
+
+/*
+ * Return a new line or null if there's no further line left.
+ * lastLine is the last returned line, after it, the search for the
+ * next line must begin.
+ */
+function _justifyNextLine(carryOverElement, lastLine=null) {
+    let lines = []
+      , firstLine = null
+      , secondLine = null
+      ;
+
+    console.log('_justifyNextLine', carryOverElement, carryOverElement.textContent);
+    console.log('lastLine', lastLine);
+
+
+    let startNode = _getStartNode(carryOverElement, lastLine);
+    console.log('startNode:', startNode, startNode && startNode.textContent);
+    if(!startNode)
+        return null;
+
+    for(let line of findLines([carryOverElement, startNode])) {
+        lines.push(line);
+        if(lines.length === 2)
+            break;
+    }
+    if(!lines.length)
+        return null;
+    else if(lines.length === 1) {
+        // FIXME: a last line can also be just before a <br /> but
+        // this we don't detect here.
+        console.log('found a terminal last line');
+        // do something with firstLine
+        firstLine = lines[0];
+        return;
+    }
+
+    [firstLine, secondLine] = lines;
+    console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
+    let line = _justifyLine(firstLine, secondLine);
+    throw new Error('killed here to analyze');
+    return line;
 }
 
 function _justifyInlines(notBlockNodes) {
@@ -1596,7 +1743,9 @@ function _justifyInlines(notBlockNodes) {
     // let bcr = range.getBoundingClientRect();
     // if(bcr.width === 0)
     //    return;
-
+    // maybe we can just check so far if the range contains only whitespace:
+    if(_isWhiteSpaceText(range.toString()))
+        return;
     // ... insert magic here ...
     // I wonder if the general find lines would be a good start, but actually
     // all lines of a block are invalid after the first iteration. Hence,
@@ -1604,12 +1753,10 @@ function _justifyInlines(notBlockNodes) {
 
     let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
 
-    // hmm this is likely rather happening within _findNextLines
-    // let inlineNodes = _flatFindInlineNodes(block);
-    // let lastLine = null;
-    // for(let [firstLineRange, secondLineRange] of _findNextLines(block, blockContextElement, lastLine, inlineNodes)) {
-    //     lastLine = _justifyLine(lastLineElements, firstLineRange, secondLineRange);
-    // }
+    let lastLine = null;
+    do {
+        lastLine = _justifyNextLine(carryOverElement, lastLine);
+    } while(lastLine);
 
     let newFragment = firstNotBlock.ownerDocument.createDocumentFragment();
     carryOverElement.parentElement.removeChild(carryOverElement);
@@ -1618,7 +1765,7 @@ function _justifyInlines(notBlockNodes) {
     range.deleteContents();
 }
 
-function _justifyBlockElement(elem, skipSelector, options) {
+function _justifyBlockElement(elem, [skipSelector, skipClass], options) {
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
@@ -1639,7 +1786,10 @@ function _justifyBlockElement(elem, skipSelector, options) {
                 }
                 if(!skip)
                     // changes the node in place
-                    total += _justifyBlockElement(node, skipSelector, options);
+                    total += _justifyBlockElement(node, [skipSelector, skipClass], options);
+                else if(skipClass)
+                    node.classList.add(skipClass);
+
                 continue;
             }
         }

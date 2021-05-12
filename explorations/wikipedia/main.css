@@ -811,12 +811,17 @@ label.portal_augmentation-amplify_grade::after {
 --font-slant: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
-/* used to be 520 but making it narrow to work out justification */
+/* FIXME: get default --font-stretch (XTRA) value by font-size
+ *
+ * used to be 520 but making it narrow to work out justification */
 /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
  * was 440 and I thought it was tight.
  *  */
---font-stretch: 375;/* by (xtra, wdth) */
-/* so far only experimental used in OLD_justifyLine*/
+--font-stretch: 440;/* by (xtra, wdth) */
+/* so far only experimental used in OLD_justifyLine
+ *
+ * TODO: REMOVE!
+ */
 --font-stretch-change: 0;
 
 --font-width: 100; /* this goes into wdth */
@@ -1463,10 +1468,18 @@ i, cite, em, var, dfn {
 .runion-01.justification-context-block,
 .runion-01 .justification-context-block {
     position: absolute;
+    /* with top and left set, there's no need to determine the default */
+    top: 0;
+    left: 0;
     visibility: hidden;
     column-span: all;/* Take out of column layout. */
     padding: 0;
     width: calc(0.5em * var(--column-width-en));
+
+
+    visibility: visible;
+    background: lime;
+
 }
 
 .runion-01.runion-activated {
