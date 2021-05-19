@@ -1482,6 +1482,12 @@ i, cite, em, var, dfn {
 
 }
 
+.runion-01  .new-style-line-last-elem:after{
+    content: "-";
+    display: block;
+    color: red;
+}
+
 .runion-01.runion-activated {
     white-space: nowrap;
 }

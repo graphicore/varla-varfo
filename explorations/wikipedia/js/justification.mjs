@@ -9,6 +9,14 @@ import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
  *
  ***/
 function* _deepTextGen(node, [skipSelector, skipClass]) {
+    // console.log('_deepTextGen:', node);
+    let continueWithNextSiblings = false;
+    if(Array.isArray(node)){
+        [node, continueWithNextSiblings] = node;
+    }
+
+    // console.log('_deepTextGen:', node, nextElementSiblings, '==>', node.nextSibling);
+
     if(node && skipSelector && node.nodeType === Node.ELEMENT_NODE && node.matches(skipSelector)){
         if(skipClass)
             node.classList.add(skipClass);
@@ -17,7 +25,7 @@ function* _deepTextGen(node, [skipSelector, skipClass]) {
         // Only if node is an element, otherwise, assert it's a text
         // node and continue with it and then it's nextSiblinds...
         // this way we can start the generator in the middle of an element.
-        if(node.nodeType === Node.ELEMENT_NODE)
+        if(node.nodeType === Node.ELEMENT_NODE && !continueWithNextSiblings)
             node = node.firstChild;
         while(node !== null) {
             if(node.nodeType === Node.TEXT_NODE)
@@ -274,30 +282,43 @@ function _isOutOfFlowContext(elem) {
 function* findLines(elem, skip=[null, null]) {
     var textNodesGen
       , container // = elem.nodeType === Node.ELEMENT_NODE ? elem : elem.parentElement
+      , skipUntilAfter = null
       , currentLine = null
       , last = null
       ;
 
     if(Array.isArray(elem)){
-        [container, elem] = elem;
+        [container, elem, skipUntilAfter] = elem;
     }
     else
         container = elem;
 
-    console.log('starting _deepTextGen with:', elem, elem.textContent);
+    // console.log('findLines starting _deepTextGen with:', elem, elem.textContent);
     textNodesGen = _deepTextGen(elem, skip);
 
     // NOTE: i/maxI is for development and debugging only to limit
     // the algorithm.
     let i=0
-      , maxI = Infinity;//3000;
-    while(i<maxI) {
+      , maxI = Infinity;//3000; --> this can be controlled by the caller
+    while(true) {
         let rv = textNodesGen.next();
         if(rv.done){
             console.log('textNodesGen is done!', rv);
             break;
         }
         let endNode = rv.value;
+        if(skipUntilAfter) {
+            //console.log('SKIPPING:', endNode.textContent);
+            if(skipUntilAfter === endNode){
+                // console.log('That was the last skip');
+                // the node after this node wont be skipped anymore
+                skipUntilAfter = null;
+            }
+            // continue anyways
+
+            continue;
+        }
+
         let endNodeIndex = 0;
 
         // Seems necessary to keep/not filter some of these e.g.
@@ -325,6 +346,8 @@ function* findLines(elem, skip=[null, null]) {
         if(!currentLine) {
             currentLine = new Line();
         }
+
+        // console.log('findLines, endNode:', endNode, endNode.data);
         while(i<maxI) {
             // TODO: This whole block is expensive, we should reduce the
             // repetitions needed using a binary search or something. There
@@ -346,7 +369,7 @@ function* findLines(elem, skip=[null, null]) {
                 break;
             i++;
             currentLine.setIndex(endNode, endNodeIndex);
-            if(currentLine.collectWhitespace === true){
+            if(currentLine.collectWhitespace === true) {
                 endNodeIndex += 1;
                 continue;
             }
@@ -1618,25 +1641,149 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
  *
  * If lastLine is null this is the first line. We must use carryOverElement.
  */
-function _getStartNode(carryOverElement, lastLine) {
-    if(lastLine === null)
-        return carryOverElement;
 
-    let node = lastLine[lastLine.length-1];
+function _getDirectChild(carryOverElement, node) {
     while(node.parentElement !== carryOverElement){
         node = node.parentElement;
         if(!node)
-            throw new Error(` lastLine ${lastLine} appears not to be a `
+            throw new Error(`Node ${node} appears not to be a `
                             + `descendant of ${carryOverElement}`);
+    }
+    return node;
+}
+
+
+function _getNext(carryOverElement, node) {
+    if(node.nextSibling)
+        return node.nextSibling;
+    while(node.parentElement !== carryOverElement) {
+        node = node.parentElement;
+        if(!node)
+            throw new Error(`Node ${node} appears not to be a `
+                            + `descendant of ${carryOverElement}`);
+        if(node.nextSibling)
+            break;
     }
     return node.nextSibling;
 }
 
-function _justifyLine(firstLine, secondLine) {
-    let spans = [], nodes;
+function _getStartNode(carryOverElement, lastLine) {
+    if(lastLine === null)
+        return carryOverElement;
+
+    return _getNext(carryOverElement, lastLine[lastLine.length-1]);
+}
+
+// _function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextContent) {
+//     let {range, nodes} = line
+//       , prepared = []
+//       , lineElements = []
+//       ;
+//     let randBG = `hsl(${Math.round((Math.random() * 70)) + 90}, `  // 90 to 160
+//                    + `${Math.round((Math.random() * 30)) + 60}%, ` // 55 to 90
+//                    + `${Math.round((Math.random() * 20)) + 70}%)`; // 70 to 90
+//
+//     for(let node of nodes) {
+//         let startIndex = node === range.startContainer
+//                     ? range.startOffset
+//                     : 0
+//           , endIndex = node === range.endContainer
+//                     ? range.endOffset
+//                     : node.data.length // -1???
+//           ;
+//         prepared.push([node, startIndex, endIndex]);
+//     }
+//
+//     // FIXME: add all punctuation and "white-space" etc. that breaks lines.
+//     // not too sure about ] and ) but I've seen a line-break after a ] in
+//     // a foot note link (inside a <sup>.
+//     // All elements on a page that end up with the class `r00-l-hyphen`
+//     // should be inspected to see what belongs in here, at least for our
+//     // example, this could be feasible. This heuristic is probably not
+//     // ideal in the long run, yet simple.
+//     let lineBreakers = new Set([' ', '-', '–', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
+//     let addHyphen = false;
+//     {
+//         let [node, , endIndex] = prepared[prepared.length-1];
+//         // FIXME: there are other heuristics/reasons to not add a hyphen!
+//         //        but the error is not always in here.
+//         // If the last character is not a line breaking character,
+//         // e.g. in Firefox after sectioning headlines, I get hyphens.
+//         if(        !nextLinePrecedingWhiteSpace.length
+//                 && nextLineTextContent.length
+//                 && !lineBreakers.has(nextLineTextContent[0])
+//                 && !lineBreakers.has(node.data[endIndex-1])) {
+//             addHyphen = true;
+//         }
+//     }
+//     // TODO: Although they seem to cause no trouble (yet), all
+//     // white space only first line (.r00-l-first nodes) seem
+//     // unnecessary as well:
+//     // for(let node of document.querySelectorAll('.r00-l-first')) {
+//     //       // NOTE: don't use \s
+//     //       if(/^\s+$/g.test(node.textContent)) console.log(node);
+//     // }
+//
+//     // Do it from end to start, so all offsets stay valid.
+//     let last = prepared.length-1;
+//     for(let i=last;i>=0;i--) {
+//         let [node, startIndex, endIndex] = prepared[i];
+//         // we have at least one char of something
+//         let span = node.ownerDocument.createElement('span');
+//         lineElements.unshift(span); // backwards iteration so no push...
+//         span.classList.add('runion-line');
+//         span.classList.add(`r00-l${index}`);
+//         if(i === 0)
+//             span.classList.add('r00-l-first');
+//         if(i === last) {
+//             span.classList.add('r00-l-last');
+//             if(addHyphen)
+//                 span.classList.add('r00-l-hyphen');
+//         }
+//         span.style.setProperty('--line-color-code', randBG);
+//
+//         // try letting range wrap here ...
+//         // works awesomely great so far.
+//         let r = new Range();
+//         r.setStart(node, startIndex);
+//         r.setEnd(node, endIndex);
+//         r.surroundContents(span);
+//     }
+//     return lineElements;
+// }
+
+function _packLine(addClasses, tagName, nodes, startRange, endRange) {
+    let elements = [];
+    for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
+        if(node.data.length === 0)
+            continue;
+        let element = node.ownerDocument.createElement(tagName)
+          , startIndex = node === startRange.startContainer
+                    ? startRange.startOffset
+                    : 0
+          , endIndex = node === endRange.endContainer
+                    ? endRange.endOffset
+                    : node.data.length // -1???
+          , r = new Range()
+          ;
+        r.setStart(node, startIndex);
+        r.setEnd(node, endIndex);
+        r.surroundContents(element);
+        elements.unshift(element);
+    }
+    if(addClasses) {
+        elements[0].classList.add('new-style-line-first-elem');
+        elements[elements.length-1].classList.add('new-style-line-last-elem');
+    }
+    return elements;
+}
+
+function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine) {
+    let spans = [], nodes
+      , firstLineTextContent = firstLine.range.toString()
+      ;
 
     {
-
         let seen = new Set();
         nodes = [...firstLine.nodes,
                  ...secondLine.wsNodes,
@@ -1648,35 +1795,115 @@ function _justifyLine(firstLine, secondLine) {
         });
     }
 
-    for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
-        let span = node.ownerDocument.createElement('span')
-          , startIndex = node === firstLine.range.startContainer
-                    ? firstLine.range.startOffset
-                    : 0
-          , endIndex = node === secondLine.range.endContainer
-                    ? secondLine.range.endOffset
-                    : node.data.length // -1???
-          , r = new Range()
-          ;
-        r.setStart(node, startIndex);
-        r.setEnd(node, endIndex);
-        r.surroundContents(span);
-        spans.unshift(span);
-    }
-
+    spans = _packLine(false, 'span', nodes, firstLine.range, secondLine.range);
 
     // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
     // until we run of negative [--font-stretch, ...] adjustment potential.
-    let adjust = (val)=> {
-        for(let node of spans) {
-            console.log(node);
-            node.style.setProperty('--font-stretch', val);
+    let adjust = (nodes, val)=> {
+        for(let node of nodes) {
+            if(val)
+                node.style.setProperty('--font-stretch', val);
+            else
+                node.style.removeProperty('--font-stretch');
+        }
+    };
+
+    // We know where the initial break happened, at least, we can get the
+    // full contents of the initial line (from firstLine.range.toString());
+    //
+    // On the other hand, we can get from the current structure the first
+    // line (assert it has the same content as firstLine.range.toString())
+    // when endContainer changes or endOffset increases, we reached the
+    // desired effect.
+    //
+    // For this, to be efficient, it would be ideal if we could just use
+    // the range that we already found and see if we can extend it.
+    //
+    //
+    // after each adjustment, we should see if we can move the cursor on
+    // the first line further.
+
+    // console.log('spans[0]', spans[0].textContent, spans);
+
+    // find the current first line:
+    // assert it has the same content as the initial firstLine
+    let startNodeElement = _getDirectChild(carryOverElement, spans[0])
+      // , startNode = [startNodeElement, true] // special instructions for deepTextNodes
+      , getStartLineContent=()=> {
+
+            let startLineResult = findLines(...findLinesArguments).next();
+            if(startLineResult.done)
+                // We just put that line there, it must be there!
+                throw new Error('Assertion failed, finding a line is mandatory.');
+            return [startLineResult.value.range.toString(), startLineResult.value];
+        }
+      , [startLineContent, ] = getStartLineContent()
+      ;
+    // console.log('startNodeElement', startNodeElement);
+    if(firstLineTextContent !== startLineContent)
+        throw new Error(`Assertion failed, firstLineTextContent must equal `
+            + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
+            + `vesus "${startLineContent}".\nstartNodeElement was ${startNodeElement.tagName} ${startNodeElement.textContent}`);
+
+    let adjustmentPotential = -200
+      , adjustment = 0
+      , adjustmentStepSize = -1
+      , rawValue = 440
+      , resultLine = null
+      , currentLine = null
+      ;
+    while(true) {
+        adjustment += adjustmentStepSize;
+        // if there's potential for adjustment
+        if(Math.abs(adjustmentPotential) < Math.abs(adjustment)) {
+            //console.log(`${adjustment} no more potential (${adjustmentPotential}):\n  `,
+            //    startLineContent
+            //);
+            // don't adjust this with negative width ->
+            //          undo all adjustments and go to positive width
+            adjust(spans, null);
+            resultLine = currentLine;
+            adjustment = null;
+            break;
+        }
+        adjust(spans, rawValue + adjustment);
+        let currentLineContent;
+        [currentLineContent, currentLine] = getStartLineContent();
+        if(startLineContent !== currentLineContent) {
+            if(startLineContent.length >= currentLineContent.length) {
+                // Turns out that this happens sometimes depending on how
+                // the browser decides to break the line, in this case, now
+                // try to return as if the adjustmentPotential is depleted.
+                adjust(spans, null);
+                resultLine = currentLine;
+                adjustment = null;
+                break;
+                // throw new Error('Assertion failed, line changed but got shorter! '
+                //                 + 'Something is fatally wrong.\n'
+                //                 + `initial line: ${startLineContent}`
+                //                 + `current line: ${currentLineContent}`);
+            }
+            //console.log(`>>>>line changed ${adjustment} from:\n  `, startLineContent
+            //          , 'to:\n  ', currentLineContent, currentLine);
+            resultLine = currentLine;
+            break; // could be tried to fine-tune with positive width again
         }
     }
-    console.log(adjust);
+    // now repack the first line and undo the rest of the second line ...
+    let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range);
+    adjust(newSpans, adjustment === null ? null : rawValue + adjustment);
+    // remove adjustment spans
+    for(let elem of spans) {
+        elem.replaceWith(...elem.childNodes);
+    }
+    // TODO: would be interesting to plot how often each value appears
+    // maybe, in the sweetspot range, if there is any, small changed could
+    // have big effects. But it would differ between line length and
+    // font-size/font-spec, so one value wouldn't do.
+    // console.log(`narrowing ${adjustment}`);
 
-    return spans;
+    return newSpans;
 }
 
 /*
@@ -1690,16 +1917,31 @@ function _justifyNextLine(carryOverElement, lastLine=null) {
       , secondLine = null
       ;
 
-    console.log('_justifyNextLine', carryOverElement, carryOverElement.textContent);
-    console.log('lastLine', lastLine);
+    // console.log('_justifyNextLine', carryOverElement, carryOverElement.textContent);
+    // console.log('lastLine', lastLine);
 
-
-    let startNode = _getStartNode(carryOverElement, lastLine);
-    console.log('startNode:', startNode, startNode && startNode.textContent);
+    // This node, we want to be the first node to be *considered*
+    // in the next line, the generator starts however in a parent element
+    //
+    let startNode = null
+      , skipUntilAfter = null
+      ;
+    if(lastLine === null)
+        startNode = carryOverElement;
+    else {
+        skipUntilAfter = lastLine[lastLine.length-1].firstChild;
+        startNode = _getDirectChild(carryOverElement, skipUntilAfter);
+    }
     if(!startNode)
         return null;
 
-    for(let line of findLines([carryOverElement, startNode])) {
+    //console.log('startNode:', startNode, startNode && startNode.textContent,
+    //            '\nskipUntilAfter:', skipUntilAfter && skipUntilAfter.textContent);
+
+    let continueWithNextSiblings = startNode !== carryOverElement
+      , findLinesArguments = [[carryOverElement, [startNode, continueWithNextSiblings], skipUntilAfter]]
+      ;
+    for(let line of findLines(...findLinesArguments)) {
         lines.push(line);
         if(lines.length === 2)
             break;
@@ -1712,17 +1954,26 @@ function _justifyNextLine(carryOverElement, lastLine=null) {
         console.log('found a terminal last line');
         // do something with firstLine
         firstLine = lines[0];
-        return;
+        return _packLine(true, 'span', firstLine.nodes, firstLine.range, firstLine.range);
     }
 
     [firstLine, secondLine] = lines;
-    console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
-    let line = _justifyLine(firstLine, secondLine);
-    throw new Error('killed here to analyze');
+    // console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
+    let line = _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine);
+    // throw new Error('killed here to analyze');
+
+    // Required to help chrome to do hyphenation! Chrome doesn't hyphenate
+    // on node boundaries.
+    // FIXME: with secondLine we tend to split nodes that span over to
+    // the next line, and that breaks the hyphenation for those lines
+    // we could just include the complete node of the second line, should
+    // not hurt.
+    carryOverElement.normalize();
     return line;
 }
 
 function _justifyInlines(notBlockNodes) {
+    // console.log('_justifyInlines', notBlockNodes);
     // The first line we have in here should be treated as a first line.
     //    CAUTION: seems like only the first line *of* a block should be
     //    treated as first line, NOT the first *after* a block!.
@@ -1754,26 +2005,37 @@ function _justifyInlines(notBlockNodes) {
     let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
 
     let lastLine = null;
+    let i = 0;
     do {
         lastLine = _justifyNextLine(carryOverElement, lastLine);
+        i++;
+        if(i > Infinity)
+            throw new Error('HALT FOR DEV!!! ' + i + ' (_justifyInlines)');
     } while(lastLine);
 
+
     let newFragment = firstNotBlock.ownerDocument.createDocumentFragment();
-    carryOverElement.parentElement.removeChild(carryOverElement);
+    carryOverElement.remove();
     newFragment.append(...carryOverElement.childNodes);
     parent.insertBefore(newFragment, lastNotBlock.nextSibling);
     range.deleteContents();
 }
 
-function _justifyBlockElement(elem, [skipSelector, skipClass], options) {
+function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
+    // console.log('_justifyBlockElement', elem);
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
         // also work otherwise, but this is very explicit.
       , childNodes = [...elem.childNodes]
       , total = 0
+      , i = 0, maxI = Infinity//120
       ;
     for(let node of childNodes) {
+        if(i >= maxI)
+            throw new Error('HALT FOR DEV! ' + i );
+        i++;
+
         if(node.nodeType === Node.ELEMENT_NODE) {
             let skip = node.matches(skipSelector);
             if(skip || _isBlock(node)) {
@@ -1783,10 +2045,13 @@ function _justifyBlockElement(elem, [skipSelector, skipClass], options) {
                     _justifyInlines(notBlocks);
                     total += (performance.now() - t0);
                     notBlocks = [];
+                    yield ['DONE _justifyInlines'];
                 }
-                if(!skip)
+                if(!skip){
                     // changes the node in place
-                    total += _justifyBlockElement(node, [skipSelector, skipClass], options);
+                    total += yield* _justifyBlockElement(node, [skipSelector, skipClass], options);
+
+                }
                 else if(skipClass)
                     node.classList.add(skipClass);
 
@@ -1801,13 +2066,14 @@ function _justifyBlockElement(elem, [skipSelector, skipClass], options) {
         _justifyInlines(notBlocks);
         total += (performance.now() - t0);
     }
+    yield ['DONE _justifyBlockElement'];
     return total;
 }
 
 
 function* _neoJustifyLineGenerator(elem, skip, options) {
     let t0 = performance.now();
-    let total = _justifyBlockElement(elem, skip, options);
+    let total = yield* _justifyBlockElement(elem, skip, options);
     let t1 = performance.now();
     console.log(`time in _justifyBlockElement ${(t1-t0) /1000} s`);
     console.log(`time in _justifyInlines ${total/1000} s`);
