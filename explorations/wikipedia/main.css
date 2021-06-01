@@ -817,7 +817,7 @@ label.portal_augmentation-amplify_grade::after {
 /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
  * was 440 and I thought it was tight.
  *  */
---font-stretch: 440;/* by (xtra, wdth) */
+--font-stretch: 562;/* by (xtra, wdth) */
 /* so far only experimental used in OLD_justifyLine
  *
  * TODO: REMOVE!
@@ -867,7 +867,7 @@ font-style: var(--font-style);
 font-size: calc(1pt * var(--x-font-size));
 letter-spacing: calc(1pt * var(--letter-space));
 line-height: var(--x-line-height);
-word-spacing: calc(1em * var(--word-space));
+/* word-spacing: calc(1em * var(--word-space)); */
 /* This case is better set on each element, seems to be calculated in the
  * wrong place otherwise. I.e. not using the --font-size from sub{--font-size: 8;}
  * but from :root{--font-size: 12;}
@@ -1488,6 +1488,28 @@ i, cite, em, var, dfn {
     color: red;
 }
 
+.runion-01  .new-style-line {
+    transition: background 3s;
+}
+
+.runion-01 {
+    /*
+     * This would be  a non-issue if percentages in the CSS
+     * word-spacing property were supported! (They are only in Firefox.)
+     */
+    --word-space-size: (undefined); /* a length unit */
+    /* This describes only the change, 0 being no change 1 doubles ws. */
+    --word-space: 0; /* multiplier with --word-space-size */
+}
+.runion-01  *,
+.justification-context-block * {
+    /* word-spacing, when using a <length>:
+     *          Specifies extra spacing in addition to the intrinsic
+     *          inter-word spacing defined by the font.
+     */
+    word-spacing: calc(var(--word-space-size) * var(--word-space));
+}
+
 .runion-01.runion-activated {
     white-space: nowrap;
 }
@@ -1533,6 +1555,8 @@ i, cite, em, var, dfn {
     transition: background 3s;
 }
 
+
+.color-coded-lines  .new-style-line,
 .color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
      * tend to clip descenders.
@@ -1540,9 +1564,9 @@ i, cite, em, var, dfn {
      * especially Chromium has little rendering errors in column layout
      * here.
      */
-    mix-blend-mode: darken;
     background: var(--line-color-code, bisque);
     transition: background .5s;
+    mix-blend-mode: darken;
 }
 
 

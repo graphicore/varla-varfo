@@ -1772,6 +1772,8 @@ function _packLine(addClasses, tagName, nodes, startRange, endRange) {
         elements.unshift(element);
     }
     if(addClasses) {
+        for(let elem of elements)
+            elem.classList.add('new-style-line');
         elements[0].classList.add('new-style-line-first-elem');
         elements[elements.length-1].classList.add('new-style-line-last-elem');
     }
@@ -1800,12 +1802,14 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
     // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
     // until we run of negative [--font-stretch, ...] adjustment potential.
-    let adjust = (nodes, val)=> {
+    let adjust = (nodes, adjustmentProperties, colorIntensity) => {
         for(let node of nodes) {
-            if(val)
-                node.style.setProperty('--font-stretch', val);
-            else
-                node.style.removeProperty('--font-stretch');
+            if(colorIntensity !== undefined) {
+                let hslColor = `hsl(180, 80%, ${30 + 70 * (1 - colorIntensity)}%)`;
+                node.style.setProperty('--line-color-code', hslColor);
+            }
+            for(let [propName, propVal] of Object.entries(adjustmentProperties))
+                    node.style.setProperty(propName, propVal);
         }
     };
 
@@ -1846,28 +1850,142 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
             + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
             + `vesus "${startLineContent}".\nstartNodeElement was ${startNodeElement.tagName} ${startNodeElement.textContent}`);
 
-    let adjustmentPotential = -200
-      , adjustment = 0
-      , adjustmentStepSize = -1
-      , rawValue = 440
+
+    // FIXME: this is Amstelvar opsz 14 PT, 400 weight, 100 width:
+    //          (min, default, max)
+    //      XTRA: 515, 562, 580 || increment :1 range: 75
+    //      Track: -.4, 0, .2 || increment: ? range: .6
+    //      word-space: 8/14, 14/14, 18/14 || increment: ? range: 10/14
+    //
+    // opsz 8, 400 weight, 100 width:
+    //      XTRA: 545, 562, 580 || increment: 1 range 35
+    //      Track: -.1, 0, .25 || increment: ? range .35
+    //      word-space: 6/8, 8/8, 12/8 || increment: ? range: 4/8
+    // NOTE: word-space is essentially in EM
+    //
+
+
+
+    // It doesn't adjust tracking/wordspace either yet!.
+        // FIXME: do this in the caller:
+    let elemStyle = carryOverElement.ownerDocument.defaultView.getComputedStyle(carryOverElement)
+      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
+      , fontSizePt = fontSizePx * 0.75
       , resultLine = null
       , currentLine = null
+      , fontSpecConfig = {
+            14: {XTRA: [515, 562, 580], tracking:[-0.4, 0, 0.2], wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+          , 8:  {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25],wordspace: [6/8 - 1, 1 - 1 /*8/8*/,   12/8 - 1]}
+        }
+      ;
+
+    let getTime = (val, upper, lower) => {
+          let normalValue = val - lower
+            , normalUpper = upper - lower
+            ;
+           return  normalValue/normalUpper;
+         }
+      , interpolateValue = (t, upperValue, lowerValue) => {
+            return (upperValue - lowerValue) * t + lowerValue;
+        }
+      , interpolateArray = (t, upperValues, lowerValues) => {
+            let result = [];
+            for(let i=0, l = Math.min(upperValues.length, lowerValues.length);
+                                                                    i<l; i++) {
+                result.push(interpolateValue(t, upperValues[i], lowerValues[i]));
+            }
+            return result;
+        }
+      ;
+    // => interpolate fontSpecConfig
+    let spec = {}
+      , upperFontSize = 14
+      , lowerFontSize = 8
+      , t = getTime(fontSizePt, upperFontSize, lowerFontSize)
+      ;
+    // console.log(fontSpecConfig[upperFontSize]);
+    for(let k of Object.keys(fontSpecConfig[upperFontSize]))
+        spec[k] = interpolateArray(t, fontSpecConfig[upperFontSize][k], fontSpecConfig[lowerFontSize][k]);
+    console.log(fontSizePt, 'spec:', spec);
+    // Then, in each iteration below adjust one of the above, in order
+    // e.g. 0:XTRA, 1:tracking, 2:wordspace, 3:XTRA, ...
+    // use the same amount of steps for each, so that all are exhausted at
+    // the same time (we may change this, but it'll be very evenly distributed).
+    //
+    // FIXME: there are many options to do this differently, and some
+    // may even be better for performance, i.e. because of less iterations,
+    // and still produce similar results.
+    function* genNarrowAdjustments(order, spec) {
+        let steps = Math.floor(spec.XTRA[1]-spec.XTRA[0]);
+        for(let step=1; step <= steps; step++) {
+            for(let [i, [k, propertyName]] of order.entries()) {
+                let [target, base /* max*/ ] = spec[k]
+                  , range = target - base
+                  , stepSize = range/steps
+                  , val = base + (stepSize * step)
+                    // lolwut
+                  , progress = (step - (1 - ((i + 1) *  (1 / order.length)))) / steps
+                  ;
+                yield [propertyName, val, progress];
+            }
+        }
+    }
+    // Guessing that XTRA is the most expensive adjustment, it's probably
+    // quicker to put wordspace and tracking first. Used to be:
+    //              [['XTRA', '--font-stretch'], ['tracking', '--letter-space'], ['wordspace',  '--word-space']]
+
+
+    let adjustmens = genNarrowAdjustments([
+                                    ['wordspace',  '--word-space'],
+                                    ['tracking', '--letter-space'],
+                                    ['XTRA', '--font-stretch']
+                                ], spec);
+    //    setLetterSpacingEm = (letterSpacingEm)=>{
+    //        // NOTE: it is defined in pt:
+    //        //      letter-spacing: calc(1pt * var(--letter-space));
+    //        let letterSpacingPt = letterSpacingEm * fontSizePx * 0.75;
+    //        setPropertyToLine('--letter-space', letterSpacingPt);
+    //        // this was just for reporting
+    //        // line.setAttribute('data-letterspace', Math.round(fitLS * 1000));
+    //                    //console.log(line.textContent.trim().split(' ')[0], control);
+    //    }
+    //
+    //  , setWordSpacingPx = (wordSpacingPx)=> {
+    //        // NOTE: it is defined in em:
+    //        //      word-spacing: calc(1em * var(--word-space));
+    //        let wordSpacingEm = wordSpacingPx / fontSizePx;
+    //        setPropertyToLine('--word-space', wordSpacingEm);
+    //        // this was just for reporting
+    //        // line.setAttribute('data-wordspace', Math.round(parseFloat(line.style.wordSpacing) * 1000));
+    //    }
+
+    let adjustmentProperties = {}
+      , PROGRESS = Symbol('progress')
       ;
     while(true) {
-        adjustment += adjustmentStepSize;
-        // if there's potential for adjustment
-        if(Math.abs(adjustmentPotential) < Math.abs(adjustment)) {
-            //console.log(`${adjustment} no more potential (${adjustmentPotential}):\n  `,
-            //    startLineContent
-            //);
+        let adjustmentVal = adjustmens.next();
+        if(adjustmentVal.done) {
+            console.log('no more potential:' ,
+                        ...Object.entries(adjustmentProperties).map(v=>v.join('::'))
+                        , '\n', `${100 * adjustmentProperties[PROGRESS]} %`
+                        , '\n', startLineContent);
             // don't adjust this with negative width ->
             //          undo all adjustments and go to positive width
-            adjust(spans, null);
             resultLine = currentLine;
-            adjustment = null;
+            adjustmentProperties = null;
+        //    throw  'Bye';
             break;
         }
-        adjust(spans, rawValue + adjustment);
+        // if there's potential for adjustment
+
+        let [propName, propValue, progress] = adjustmentVal.value;
+        adjustmentProperties[propName] = propValue;
+        adjustmentProperties[PROGRESS] = progress;
+        console.log('applying potential:' ,
+                        ...Object.entries(adjustmentProperties).map(v=>v.join('::'))
+                        , '\n', `${100 * adjustmentProperties[PROGRESS]} %`
+                        , '\n', startLineContent);
+        adjust(spans, adjustmentProperties);
         let currentLineContent;
         [currentLineContent, currentLine] = getStartLineContent();
         if(startLineContent !== currentLineContent) {
@@ -1875,10 +1993,12 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
                 // Turns out that this happens sometimes depending on how
                 // the browser decides to break the line, in this case, now
                 // try to return as if the adjustmentPotential is depleted.
-                adjust(spans, null);
-                resultLine = currentLine;
-                adjustment = null;
-                break;
+                //adjust(spans, null);
+                //resultLine = currentLine;
+                //adjustment = null;
+                // break;
+                // try to continue and see if it will improve again at some point.
+                continue;
                 // throw new Error('Assertion failed, line changed but got shorter! '
                 //                 + 'Something is fatally wrong.\n'
                 //                 + `initial line: ${startLineContent}`
@@ -1886,13 +2006,15 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
             }
             //console.log(`>>>>line changed ${adjustment} from:\n  `, startLineContent
             //          , 'to:\n  ', currentLineContent, currentLine);
+            // FOUND IT!
             resultLine = currentLine;
             break; // could be tried to fine-tune with positive width again
         }
     }
     // now repack the first line and undo the rest of the second line ...
     let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range);
-    adjust(newSpans, adjustment === null ? null : rawValue + adjustment);
+    if(adjustmentProperties !== null)
+        adjust(newSpans, adjustmentProperties, adjustmentProperties[PROGRESS]);
     // remove adjustment spans
     for(let elem of spans) {
         elem.replaceWith(...elem.childNodes);
@@ -2071,7 +2193,32 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
 }
 
 
-function* _neoJustifyLineGenerator(elem, skip, options) {
+function _getWordSpaceForElement(elem) {
+    // assert CSS word-spacing === normal
+    let text = elem.ownerDocument.createTextNode('] [')
+     , range = new Range()
+     , wordSpacingPx
+     ;
+    elem.appendChild(text);
+    range.setStart(text, 1);
+    range.setEnd(text, 2);
+    wordSpacingPx = range.getBoundingClientRect().width;
+    text.remove();
+    return wordSpacingPx;
+}
+
+function* _justifyNextGenGenerator(elem, skip, options) {
+    // Just like the original _justifyGenerator, this needs to perform
+    // some general environment massages.
+
+    // ... assert elem has class 'runion-01'...
+
+    // FIXME: --word-space-size should be reset on unjustify for completeness
+    let wsPx = _getWordSpaceForElement(elem);
+    elem.style.setProperty('--word-space-size', `${wsPx}px`);
+    console.log('--word-space-size', `${wsPx}px`);
+
+
     let t0 = performance.now();
     let total = yield* _justifyBlockElement(elem, skip, options);
     let t1 = performance.now();
