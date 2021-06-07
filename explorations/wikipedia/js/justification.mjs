@@ -2380,8 +2380,8 @@ export class JustificationController{
             if(!this._gen) {
                 this._reportStatus('init');
                 this._unjustify();
-                // _neoJustifyLineGenerator/_justifyGenerator
-                this._gen = _justifyGenerator(this._elem, this._skip, this._options);
+                // _justifyNextGenGenerator/_justifyGenerator
+                this._gen = _justifyNextGenGenerator(this._elem, this._skip, this._options);
             }
             else
                 this._reportStatus('continue');
