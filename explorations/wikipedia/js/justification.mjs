@@ -2083,65 +2083,102 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
  * lastLine is the last returned line, after it, the search for the
  * next line must begin.
  */
-function _justifyNextLine(carryOverElement, lastLine=null) {
-    let lines = []
-      , firstLine = null
-      , secondLine = null
-      ;
+function* _justifyLines(carryOverElement) {
+    let lastLine = null;
+    while(true) {
+        let lines = []
+          , firstLine = null
+          , secondLine = null
+          ;
 
-    // console.log('_justifyNextLine', carryOverElement, carryOverElement.textContent);
-    // console.log('lastLine', lastLine);
+        // console.log('_justifyNextLine', carryOverElement, carryOverElement.textContent);
+        // console.log('lastLine', lastLine);
 
-    // This node, we want to be the first node to be *considered*
-    // in the next line, the generator starts however in a parent element
-    //
-    let startNode = null
-      , skipUntilAfter = null
-      ;
-    if(lastLine === null)
-        startNode = carryOverElement;
-    else {
-        skipUntilAfter = lastLine[lastLine.length-1].firstChild;
-        startNode = _getDirectChild(carryOverElement, skipUntilAfter);
+        // This node, we want to be the first node to be *considered*
+        // in the next line, the generator starts however in a parent element
+        //
+        let startNode = null
+          , skipUntilAfter = null
+          ;
+        if(lastLine === null)
+            startNode = carryOverElement;
+        else {
+            skipUntilAfter = lastLine[lastLine.length-1].firstChild;
+            startNode = _getDirectChild(carryOverElement, skipUntilAfter);
+        }
+        if(!startNode) {
+            if(lastLine)
+                yield lastLine; // we don't use these anyways!
+            return null;
+        }
+
+        //console.log('startNode:', startNode, startNode && startNode.textContent,
+        //            '\nskipUntilAfter:', skipUntilAfter && skipUntilAfter.textContent);
+
+        let continueWithNextSiblings = startNode !== carryOverElement
+          , findLinesArguments = [[carryOverElement, [startNode, continueWithNextSiblings], skipUntilAfter]]
+          ;
+        // here we hit the "missing textNode paradox" it's there but not there...
+        for(let line of findLines(...findLinesArguments)) {
+            lines.push(line);
+            if(lines.length === 2)
+                break;
+        }
+
+        // Maybe here, logical position, we could already find the next line and
+        // by doing so, identify the whitespace between line and next line,
+        // which is important to add a possible hyphen and also to maybe widen
+        // the line, if it was not narrowed.
+        // use: firstLine.wsTextContent, it's the same that gets passed to markupLine()
+        // If there is no next line, there's no hyphen as well.
+        if(lastLine) {
+            let lastLineLastElem = lastLine[lastLine.length - 1];
+            if(lines.length) {
+                let nextLinePrecedingWhiteSpace = lines[0].wsTextContent
+                  , nextLineTextContent = lines[0].range.toString()
+                  , currentLineLastChar = lastLine[lastLine.length-1].textContent.slice(-1)
+                  , addHyphen = _needsHyphen(nextLinePrecedingWhiteSpace
+                                                            , nextLineTextContent
+                                                            , currentLineLastChar)
+                  ;
+                if(addHyphen){
+                    //console.log('lastLine', lastLine)'
+                    lastLineLastElem.classList.add('r00-l-hyphen');
+                }
+            }
+            lastLineLastElem.classList.remove('new-style-current-last-line-elem');
+            yield lastLine;
+        }
+
+        // no next line
+        if(!lines.length)
+            return null;
+        if(lines.length === 1) {
+            // FIXME: a last line can also be just before a <br /> but
+            // this we don't detect here.
+            console.log('found a terminal last line');
+            // do something with firstLine
+            firstLine = lines[0];
+            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range, firstLine.range);
+        }
+        else {
+            [firstLine, secondLine] = lines;
+            // console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
+            lastLine = yield* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine);
+        }
+
+        lastLine[lastLine.length - 1].classList.add('new-style-current-last-line-elem');
+
+        // throw new Error('killed here to analyze');
+
+        // Required to help chrome to do hyphenation! Chrome doesn't hyphenate
+        // on node boundaries.
+        // FIXME: with secondLine we tend to split nodes that span over to
+        // the next line, and that breaks the hyphenation for those lines
+        // we could just include the complete node of the second line, should
+        // not hurt.
+        carryOverElement.normalize();
     }
-    if(!startNode)
-        return null;
-
-    //console.log('startNode:', startNode, startNode && startNode.textContent,
-    //            '\nskipUntilAfter:', skipUntilAfter && skipUntilAfter.textContent);
-
-    let continueWithNextSiblings = startNode !== carryOverElement
-      , findLinesArguments = [[carryOverElement, [startNode, continueWithNextSiblings], skipUntilAfter]]
-      ;
-    for(let line of findLines(...findLinesArguments)) {
-        lines.push(line);
-        if(lines.length === 2)
-            break;
-    }
-    if(!lines.length)
-        return null;
-    else if(lines.length === 1) {
-        // FIXME: a last line can also be just before a <br /> but
-        // this we don't detect here.
-        console.log('found a terminal last line');
-        // do something with firstLine
-        firstLine = lines[0];
-        return _packLine(true, 'span', firstLine.nodes, firstLine.range, firstLine.range);
-    }
-
-    [firstLine, secondLine] = lines;
-    // console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
-    let line = _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine);
-    // throw new Error('killed here to analyze');
-
-    // Required to help chrome to do hyphenation! Chrome doesn't hyphenate
-    // on node boundaries.
-    // FIXME: with secondLine we tend to split nodes that span over to
-    // the next line, and that breaks the hyphenation for those lines
-    // we could just include the complete node of the second line, should
-    // not hurt.
-    carryOverElement.normalize();
-    return line;
 }
 
 function _justifyInlines(notBlockNodes) {
