@@ -1616,11 +1616,19 @@ i, cite, em, var, dfn {
  * just for the hyphens, but in the phase of finding and narrowing lines
  * that is not essential.
  */
-.justification-context-block .new-style-line-last-elem::after {
+
+.justification-context-block .line-in-progress-first-elem::before,
+.justification-context-block .new-style-line-first-elem::before {
     content: '';
     display: block;
 }
+.justification-context-block:firstChild .line-in-progress-first-elem::before{
+    content: unset;
+    display: unset;
+}
 
+.justification-context-block .line-in-progress-first-elem.r00-first-line::before,
+.new-style-line-first-elem.r00-first-line::before,
 .runion-line.r00-first-line.r00-l-first::before
 {
     content: unset;

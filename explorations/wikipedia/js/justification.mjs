@@ -1669,7 +1669,7 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
  */
 
 function _getDirectChild(carryOverElement, node) {
-    while(node.parentElement !== carryOverElement){
+    while(node.parentElement !== carryOverElement) {
         node = node.parentElement;
         if(!node)
             throw new Error(`Node ${node} appears not to be a `
@@ -1777,8 +1777,7 @@ function _getStartNode(carryOverElement, lastLine) {
 //     }
 //     return lineElements;
 // }
-
-function _packLine(addClasses, tagName, nodes, startRange, endRange) {
+function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInitialLine) {
     let elements = [];
     for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
         if(node.data.length === 0)
@@ -1797,16 +1796,23 @@ function _packLine(addClasses, tagName, nodes, startRange, endRange) {
         r.surroundContents(element);
         elements.unshift(element);
     }
-    if(addClasses) {
+    if(addFinalClasses) {
         for(let elem of elements)
             elem.classList.add('new-style-line');
         elements[0].classList.add('new-style-line-first-elem');
         elements[elements.length-1].classList.add('new-style-line-last-elem');
     }
+    else{
+        // add in progress classes
+        elements[0].classList.add('line-in-progress-first-elem');
+    }
+    if(isInitialLine)
+        for(let elem of elements)
+            elem.classList.add('r00-first-line');
     return elements;
 }
 
-function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine) {
+function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine, isInitialLine) {
     let spans = [], nodes
       , firstLineTextContent = firstLine.range.toString()
       ;
@@ -1823,7 +1829,7 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
         });
     }
 
-    spans = _packLine(false, 'span', nodes, firstLine.range, secondLine.range);
+    spans = _packLine(false, 'span', nodes, firstLine.range, secondLine.range, isInitialLine);
 
     // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
@@ -2045,7 +2051,7 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
     }
 
     // now repack the first line and undo the rest of the second line ...
-    let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range);
+    let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range, isInitialLine);
 
 
     if(adjustmentProperties !== null)
@@ -2084,7 +2090,9 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
  * next line must begin.
  */
 function* _justifyLines(carryOverElement) {
-    let lastLine = null;
+    let lastLine = null
+      , isInitialLine = true
+      ;
     while(true) {
         let lines = []
           , firstLine = null
@@ -2148,6 +2156,7 @@ function* _justifyLines(carryOverElement) {
             }
             lastLineLastElem.classList.remove('new-style-current-last-line-elem');
             yield lastLine;
+            isInitialLine = false;
         }
 
         // no next line
@@ -2159,12 +2168,12 @@ function* _justifyLines(carryOverElement) {
             console.log('found a terminal last line');
             // do something with firstLine
             firstLine = lines[0];
-            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range, firstLine.range);
+            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range, firstLine.range, isInitialLine);
         }
         else {
             [firstLine, secondLine] = lines;
             // console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
-            lastLine = yield* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine);
+            lastLine = yield* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine, isInitialLine);
         }
 
         lastLine[lastLine.length - 1].classList.add('new-style-current-last-line-elem');
