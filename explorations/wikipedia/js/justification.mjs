@@ -252,9 +252,9 @@ function _getContainingRect(lineRangeOrNode,
         // needed. Once this heuristic stabilizes we may remove that stuff.
         logs.push(['did not fit', i++, 'lineRect', lineRect ,
             '\nrect', rect, '\n',
-            parentRects, '\n', lineParent,
+            parentRects, '\nclosest block parent:', lineParent,
             lineRangeOrNode.getClientRects()
-            ]);
+            , 'lineRangeOrNode:', lineRangeOrNode]);
         logs.push(['top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top]);
         logs.push(['bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom]);
         logs.push(['lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left]);
@@ -263,7 +263,7 @@ function _getContainingRect(lineRangeOrNode,
     for(let line of logs)
         console.log(...line);
     throw new Error(`_getContainingRect couldn't identify a containing rect`
-                  + ` for: ${lineRangeOrNode.textContent || lineRangeOrNode.toString()}`);
+                  + ` for: "${lineRangeOrNode.textContent || lineRangeOrNode.toString()}"`);
 }
 
 function _isOutOfFlowContext(elem) {
