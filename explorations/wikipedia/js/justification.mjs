@@ -459,6 +459,8 @@ function* findLines(elem, skip=[null, null]) {
             }
         }
     }
+    if(currentLine && currentLine.range.toString().length)
+        yield currentLine;
 }
 
 
@@ -1777,7 +1779,7 @@ function _getStartNode(carryOverElement, lastLine) {
 //     }
 //     return lineElements;
 // }
-function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInitialLine) {
+function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInitialLine, isTerminalLine) {
     let elements = [];
     for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
         if(node.data.length === 0)
@@ -1806,9 +1808,13 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInit
         // add in progress classes
         elements[0].classList.add('line-in-progress-first-elem');
     }
-    if(isInitialLine)
-        for(let elem of elements)
-            elem.classList.add('r00-first-line');
+    if(isInitialLine || isTerminalLine)
+        for(let elem of elements) {
+            if(isInitialLine)
+                elem.classList.add('r00-first-line');
+            if(isTerminalLine)
+                elem.classList.add('r00-last-line');
+        }
     return elements;
 }
 
@@ -2160,15 +2166,18 @@ function* _justifyLines(carryOverElement) {
         }
 
         // no next line
-        if(!lines.length)
+        if(!lines.length) {
             return null;
+        }
         if(lines.length === 1) {
             // FIXME: a last line can also be just before a <br /> but
             // this we don't detect here.
             console.log('found a terminal last line');
             // do something with firstLine
             firstLine = lines[0];
-            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range, firstLine.range, isInitialLine);
+            let isTerminalLine = true;
+            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range,
+                        firstLine.range, isInitialLine, isTerminalLine);
         }
         else {
             [firstLine, secondLine] = lines;
