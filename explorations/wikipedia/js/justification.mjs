@@ -837,13 +837,13 @@ function* _approachZeroGenerator(originalMin, originalMax, initialValue) {
     while (true) {
         // The intial yield is not that interesting, as we changed nothing yet, we use
         // it to aquire the inital value of control.
-        control = yield value;
+        control = yield value; // control === unusedWhiteSpace
         [currentMin, currentMax, value] = _approachZero(currentMin, currentMax, value, control);
     }
 }
 
 function* _justifyByGenerator(setVal, readVal, originalMin, originalMax, tries=10) {
-    let control = yield true
+    let control = yield true // control === unusedWhiteSpace
       , value = readVal() /*initial value*/
       , ctrlGen = _approachZeroGenerator(originalMin, originalMax, value)
       ;
@@ -855,7 +855,8 @@ function* _justifyByGenerator(setVal, readVal, originalMin, originalMax, tries=1
         // not god enough
         let ctrVal = ctrlGen.next(control);
         if(ctrVal.done)
-            // the generator gave up
+            // The generator gave up. However, the current
+            // generator implementation never does.
             break;
 
         if (Math.abs(value - ctrVal.value) / (originalMax - originalMin) < 0.005) {
