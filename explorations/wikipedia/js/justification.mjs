@@ -1806,7 +1806,7 @@ function _packLine(addClasses, tagName, nodes, startRange, endRange) {
     return elements;
 }
 
-function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine) {
+function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine) {
     let spans = [], nodes
       , firstLineTextContent = firstLine.range.toString()
       ;
@@ -1871,10 +1871,13 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
       , [startLineContent, ] = getStartLineContent()
       ;
     // console.log('startNodeElement', startNodeElement);
-    if(firstLineTextContent !== startLineContent)
-        throw new Error(`Assertion failed, firstLineTextContent must equal `
-            + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
-            + `vesus "${startLineContent}".\nstartNodeElement was ${startNodeElement.tagName} ${startNodeElement.textContent}`);
+    // FIXME: Seems like this is not always true, as the browser may decide to
+    // change line breaking. startLineContent appears to be correct in the
+    // particular I was able to observe.
+    //if(firstLineTextContent !== startLineContent)
+    //    throw new Error(`Assertion failed, firstLineTextContent must equal `
+    //        + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
+    //        + `vesus "${startLineContent}".\nstartNodeElement was ${startNodeElement.tagName} ${startNodeElement.textContent}`);
 
 
     // FIXME: this is Amstelvar opsz 14 PT, 400 weight, 100 width:
@@ -1959,8 +1962,6 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
     // Guessing that XTRA is the most expensive adjustment, it's probably
     // quicker to put wordspace and tracking first. Used to be:
     //              [['XTRA', '--font-stretch'], ['tracking', '--letter-space'], ['wordspace',  '--word-space']]
-
-
     let adjustmens = genNarrowAdjustments([
                                     ['wordspace',  '--word-space'],
                                     ['tracking', '--letter-space'],
@@ -1990,6 +1991,7 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
       ;
     while(true) {
         let adjustmentVal = adjustmens.next();
+        yield 'adjusted next';
         if(adjustmentVal.done) {
             console.log('no more potential:' ,
                         ...Object.entries(adjustmentProperties).map(v=>v.join('::'))
@@ -2030,17 +2032,39 @@ function _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLin
                 //                 + `initial line: ${startLineContent}`
                 //                 + `current line: ${currentLineContent}`);
             }
-            //console.log(`>>>>line changed ${adjustment} from:\n  `, startLineContent
-            //          , 'to:\n  ', currentLineContent, currentLine);
+            console.log(`>>>>line changed from:\n  `, startLineContent
+                      , 'to:\n  ', currentLineContent, currentLine);
             // FOUND IT!
             resultLine = currentLine;
-            break; // could be tried to fine-tune with positive width again
+            // Could be tried to fine-tune with positive width again
+            // but actually, this should be sufficient or must improved
+            // in here.
+            yield 'found a line break.';
+            break;
         }
     }
+
     // now repack the first line and undo the rest of the second line ...
     let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range);
+
+
     if(adjustmentProperties !== null)
         adjust(newSpans, adjustmentProperties, adjustmentProperties[PROGRESS]);
+    else {
+        // justify by making the line wider!
+        // TODO: eventually we want especially here (and only here) the
+        // option not to use word-space and thereby fully justify.
+        // HOWEVER: the fontSpecConfig controls this now by putting a max
+        // value to word-space.
+        //
+        // Spec example:
+        // font size pt: 12
+        // spec:
+        //    XTRA: [525, 562, 580]
+        //    tracking: [-0.30000000000000004, 0, 0.21666666666666667]
+        //    wordspace: [-0.36904761904761907, 0, 0.3571428571428572]
+
+    }
     // remove adjustment spans
     for(let elem of spans) {
         elem.replaceWith(...elem.childNodes);
