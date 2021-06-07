@@ -503,6 +503,28 @@ function* reverseArrayIterator(array) {
         yield [array[i], i];
 }
 
+// FIXME: add all punctuation and "white-space" etc. that breaks lines.
+// not too sure about ] and ) but I've seen a line-break after a ] in
+// a foot note link (inside a <sup>.
+// All elements on a page that end up with the class `r00-l-hyphen`
+// should be inspected to see what belongs in here, at least for our
+// example, this could be feasible. This heuristic is probably not
+// ideal in the long run, yet simple.
+const _LINE_BREAKERS = new Set([' ', '-', '–', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
+function _needsHyphen(nextLinePrecedingWhiteSpace, nextLineTextContent, currentLineLastChar) {
+    // FIXME: there are other heuristics/reasons to not add a hyphen!
+    //        but the error is not always in here.
+    // If the last character is not a line breaking character,
+    // e.g. in Firefox after sectioning headlines, I get hyphens.
+    return (!nextLinePrecedingWhiteSpace.length
+            && nextLineTextContent.length
+               // next line first char
+            && !_LINE_BREAKERS.has(nextLineTextContent[0])
+               // current line last char
+            && !_LINE_BREAKERS.has(currentLineLastChar)
+    );
+}
+
 function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextContent) {
     let {range, nodes} = line
       , prepared = []
@@ -523,28 +545,14 @@ function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextConten
         prepared.push([node, startIndex, endIndex]);
     }
 
-    // FIXME: add all punctuation and "white-space" etc. that breaks lines.
-    // not too sure about ] and ) but I've seen a line-break after a ] in
-    // a foot note link (inside a <sup>.
-    // All elements on a page that end up with the class `r00-l-hyphen`
-    // should be inspected to see what belongs in here, at least for our
-    // example, this could be feasible. This heuristic is probably not
-    // ideal in the long run, yet simple.
-    let lineBreakers = new Set([' ', '-', '–', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
-    let addHyphen = false;
+    let addHyphen;
     {
-        let [node, , endIndex] = prepared[prepared.length-1];
-        // FIXME: there are other heuristics/reasons to not add a hyphen!
-        //        but the error is not always in here.
-        // If the last character is not a line breaking character,
-        // e.g. in Firefox after sectioning headlines, I get hyphens.
-        if(        !nextLinePrecedingWhiteSpace.length
-                && nextLineTextContent.length
-                && !lineBreakers.has(nextLineTextContent[0])
-                && !lineBreakers.has(node.data[endIndex-1])) {
-            addHyphen = true;
-        }
+        let [node, , endIndex] = prepared[prepared.length-1]
+          , currentLineLastChar = node.data[endIndex-1]
+          ;
+        addHyphen = _needsHyphen(nextLinePrecedingWhiteSpace, nextLineTextContent, currentLineLastChar);
     }
+
     // TODO: Although they seem to cause no trouble (yet), all
     // white space only first line (.r00-l-first nodes) seem
     // unnecessary as well:
