@@ -408,6 +408,23 @@ function* findLines(elem, skip=[null, null]) {
                 if(lastRect.left >= currentLine.columnRect.left && lastRect.right <= currentLine.columnRect.right) {
                     withinHorizontalBounds = true;
                 }
+                else if(lastRect.left >= currentLine.columnRect.left) {
+                    // There's some amount of error that the brower allows
+                    // itself to make better lines. This means that
+                    // `lastRect.right <= currentLine.columnRect.right`
+                    // can be false, but still part of the line! It's
+                    // hard to guess an appropriate error margin, but not
+                    // doing so results in crippled hypjenation i.e. we
+                    // are hyphenating a char to early.
+                    if((lastRect.right - currentLine.columnRect.right) <= 2 /* CSS-px of error margin*/) {
+                        withinHorizontalBounds = true;
+                    }else{
+                        console.log('out of horizontal bounds:\n',
+                        `lastRect.left ${lastRect.left} >= currentLine.columnRect.left ${currentLine.columnRect.left} &&` + '\n',
+                        `lastRect.right ${lastRect.right} <= currentLine.columnRect.right ${currentLine.columnRect.right}`
+                        );
+                    }
+                }
 
                 if (Math.floor(lastRect.bottom - firstRect.bottom) < 1
                         // e.g. our <sup> tags are not touching on bottom
