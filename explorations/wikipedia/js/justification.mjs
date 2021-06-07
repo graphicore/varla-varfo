@@ -2181,7 +2181,7 @@ function* _justifyLines(carryOverElement) {
     }
 }
 
-function _justifyInlines(notBlockNodes) {
+function* _justifyInlines(notBlockNodes) {
     // console.log('_justifyInlines', notBlockNodes);
     // The first line we have in here should be treated as a first line.
     //    CAUTION: seems like only the first line *of* a block should be
@@ -2213,15 +2213,19 @@ function _justifyInlines(notBlockNodes) {
 
     let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
 
-    let lastLine = null;
-    let i = 0;
-    do {
-        lastLine = _justifyNextLine(carryOverElement, lastLine);
+    let i = 0
+      , justifyLines = _justifyLines(carryOverElement)
+      ;
+    while(true) {
+        let result = justifyLines.next();
+        if(result.done)
+            break;
+        // not used, but just to yield something
+        yield result.value;
         i++;
         if(i > Infinity)
             throw new Error('HALT FOR DEV!!! ' + i + ' (_justifyInlines)');
-    } while(lastLine);
-
+    }
 
     let newFragment = firstNotBlock.ownerDocument.createDocumentFragment();
     carryOverElement.remove();
@@ -2251,7 +2255,7 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
                 if(notBlocks.length) {
                     // also change the elements in place...
                     let t0 = performance.now();
-                    _justifyInlines(notBlocks);
+                    yield* _justifyInlines(notBlocks);
                     total += (performance.now() - t0);
                     notBlocks = [];
                     yield ['DONE _justifyInlines'];
@@ -2272,7 +2276,7 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
     }
     if(notBlocks.length){
         let t0 = performance.now();
-        _justifyInlines(notBlocks);
+        yield* _justifyInlines(notBlocks);
         total += (performance.now() - t0);
     }
     yield ['DONE _justifyBlockElement'];
