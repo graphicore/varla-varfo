@@ -1469,8 +1469,8 @@ i, cite, em, var, dfn {
 .runion-01 .justification-context-block {
     position: absolute;
     /* with top and left set, there's no need to determine the default */
-    top: 0;
-    left: 0;
+    top: auto;
+    left: auto;
     visibility: hidden;
     column-span: all;/* Take out of column layout. */
     padding: 0;
@@ -1480,12 +1480,6 @@ i, cite, em, var, dfn {
     visibility: visible;
     background: lime;
 
-}
-
-.runion-01  .new-style-line-last-elem:after{
-    content: "-";
-    display: block;
-    color: red;
 }
 
 .runion-01  .new-style-line {
@@ -1556,7 +1550,7 @@ i, cite, em, var, dfn {
 }
 
 
-.color-coded-lines  .new-style-line,
+.color-coded-lines .new-style-line,
 .color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
      * tend to clip descenders.
@@ -1586,6 +1580,46 @@ i, cite, em, var, dfn {
     content: '';
     display: block;
 }
+/* Must be unset for first lines to keep text-indent.*/
+.new-style-line-first-elem::before {
+    content: '';
+    display: block;
+}
+/* FIXME: fails in some cases whith mixed elements on a line, but good for
+ * most cases. It's better to have the parent element to be nowrap, but
+ * that doesn't fit in well in all cases, e.g. bad while narrowing, bad
+ * when not all lines of a container are already marked up.
+ */
+.new-style-line{
+    white-space: nowrap;
+}
+
+/*
+ * THIS actually helps to prevent the "paradox mystery of the disappearing
+ * textNode": it's there but it's not there...
+ * But in Firefox it introduces line breaks that we don't want to see at
+ * all, the `white-space: nowrap` of `.runion-01.runion-activated ` is
+ * intended to stop those line breaks, but with the new "line by line
+ * and narrowing" approach, we cant do this.
+ *
+ * Incidentally: this does not by itself fix the rendering issue, it looks
+ * like this plus the adding and removal of the "new-style-current-last-line-elem"
+ * does it. It is not enough to leave this rule empty or to not have the
+ * rule at all, just adding the class.
+ */
+.justification-context-block .new-style-line.new-style-current-last-line-elem::after {
+    content: '';
+}
+
+/* Prevent Firefox from creating arbitrary breaks while justifying.
+ * This also breaks the hyphens of hyphenated lines, creating new lines
+ * just for the hyphens, but in the phase of finding and narrowing lines
+ * that is not essential.
+ */
+.justification-context-block .new-style-line-last-elem::after {
+    content: '';
+    display: block;
+}
 
 .runion-line.r00-first-line.r00-l-first::before
 {
@@ -1600,9 +1634,8 @@ i, cite, em, var, dfn {
  * looking for.
  * The heuristic that the adds the hyphen class may still have flaws!
  */
-.runion-line.r00-l-hyphen::after {
+.runion-line.r00-l-hyphen::after,
+.new-style-line.r00-l-hyphen::after {
     content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
                      doesn't do anything*/
 }
-
-
