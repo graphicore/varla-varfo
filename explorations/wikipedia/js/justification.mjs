@@ -302,8 +302,8 @@ function* findLines(elem, skip=[null, null]) {
       , maxI = Infinity;//3000; --> this can be controlled by the caller
     while(true) {
         let rv = textNodesGen.next();
-        if(rv.done){
-            console.log('textNodesGen is done!', rv);
+        if(rv.done) {
+            // No more textNodes.
             break;
         }
         let endNode = rv.value;
@@ -1818,9 +1818,64 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInit
     return elements;
 }
 
-function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine, isInitialLine) {
+
+function _getInterpolationPosition(val, upper, lower) {
+    let normalValue = val - lower
+      , normalUpper = upper - lower
+      ;
+    return  normalValue/normalUpper;
+}
+
+function _interpolateValue(t, upperValue, lowerValue) {
+    return (upperValue - lowerValue) * t + lowerValue;
+}
+
+function _interpolateArray(t, upperValues, lowerValues) {
+    let result = [];
+    for(let i=0, l = Math.min(upperValues.length, lowerValues.length);
+                                                            i<l; i++) {
+        result.push(_interpolateValue(t, upperValues[i], lowerValues[i]));
+    }
+    return result;
+}
+
+
+function _getFontSpec(referenceElement) {
+    // FIXME: fontSpecConfig etc. will be for more sizes and different
+    // per font/family.
+    let elemStyle = referenceElement.ownerDocument.defaultView.getComputedStyle(referenceElement)
+      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
+      , fontSizePt = fontSizePx * 0.75
+        //This is Amstelvar opsz 14 PT, 400 weight, 100 width:
+        //          (min, default, max)
+        //      XTRA: 515, 562, 580 || increment :1 range: 75
+        //      Track: -.4, 0, .2 || increment: ? range: .6
+        //      word-space: 8/14, 14/14, 18/14 || increment: ? range: 10/14
+        //
+        // opsz 8, 400 weight, 100 width:
+        //      XTRA: 545, 562, 580 || increment: 1 range 35
+        //      Track: -.1, 0, .25 || increment: ? range .35
+        //      word-space: 6/8, 8/8, 12/8 || increment: ? range: 4/8
+      , fontSpecConfig = {
+            14: {XTRA: [515, 562, 580], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+           , 8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/,   12/8 - 1]}
+        }
+      , spec = {}
+      , upperFontSize = 14
+      , lowerFontSize = 8
+      , t = _getInterpolationPosition(fontSizePt, upperFontSize, lowerFontSize)
+      ;
+    for(let k of Object.keys(fontSpecConfig[upperFontSize]))
+        spec[k] = _interpolateArray(t, fontSpecConfig[upperFontSize][k],
+                                      fontSpecConfig[lowerFontSize][k]);
+    console.log('Font Spec for',fontSizePt, 'pt:', spec);
+    return [spec, fontSizePx, fontSizePt];
+}
+
+
+function* _justifyLineByNarrowing(findLinesArguments, spec, firstLine, secondLine, isInitialLine) {
     let spans = [], nodes
-      , firstLineTextContent = firstLine.range.toString()
+    //  , firstLineTextContent = firstLine.range.toString()
       ;
 
     {
@@ -1869,11 +1924,9 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
     // console.log('spans[0]', spans[0].textContent, spans);
 
     // find the current first line:
-    // assert it has the same content as the initial firstLine
-    let startNodeElement = _getDirectChild(carryOverElement, spans[0])
-      // , startNode = [startNodeElement, true] // special instructions for deepTextNodes
-      , getStartLineContent=()=> {
-
+    let getStartLineContent=()=> {
+            // TODO: findLines could be more efficient if we could give it
+            // the last line and see if it got wider...
             let startLineResult = findLines(...findLinesArguments).next();
             if(startLineResult.done)
                 // We just put that line there, it must be there!
@@ -1886,68 +1939,18 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
     // FIXME: Seems like this is not always true, as the browser may decide to
     // change line breaking. startLineContent appears to be correct in the
     // particular I was able to observe.
+    // assert it has the same content as the initial firstLine
+    // let startNodeElement = _getDirectChild(carryOverElement, spans[0])
     //if(firstLineTextContent !== startLineContent)
     //    throw new Error(`Assertion failed, firstLineTextContent must equal `
     //        + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
     //        + `vesus "${startLineContent}".\nstartNodeElement was ${startNodeElement.tagName} ${startNodeElement.textContent}`);
 
 
-    // FIXME: this is Amstelvar opsz 14 PT, 400 weight, 100 width:
-    //          (min, default, max)
-    //      XTRA: 515, 562, 580 || increment :1 range: 75
-    //      Track: -.4, 0, .2 || increment: ? range: .6
-    //      word-space: 8/14, 14/14, 18/14 || increment: ? range: 10/14
-    //
-    // opsz 8, 400 weight, 100 width:
-    //      XTRA: 545, 562, 580 || increment: 1 range 35
-    //      Track: -.1, 0, .25 || increment: ? range .35
-    //      word-space: 6/8, 8/8, 12/8 || increment: ? range: 4/8
-    // NOTE: word-space is essentially in EM
-    //
-
-
-
     // It doesn't adjust tracking/wordspace either yet!.
-        // FIXME: do this in the caller:
-    let elemStyle = carryOverElement.ownerDocument.defaultView.getComputedStyle(carryOverElement)
-      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
-      , fontSizePt = fontSizePx * 0.75
-      , resultLine = null
+   let resultLine = null
       , currentLine = null
-      , fontSpecConfig = {
-            14: {XTRA: [515, 562, 580], tracking:[-0.4, 0, 0.2], wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-          , 8:  {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25],wordspace: [6/8 - 1, 1 - 1 /*8/8*/,   12/8 - 1]}
-        }
       ;
-
-    let getTime = (val, upper, lower) => {
-          let normalValue = val - lower
-            , normalUpper = upper - lower
-            ;
-           return  normalValue/normalUpper;
-         }
-      , interpolateValue = (t, upperValue, lowerValue) => {
-            return (upperValue - lowerValue) * t + lowerValue;
-        }
-      , interpolateArray = (t, upperValues, lowerValues) => {
-            let result = [];
-            for(let i=0, l = Math.min(upperValues.length, lowerValues.length);
-                                                                    i<l; i++) {
-                result.push(interpolateValue(t, upperValues[i], lowerValues[i]));
-            }
-            return result;
-        }
-      ;
-    // => interpolate fontSpecConfig
-    let spec = {}
-      , upperFontSize = 14
-      , lowerFontSize = 8
-      , t = getTime(fontSizePt, upperFontSize, lowerFontSize)
-      ;
-    // console.log(fontSpecConfig[upperFontSize]);
-    for(let k of Object.keys(fontSpecConfig[upperFontSize]))
-        spec[k] = interpolateArray(t, fontSpecConfig[upperFontSize][k], fontSpecConfig[lowerFontSize][k]);
-    console.log(fontSizePt, 'spec:', spec);
     // Then, in each iteration below adjust one of the above, in order
     // e.g. 0:XTRA, 1:tracking, 2:wordspace, 3:XTRA, ...
     // use the same amount of steps for each, so that all are exhausted at
@@ -2021,10 +2024,10 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
         let [propName, propValue, progress] = adjustmentVal.value;
         adjustmentProperties[propName] = propValue;
         adjustmentProperties[PROGRESS] = progress;
-        console.log('applying potential:' ,
-                        ...Object.entries(adjustmentProperties).map(v=>v.join('::'))
-                        , '\n', `${100 * adjustmentProperties[PROGRESS]} %`
-                        , '\n', startLineContent);
+        // console.log('applying potential:' ,
+        //                 ...Object.entries(adjustmentProperties).map(v=>v.join('::'))
+        //                 , '\n', `${100 * adjustmentProperties[PROGRESS]} %`
+        //                 , '\n', startLineContent);
         adjust(spans, adjustmentProperties);
         let currentLineContent;
         [currentLineContent, currentLine] = getStartLineContent();
@@ -2044,8 +2047,8 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
                 //                 + `initial line: ${startLineContent}`
                 //                 + `current line: ${currentLineContent}`);
             }
-            console.log(`>>>>line changed from:\n  `, startLineContent
-                      , 'to:\n  ', currentLineContent, currentLine);
+            //console.log(`>>>>line changed from:\n  `, startLineContent
+            //          , 'to:\n  ', currentLineContent, currentLine);
             // FOUND IT!
             resultLine = currentLine;
             // Could be tried to fine-tune with positive width again
@@ -2059,26 +2062,12 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
     // now repack the first line and undo the rest of the second line ...
     let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range, isInitialLine);
 
-
-    if(adjustmentProperties !== null)
+    let isNarrowAdjusted = adjustmentProperties !== null;
+    if(isNarrowAdjusted)
         adjust(newSpans, adjustmentProperties, adjustmentProperties[PROGRESS]);
-    else {
-        // justify by making the line wider!
-        // TODO: eventually we want especially here (and only here) the
-        // option not to use word-space and thereby fully justify.
-        // HOWEVER: the fontSpecConfig controls this now by putting a max
-        // value to word-space.
-        //
-        // Spec example:
-        // font size pt: 12
-        // spec:
-        //    XTRA: [525, 562, 580]
-        //    tracking: [-0.30000000000000004, 0, 0.21666666666666667]
-        //    wordspace: [-0.36904761904761907, 0, 0.3571428571428572]
-
-    }
     // remove adjustment spans
     for(let elem of spans) {
+        // The nodes from newSpans are already removed as children of these elements.
         elem.replaceWith(...elem.childNodes);
     }
     // TODO: would be interesting to plot how often each value appears
@@ -2087,7 +2076,143 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
     // font-size/font-spec, so one value wouldn't do.
     // console.log(`narrowing ${adjustment}`);
 
-    return newSpans;
+    return [newSpans, isNarrowAdjusted];
+}
+
+function _justifyLineByWidening(spec, lineElements, container, fontSizePx, options=null) {
+// function justifyLine(container, lineElements, fontSizePx, tolerances, options=null) {
+
+    // TOLERANCES:
+    //                // All these appear a bit low/narrow for the current AmstelVar
+    //                // all values: [min, default, max]
+    // >        XTRA: [375, 402, 402],
+    // >        'letter-spacing': [-0.025, 0, 0.025],
+    // >        'word-spacing': [-0.20500000000000002, 0, 0.20500000000000002]
+    // VERSUS
+    // SPEC at 12 pt:
+    // >        XTRA: [525, 562, 580]
+    // >        tracking: [-0.30000000000000004, 0, 0.21666666666666667]
+    // >        wordspace: [-0.36904761904761907, 0, 0.3571428571428572]
+    //
+    // and a mapping to css property names:
+    //      ['wordspace',  '--word-space'],
+    //      ['tracking', '--letter-space'],
+    //      ['XTRA', '--font-stretch']
+
+    let lineRange = new Range()
+      , firstNode = lineElements[0]
+      , lastNode = lineElements[lineElements.length-1]
+      , setPropertyToLine = (name, value)=>{
+            for(let elem of lineElements) {
+                elem.style.setProperty(name, value);
+            }
+        }
+      , _lineStyleForAll = firstNode.ownerDocument.defaultView.getComputedStyle(firstNode)
+      , getPropertyFromLine = (name)=>_lineStyleForAll.getPropertyValue(name)
+      ;
+    // This is the best method so far, it includes the hyphens that may
+    // have been added by :after.
+    lineRange.setStartBefore(firstNode);
+    lineRange.setEndAfter(lastNode);
+
+    let [rectContainingLine, lineParent] = _getContainingRect(firstNode, container);
+    // let style = lineParent.ownerDocument.defaultView.getComputedStyle(lineParent);
+    let widthPaddings = getElementSizesInPx(lineParent, 'padding-left', 'padding-right');
+
+    // The values below looked all plausible.
+    // FIXME: Does not take into account:
+    //                      - floats around this line (we don't do this yet)
+    //                      - hanging-punctuation(?) (not implemented in any browser)
+    //                      -  drop-caps/initial-letter(Safari only?) maybe as
+    //                         float with ::initial-letter? NOTE :initial-letter
+    //                          :first-line fail with our span surrounded lines and
+    //                          other inline elements.
+    let rightStop = rectContainingLine.right - widthPaddings[1]
+      , readUnusedWhiteSpace =()=>{
+            // This will be called a lot and it's *very* expensive!
+            // lineRange.getBoundingClientRect() includes also the hyphens
+            // added with :after if any!
+            return rightStop  - lineRange.getBoundingClientRect().right;
+        }
+      ;
+
+    // This block is just a visualization, on "how bad" a line is,
+    // i.e. more unusedWhiteSpace is worse, appears darker red,
+    // "good" lines become lighter red to white.
+    {
+        // wsRatio will be 1 for ideal lines and < 1 for less than full lines.
+        let lineBCR = lineRange.getBoundingClientRect()
+          , lineStart = lineBCR.left
+          , availableLineLength = rightStop - lineStart
+          , actualLineLength = lineBCR.right - lineStart
+          , wsRatio = actualLineLength / availableLineLength
+            // === 0 for ideal lines
+            // === Full line length for empty lines
+            // === how to get the full line length????
+          , hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`
+          ;
+        setPropertyToLine('--line-color-code', hslColor);
+    }
+
+
+    // prepare the actual justification
+
+    // TODO: does not include generic :before and :after content
+    let lineText = _whiteSpaceNormalize(lineRange.toString());
+    // Asking for this class is very specific, but at least it covers
+    // one common pseudo class content case in our scenario.
+
+    if(lastNode.classList.contains('r00-l-hyphen'))
+        lineText +=  '-';
+
+    let setLetterSpacing = val=>setPropertyToLine('--letter-space', val)
+      , readLetterSpacing = ()=>parseFloat(getPropertyFromLine('--letter-space'))
+      , lineGlyphsLength = lineText.length
+      , lineWordSpaces = lineText.split(' ').length - 1
+// Works differently now:
+//      , setWordSpacingPx = (wordSpacingPx)=> {
+//            // NOTE: it is defined in em:
+//            //      word-spacing: calc(1em * var(--word-space));
+//            let wordSpacingEm = wordSpacingPx / fontSizePx;
+//            setPropertyToLine('--word-space', wordSpacingEm);
+//            // this was just for reporting
+//            // line.setAttribute('data-wordspace', Math.round(parseFloat(line.style.wordSpacing) * 1000));
+//        }
+      , setXTRA = val=>setPropertyToLine('--font-stretch', val)
+      , readXTRA = ()=>parseFloat(getPropertyFromLine('--font-stretch'))
+        //FIXME: to widen narrowed lines again, min(xtraDefault, readXTRA())
+        //       must be used as lower value
+      , [/*xtraMin*/, xtraDefault ,xtraMax] = spec.XTRA
+      , [/*trackingMin*/, trackingDefault ,trackingMax] = spec.tracking
+      , generators = []
+      ;
+    if(!options || options.XTRA !== false) {
+        generators.push(
+            _justifyByGenerator(setXTRA, readXTRA, xtraDefault ,xtraMax));
+    }
+    if(!options || options.letterSpacing !== false) {
+        //generators.push(
+        //    _justifyByLetterSpacingGenerator(setLetterSpacing, lineGlyphsLength,
+        //                      fontSizePx, spec.tracking));
+
+        generators.push(_justifyByGenerator(setLetterSpacing, readLetterSpacing,
+                                trackingDefault ,trackingMax));
+    }
+    // if(!options || options.wordSpacing !== false) {
+    //         // We had some good results with this not used at all,
+    //         // But if it can do some reduced word-spacing, optionally
+    //         // not fully justified, it could still be an option.
+    //     generators.push(
+    //         _fullyJustifyByWordSpacingGenerator(setWordSpacingPx, lineWordSpaces));
+    // }
+        //   // NOTE: these are different to the vabro way, but could be possible!
+        //   // letter-space
+        // , _justifyByGenerator(setLetterSpacingEm, readLetterSpacingEm, originalMin, originalMax)
+        //   // word-space (there's a rule that this must stay smaller than line space I think)
+        // , _justifyByGenerator(setWordSpacingPx, readWordSpacingPx, originalMin, originalMax)
+
+    // run the actual justification
+    justifyControlLoop(readUnusedWhiteSpace, generators);
 }
 
 /*
@@ -2098,6 +2223,8 @@ function* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLi
 function* _justifyLines(carryOverElement) {
     let lastLine = null
       , isInitialLine = true
+      , linesToWiden = []
+      , [fontSpec, fontSizePx/*, fontSizePt*/] = _getFontSpec(carryOverElement)
       ;
     while(true) {
         let lines = []
@@ -2121,9 +2248,10 @@ function* _justifyLines(carryOverElement) {
             startNode = _getDirectChild(carryOverElement, skipUntilAfter);
         }
         if(!startNode) {
+            console.log('!startNode -> return null;');
             if(lastLine)
                 yield lastLine; // we don't use these anyways!
-            return null;
+            break;
         }
 
         //console.log('startNode:', startNode, startNode && startNode.textContent,
@@ -2167,12 +2295,12 @@ function* _justifyLines(carryOverElement) {
 
         // no next line
         if(!lines.length) {
-            return null;
+            break;
         }
         if(lines.length === 1) {
             // FIXME: a last line can also be just before a <br /> but
             // this we don't detect here.
-            console.log('found a terminal last line');
+            console.log('found a terminal last line:', lines[0].range.toString());
             // do something with firstLine
             firstLine = lines[0];
             let isTerminalLine = true;
@@ -2181,8 +2309,26 @@ function* _justifyLines(carryOverElement) {
         }
         else {
             [firstLine, secondLine] = lines;
-            // console.log('_justifyLine(firstLine, secondLine):', firstLine, secondLine);
-            lastLine = yield* _justifyLine(findLinesArguments, carryOverElement, firstLine, secondLine, isInitialLine);
+            // console.log('_justifyLineByNarrowing(firstLine, secondLine):', firstLine, secondLine);
+            let isNarrowAdjusted;
+            // [lastLine, isNarrowAdjusted] = yield* _justifyLineByNarrowing(
+            //             findLinesArguments, fontSpec, firstLine,
+            //             secondLine, isInitialLine);
+
+            let gen = _justifyLineByNarrowing(
+                                findLinesArguments, fontSpec, firstLine,
+                                secondLine, isInitialLine)
+              , result = null
+              ;
+            while( !(result=gen.next()).done) {
+                /*yield result.value; */
+            }
+            // is done
+            [lastLine, isNarrowAdjusted] = result.value;
+
+
+            if(!isNarrowAdjusted)
+                linesToWiden.push(lastLine);
         }
 
         lastLine[lastLine.length - 1].classList.add('new-style-current-last-line-elem');
@@ -2197,6 +2343,12 @@ function* _justifyLines(carryOverElement) {
         // not hurt.
         carryOverElement.normalize();
     }
+    console.log('_justifyLineByWidening with:', linesToWiden.length);
+    for(let line of linesToWiden) {
+        console.log('_justifyLineByWidening:', line);
+        yield ['_justifyLineByWidening', _justifyLineByWidening(fontSpec, line, carryOverElement, fontSizePx )];
+    }
+
 }
 
 function* _justifyInlines(notBlockNodes) {
@@ -2274,9 +2426,12 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
                     // also change the elements in place...
                     let t0 = performance.now();
                     yield* _justifyInlines(notBlocks);
+                    //for(let _ of _justifyInlines(notBlocks)){};
                     total += (performance.now() - t0);
                     notBlocks = [];
                     yield ['DONE _justifyInlines'];
+                    //if(i > 9)
+                    //    throw new Error('HALT FOR DEV! XXX DONE _justifyInlines');
                 }
                 if(!skip){
                     // changes the node in place
@@ -2295,6 +2450,7 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
     if(notBlocks.length){
         let t0 = performance.now();
         yield* _justifyInlines(notBlocks);
+        //for(let _ of _justifyInlines(notBlocks)){};
         total += (performance.now() - t0);
     }
     yield ['DONE _justifyBlockElement'];
