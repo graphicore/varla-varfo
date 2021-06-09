@@ -1478,7 +1478,8 @@ i, cite, em, var, dfn {
 
 
     visibility: visible;
-    background: lime;
+    background: white;
+    outline: 2px solid lime;
 
 }
 
