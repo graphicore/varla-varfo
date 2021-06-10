@@ -1646,6 +1646,44 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
         cloned.appendChild(node.cloneNode(true));
     }
 
+    {
+        // "text-indent" goes away if there's a previous sibling, if the
+        // first notBlockNodes item is not the first child, e.g. in our
+        // example document we have .thumbcaption elements with text but
+        // before the text is a div with a class .magnify, in original
+        // wikipedia, clicking that would open a larger version of the
+        // thumbnail. The HTML is like this:
+        //      <div class="thumbcaption">
+        //          <div class="magnify"><!--...--></div>
+        //          Here comes the text ...
+        //      </div>
+        // "text-indent" is applied/active on these .thumbcaption elements
+        // (it would likely be turned of if it would show), but because of
+        // the div.magnify, the indent is not applied to the text. BTW even
+        // if "div.magnify" is display: none or position: absolute!
+        //
+        // In the element we create here (cloned) however, the first child
+        // element is missing and hence we get a text-indent in justification,
+        // but not in the result:
+        //      <div class="thumbcaption">
+        //          Here comes the text ...
+        //      </div>
+        // This means bad lines, that are e.g. narrowed but also noticeably
+        // too short.
+        let node = notBlockNodes[0];
+        while(true) {
+            if(!node.previousSibling)
+                // no problem
+                break;
+            node = node.previousSibling;
+            if(node.nodeType === Node.ELEMENT_NODE) {
+                // found it
+                cloned.insertBefore(node.cloneNode(false), cloned.firstChild);
+                break;
+            }
+        }
+    }
+
     // insert at the same position, so we get the same CSS-rules to apply
     // to the container. CAUTION: this can become problematic where we have
     // e.g. position related CSS selectors (first-child, ~ etc.)
