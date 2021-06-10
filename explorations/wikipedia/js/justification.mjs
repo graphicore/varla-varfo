@@ -206,19 +206,12 @@ class Line {
     }
 }
 
-function _getContainingRect(lineRangeOrNode,
-                                        container=null) {
+function _getContainingRect(lineRangeOrNode) {
     let lineParent = getClosestBlockParent(
                 // if it has a startContainer it's probably a Range
                 // otherwise, assume it is a  Node
                 lineRangeOrNode.startContainer || lineRangeOrNode);
 
-    // FIXME: This may make sense in the justifyLine context but can be optional
-    // in findLines, I've never seen this trigger, but it is a possibility!
-    //if(container && lineParent === container) {
-    //    console.log('FIXME: DON\'T KNOW (yet) what to do: lineParent === container', lineParent, container);
-    //    return;
-    //}
     let parentRects = lineParent.getClientRects();
     // expect all of the line to be
 
@@ -1680,105 +1673,6 @@ function _getDirectChild(carryOverElement, node) {
     return node;
 }
 
-
-function _getNext(carryOverElement, node) {
-    if(node.nextSibling)
-        return node.nextSibling;
-    while(node.parentElement !== carryOverElement) {
-        node = node.parentElement;
-        if(!node)
-            throw new Error(`Node ${node} appears not to be a `
-                            + `descendant of ${carryOverElement}`);
-        if(node.nextSibling)
-            break;
-    }
-    return node.nextSibling;
-}
-
-function _getStartNode(carryOverElement, lastLine) {
-    if(lastLine === null)
-        return carryOverElement;
-
-    return _getNext(carryOverElement, lastLine[lastLine.length-1]);
-}
-
-// _function markupLine(line, index, nextLinePrecedingWhiteSpace, nextLineTextContent) {
-//     let {range, nodes} = line
-//       , prepared = []
-//       , lineElements = []
-//       ;
-//     let randBG = `hsl(${Math.round((Math.random() * 70)) + 90}, `  // 90 to 160
-//                    + `${Math.round((Math.random() * 30)) + 60}%, ` // 55 to 90
-//                    + `${Math.round((Math.random() * 20)) + 70}%)`; // 70 to 90
-//
-//     for(let node of nodes) {
-//         let startIndex = node === range.startContainer
-//                     ? range.startOffset
-//                     : 0
-//           , endIndex = node === range.endContainer
-//                     ? range.endOffset
-//                     : node.data.length // -1???
-//           ;
-//         prepared.push([node, startIndex, endIndex]);
-//     }
-//
-//     // FIXME: add all punctuation and "white-space" etc. that breaks lines.
-//     // not too sure about ] and ) but I've seen a line-break after a ] in
-//     // a foot note link (inside a <sup>.
-//     // All elements on a page that end up with the class `r00-l-hyphen`
-//     // should be inspected to see what belongs in here, at least for our
-//     // example, this could be feasible. This heuristic is probably not
-//     // ideal in the long run, yet simple.
-//     let lineBreakers = new Set([' ', '-', '–', '—', '.', ',', ']', ')', '\t', '\r', '\n']);
-//     let addHyphen = false;
-//     {
-//         let [node, , endIndex] = prepared[prepared.length-1];
-//         // FIXME: there are other heuristics/reasons to not add a hyphen!
-//         //        but the error is not always in here.
-//         // If the last character is not a line breaking character,
-//         // e.g. in Firefox after sectioning headlines, I get hyphens.
-//         if(        !nextLinePrecedingWhiteSpace.length
-//                 && nextLineTextContent.length
-//                 && !lineBreakers.has(nextLineTextContent[0])
-//                 && !lineBreakers.has(node.data[endIndex-1])) {
-//             addHyphen = true;
-//         }
-//     }
-//     // TODO: Although they seem to cause no trouble (yet), all
-//     // white space only first line (.r00-l-first nodes) seem
-//     // unnecessary as well:
-//     // for(let node of document.querySelectorAll('.r00-l-first')) {
-//     //       // NOTE: don't use \s
-//     //       if(/^\s+$/g.test(node.textContent)) console.log(node);
-//     // }
-//
-//     // Do it from end to start, so all offsets stay valid.
-//     let last = prepared.length-1;
-//     for(let i=last;i>=0;i--) {
-//         let [node, startIndex, endIndex] = prepared[i];
-//         // we have at least one char of something
-//         let span = node.ownerDocument.createElement('span');
-//         lineElements.unshift(span); // backwards iteration so no push...
-//         span.classList.add('runion-line');
-//         span.classList.add(`r00-l${index}`);
-//         if(i === 0)
-//             span.classList.add('r00-l-first');
-//         if(i === last) {
-//             span.classList.add('r00-l-last');
-//             if(addHyphen)
-//                 span.classList.add('r00-l-hyphen');
-//         }
-//         span.style.setProperty('--line-color-code', randBG);
-//
-//         // try letting range wrap here ...
-//         // works awesomely great so far.
-//         let r = new Range();
-//         r.setStart(node, startIndex);
-//         r.setEnd(node, endIndex);
-//         r.surroundContents(span);
-//     }
-//     return lineElements;
-// }
 function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInitialLine, isTerminalLine) {
     let elements = [];
     for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
@@ -2167,8 +2061,8 @@ function _justifyLineByWidening(spec, lineElements, container, fontSizePx, optio
 
     let setLetterSpacing = val=>setPropertyToLine('--letter-space', val)
       , readLetterSpacing = ()=>parseFloat(getPropertyFromLine('--letter-space'))
-      , lineGlyphsLength = lineText.length
-      , lineWordSpaces = lineText.split(' ').length - 1
+//      , lineGlyphsLength = lineText.length
+//      , lineWordSpaces = lineText.split(' ').length - 1
 // Works differently now:
 //      , setWordSpacingPx = (wordSpacingPx)=> {
 //            // NOTE: it is defined in em:
@@ -2554,7 +2448,6 @@ export class JustificationController{
             if(!this._gen) {
                 this._reportStatus('init');
                 this._unjustify();
-                // _justifyNextGenGenerator/_justifyGenerator
                 this._gen = _justifyNextGenGenerator(this._elem, this._skip, this._options);
             }
             else
