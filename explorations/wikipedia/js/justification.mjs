@@ -1620,19 +1620,22 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
     // block elements.
     let block = notBlockNodes[0].parentElement
       , cloned = block.cloneNode(false/*deep*/)
+        // In the standard box model, this would be equal to the
+        // width or height property of the element + padding + border-width.
+        // But if box-sizing: border-box is set for the element this
+        // would be directly equal to its width or height.
+      , fullWidth = block.getClientRects()[0].width
+      , lineLengthAffectingSizes = getElementSizesInPx(block
+                                      , 'padding-inline-start'
+                                      , 'padding-inline-end'
+                                      , 'border-inline-start-width'
+                                      , 'border-inline-end-width')
+      , lineLength = fullWidth - lineLengthAffectingSizes.reduce((x,y)=>x+y, 0)
       ;
-
-
-    // FIXME: the width/padding is not correct for all cases,
-    // rather use actual clientRects width minus padding to determine
-    // the available space for the line in the block.
-    // .justification-context-block {
-    //     position: absolute;
-    //     visibility: hidden;
-    //     column-span: all /* Take out of column layout. */
-    //     padding: 0; width: calc(0.5em * '--column-width');
-    // }
     cloned.classList.add('justification-context-block');
+    cloned.style.setProperty('width', `${lineLength}px`);
+    cloned.style.setProperty('padding', '0');
+    cloned.style.setProperty('border', '0');
 
     /**
      * MAYBE: Add some element.style to ensure we  have the same line
