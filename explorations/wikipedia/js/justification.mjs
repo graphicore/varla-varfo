@@ -1601,7 +1601,7 @@ function* _justifyGenerator(elem, skip, options) {
 /**
  * The concept here is, that a column layout with growing number of columns
  * has big performance problems when justifying. With one column it's
- * much fast (but not fast) than with four columns. This element is
+ * much faster (but not fast) than with four columns. This element is
  * intended to make it simpler for the browser to calculate line length,
  * line breaks and hyphenation by removing a lot of the surrounding context
  * of the line from the equation, especially a possible column layout, but
@@ -1650,7 +1650,7 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
     return cloned;
 }
 
-/*
+/* TODO:
  * Here we have a couple of unknowns:
  * What is the nature of lastLine ?
  *     I would expect it to be in the type of lineElements, i.e.
