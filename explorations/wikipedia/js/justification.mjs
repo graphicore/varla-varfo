@@ -618,6 +618,7 @@ function _whiteSpaceNormalize( txt ) {
     return txt;
 }
 
+/* Keeping for now, we may use it as an option. */
 function* _fullyJustifyByWordSpacingGenerator(setVal, lineWordSpaces) {
     let unusedSpace = yield true
      , wordSpacingPx = unusedSpace / lineWordSpaces
@@ -738,27 +739,14 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
     return cloned;
 }
 
-/* TODO:
- * Here we have a couple of unknowns:
- * What is the nature of lastLine ?
- *     I would expect it to be in the type of lineElements, i.e.
- *     lowest level spans that wrap the textNodes of the line.
- * This means however, we cannot do lastLine[lastElementIndex].nextSibling,
- * instead, we must dig up the lastLine[lastElementIndex].parentElements
- * until we find a node of which the parentElement === carryOverElement
- * and of *that* use use its .nextSibling
- *
- * If lastLine is null this is the first line. We must use carryOverElement.
- */
-
-function _getDirectChild(carryOverElement, node) {
-    while(node.parentElement !== carryOverElement) {
-        node = node.parentElement;
-        if(!node)
-            throw new Error(`Node ${node} appears not to be a `
-                            + `descendant of ${carryOverElement}`);
+function _getDirectChild(ancestorElement, descendantNode) {
+    while(descendantNode.parentElement !== ancestorElement) {
+        descendantNode = descendantNode.parentElement;
+        if(!descendantNode)
+            throw new Error(`Node ${descendantNode} appears not to be a `
+                            + `descendant of ${ancestorElement}`);
     }
-    return node;
+    return descendantNode;
 }
 
 function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
@@ -827,7 +815,7 @@ function _interpolateArray(t, upperValues, lowerValues) {
 
 
 function _getFontSpec(referenceElement) {
-    // FIXME: fontSpecConfig etc. will be for more sizes and different
+    // TODO: fontSpecConfig etc. will be for more sizes and different
     // per font/family.
     let elemStyle = referenceElement.ownerDocument.defaultView.getComputedStyle(referenceElement)
       , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
