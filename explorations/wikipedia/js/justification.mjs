@@ -2078,6 +2078,9 @@ function _justifyLineByWidening(spec, lineElements, container, fontSizePx, optio
         //       must be used as lower value
       , [/*xtraMin*/, xtraDefault ,xtraMax] = spec.XTRA
       , [/*trackingMin*/, trackingDefault ,trackingMax] = spec.tracking
+      , setWordspace = val=>setPropertyToLine('--word-space', val)
+      , readWordspace = ()=>parseFloat(getPropertyFromLine('--word-space'))
+      , [ /*wordspaceMin*/, wordspaceDefault ,wordspaceMax] = spec.wordspace
       , generators = []
       ;
     if(!options || options.XTRA !== false) {
@@ -2092,13 +2095,15 @@ function _justifyLineByWidening(spec, lineElements, container, fontSizePx, optio
         generators.push(_justifyByGenerator(setLetterSpacing, readLetterSpacing,
                                 trackingDefault ,trackingMax));
     }
-    // if(!options || options.wordSpacing !== false) {
+    if(!options || options.wordSpacing !== false) {
     //         // We had some good results with this not used at all,
     //         // But if it can do some reduced word-spacing, optionally
     //         // not fully justified, it could still be an option.
     //     generators.push(
     //         _fullyJustifyByWordSpacingGenerator(setWordSpacingPx, lineWordSpaces));
-    // }
+        generators.push(_justifyByGenerator(setWordspace, readWordspace,
+                                wordspaceDefault ,wordspaceMax));
+    }
         //   // NOTE: these are different to the vabro way, but could be possible!
         //   // letter-space
         // , _justifyByGenerator(setLetterSpacingEm, readLetterSpacingEm, originalMin, originalMax)
