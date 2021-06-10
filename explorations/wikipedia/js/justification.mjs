@@ -2194,6 +2194,28 @@ function _justifyLineByWidening(spec, lineElements, container, fontSizePx, optio
     justifyControlLoop(readUnusedWhiteSpace, generators);
 }
 
+/**
+ * Returns true if line breaks because it's followed by a a soft break
+ * i.e. <br />.
+ */
+function _isSoftlyBrokenLine(lineElements) {
+    let node = lineElements[lineElements.length-1];
+    while(true) {
+        node = node.nextElementSibling;
+        if(!node)
+            return false;
+        if(_isOutOfFlowContext(node))
+            continue;
+        if(node.tagName.toLowerCase() === 'br')
+            return true;
+        if(!node.childNodes.length)
+                // There are sometimes empty spans at the end of lines, e.g.
+                // in our wikipedia example, e.g. in the "Citations" section.
+           continue;
+        return false;
+    }
+}
+
 /*
  * Return a new line or null if there's no further line left.
  * lastLine is the last returned line, after it, the search for the
@@ -2307,6 +2329,8 @@ function* _justifyLines(carryOverElement) {
     }
     console.log('_justifyLineByWidening with:', linesToWiden.length);
     for(let line of linesToWiden) {
+        if(_isSoftlyBrokenLine(line))
+            continue;
         console.log('_justifyLineByWidening:', line);
         yield ['_justifyLineByWidening', _justifyLineByWidening(fontSpec, line, carryOverElement, fontSizePx )];
     }
