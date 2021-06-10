@@ -1676,7 +1676,8 @@ function _getDirectChild(carryOverElement, node) {
     return node;
 }
 
-function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInitialLine, isTerminalLine) {
+function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
+                                isInitialLine, addHyphen, isTerminalLine) {
     let elements = [];
     for(let [node, /*index*/] of reverseArrayIterator(nodes)) {
         if(node.data.length === 0)
@@ -1705,13 +1706,16 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange, isInit
         // add in progress classes
         elements[0].classList.add('line-in-progress-first-elem');
     }
-    if(isInitialLine || isTerminalLine)
+    if(isInitialLine || isTerminalLine) {
         for(let elem of elements) {
             if(isInitialLine)
                 elem.classList.add('r00-first-line');
             if(isTerminalLine)
                 elem.classList.add('r00-last-line');
         }
+    }
+    if(addHyphen)
+        elements[elements.length-1].classList.add('r00-l-hyphen');
     return elements;
 }
 
@@ -1772,8 +1776,15 @@ function _getFontSpec(referenceElement) {
 
 function* _justifyLineByNarrowing(findLinesArguments, spec, firstLine, secondLine, isInitialLine) {
     let spans = [], nodes
-    //  , firstLineTextContent = firstLine.range.toString()
+      , bothLinesTextContent
       ;
+    {
+        let range = new Range();
+        range.setStart(firstLine.range.startContainer, firstLine.range.startOffset);
+        range.setEnd(secondLine.range.endContainer, secondLine.range.endOffset);
+        bothLinesTextContent = range.toString();
+    }
+
 
     {
         let seen = new Set();
@@ -1787,7 +1798,8 @@ function* _justifyLineByNarrowing(findLinesArguments, spec, firstLine, secondLin
         });
     }
 
-    spans = _packLine(false, 'span', nodes, firstLine.range, secondLine.range, isInitialLine);
+    spans = _packLine(false, 'span', nodes, firstLine.range, secondLine.range,
+                                                isInitialLine, false, false);
 
     // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
@@ -1956,8 +1968,35 @@ function* _justifyLineByNarrowing(findLinesArguments, spec, firstLine, secondLin
         }
     }
 
+
+    let addHyphen;
+    {
+        let resultLineTextContent = resultLine.range.toString();
+        if(bothLinesTextContent.indexOf(resultLineTextContent) !== 0) {
+            throw new Error('Can\'t decide if line needs a hyphen:\n'
+                + `"${resultLineTextContent}" is not in "${bothLinesTextContent}"`);
+        }
+
+        let nextLineStartContent = bothLinesTextContent.slice(resultLineTextContent.length)
+          , nextLinePrecedingWhiteSpace = nextLineStartContent
+          , nextLineTextContent = ''
+          , currentLineLastChar = resultLineTextContent.slice(-1)
+          ;
+
+        for(let i=0, l=nextLineStartContent.length ;i<l; i++) {
+            if(!WHITESPACE.has(nextLineStartContent[i])){
+                nextLinePrecedingWhiteSpace = nextLineStartContent.slice(0, i);
+                nextLineTextContent = nextLineStartContent.slice(i);
+                break;
+            }
+        }
+        addHyphen = _needsHyphen(nextLinePrecedingWhiteSpace
+                                                    , nextLineTextContent
+                                                    , currentLineLastChar);
+    }
     // now repack the first line and undo the rest of the second line ...
-    let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range, resultLine.range, isInitialLine);
+    let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range,
+                             resultLine.range, isInitialLine, addHyphen, false);
 
     let isNarrowAdjusted = adjustmentProperties !== null;
     if(isNarrowAdjusted)
@@ -2169,27 +2208,8 @@ function* _justifyLines(carryOverElement) {
                 break;
         }
 
-        // Maybe here, logical position, we could already find the next line and
-        // by doing so, identify the whitespace between line and next line,
-        // which is important to add a possible hyphen and also to maybe widen
-        // the line, if it was not narrowed.
-        // use: firstLine.wsTextContent, it's the same that gets passed to markupLine()
-        // If there is no next line, there's no hyphen as well.
         if(lastLine) {
             let lastLineLastElem = lastLine[lastLine.length - 1];
-            if(lines.length) {
-                let nextLinePrecedingWhiteSpace = lines[0].wsTextContent
-                  , nextLineTextContent = lines[0].range.toString()
-                  , currentLineLastChar = lastLine[lastLine.length-1].textContent.slice(-1)
-                  , addHyphen = _needsHyphen(nextLinePrecedingWhiteSpace
-                                                            , nextLineTextContent
-                                                            , currentLineLastChar)
-                  ;
-                if(addHyphen){
-                    //console.log('lastLine', lastLine)'
-                    lastLineLastElem.classList.add('r00-l-hyphen');
-                }
-            }
             lastLineLastElem.classList.remove('new-style-current-last-line-elem');
             yield lastLine;
             isInitialLine = false;
@@ -2205,9 +2225,11 @@ function* _justifyLines(carryOverElement) {
             console.log('found a terminal last line:', lines[0].range.toString());
             // do something with firstLine
             firstLine = lines[0];
-            let isTerminalLine = true;
+            let isTerminalLine = true
+              , addHyphen = false
+              ;
             lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range,
-                        firstLine.range, isInitialLine, isTerminalLine);
+                        firstLine.range, isInitialLine, addHyphen, isTerminalLine);
         }
         else {
             [firstLine, secondLine] = lines;

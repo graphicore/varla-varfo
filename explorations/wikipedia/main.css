@@ -1608,7 +1608,7 @@ i, cite, em, var, dfn {
  * does it. It is not enough to leave this rule empty or to not have the
  * rule at all, just adding the class.
  */
-.justification-context-block .new-style-line.new-style-current-last-line-elem::after {
+.justification-context-block .new-style-current-last-line-elem::after {
     content: '';
 }
 
