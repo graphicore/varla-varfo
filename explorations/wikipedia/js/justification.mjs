@@ -1363,6 +1363,10 @@ function* _justifyLines(carryOverElement) {
         carryOverElement.normalize();
     }
     console.log('_justifyLineByWidening with:', linesToWiden.length);
+
+    // Makes white-space: no-wrap;
+    carryOverElement.classList.add('runion-justified-block');
+
     for(let line of linesToWiden) {
         if(_isSoftlyBrokenLine(line))
             continue;
@@ -1468,12 +1472,16 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
         // all the others
         notBlocks.push(node);
     }
-    if(notBlocks.length){
+    if(notBlocks.length) {
         let t0 = performance.now();
         yield* _justifyInlines(notBlocks);
         //for(let _ of _justifyInlines(notBlocks)){};
         total += (performance.now() - t0);
     }
+
+    // Makes white-space: no-wrap; must be removed on unjustify.
+    elem.classList.add('runion-justified-block');
+
     yield ['DONE _justifyBlockElement'];
     return total;
 }
@@ -1614,6 +1622,10 @@ export class JustificationController{
             this._elementLines = null;
         }
         this._elem.classList.remove(this._runionActivatedClass);
+
+        let justifiedBlockClass = '.runion-justified-block';
+        for(let elem of [this._elem, ...this._elem.querySelectorAll(justifiedBlockClass)])
+            elem.classList.remove(justifiedBlockClass);
 
         for(let elem of this._elem.querySelectorAll(skipClass)) {
             elem.classList.remove(skipClass);
