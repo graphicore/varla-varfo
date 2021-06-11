@@ -1576,23 +1576,6 @@ i, cite, em, var, dfn {
     display: block;
 }
 
-/*
- * THIS actually helps to prevent the "paradox mystery of the disappearing
- * textNode": it's there but it's not there...
- * But in Firefox it introduces line breaks that we don't want to see at
- * all, the `white-space: nowrap` of `.runion-01.runion-activated ` is
- * intended to stop those line breaks, but with the new "line by line
- * and narrowing" approach, we cant do this.
- *
- * Incidentally: this does not by itself fix the rendering issue, it looks
- * like this plus the adding and removal of the "new-style-current-last-line-elem"
- * does it. It is not enough to leave this rule empty or to not have the
- * rule at all, just adding the class.
- */
-.justification-context-block .new-style-current-last-line-elem::after {
-    content: '';
-}
-
 /* Prevent Firefox from creating arbitrary breaks while justifying.
  * This also breaks the hyphens of hyphenated lines, creating new lines
  * just for the hyphens, but in the phase of finding and narrowing lines
