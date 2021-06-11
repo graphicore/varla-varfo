@@ -1523,7 +1523,6 @@ function* _justifyNextGenGenerator(elem, skip, options) {
 
 export class JustificationController{
     constructor(elem, skip, options) {
-        this._runionActivatedClass = 'runion-activated';
         this._elem = elem;
         this._skip = skip;
         this._options = options || {};
@@ -1621,7 +1620,6 @@ export class JustificationController{
             }
             this._elementLines = null;
         }
-        this._elem.classList.remove(this._runionActivatedClass);
 
         let justifiedBlockClass = '.runion-justified-block';
         for(let elem of [this._elem, ...this._elem.querySelectorAll(justifiedBlockClass)])
@@ -1675,7 +1673,6 @@ export class JustificationController{
         switch(stepName){
             case 'elementLines':
                 this._elementLines = data;
-                this._elem.classList.add(this._runionActivatedClass);
                 break;
             case 'justifyLine':
                 let [justifiedCount , total, ] = data;
