@@ -1483,10 +1483,6 @@ i, cite, em, var, dfn {
 
 }
 
-.runion-01  .new-style-line {
-    transition: background 3s;
-}
-
 .runion-01 {
     /*
      * This would be  a non-issue if percentages in the CSS
@@ -1507,6 +1503,10 @@ i, cite, em, var, dfn {
 
 .runion-01 .runion-justified-block {
     white-space: nowrap;
+}
+
+.skip-justify {
+    white-space: normal;
 }
 
 /* FIXME: Apply the class .fix-short-section automatically, it's
@@ -1551,7 +1551,6 @@ i, cite, em, var, dfn {
 }
 
 
-.color-coded-lines .new-style-line,
 .color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
      * tend to clip descenders.
@@ -1564,35 +1563,17 @@ i, cite, em, var, dfn {
     mix-blend-mode: darken;
 }
 
-
-.skip-justify {
-    white-space: normal;
-}
-
-
-
 /**
  * Introduce explicit wrapping before each line
  * This normalizes the behavior of Chrome and Firefox, both loose
  * their hyphenation with the first line ::before display: block rule
  * now, we need to mark elements in JS explicitly that require hyphens!.
+ *
+ * Must be unset for first lines to keep text-indent
 */
 .runion-line.r00-l-first::before{
     content: '';
     display: block;
-}
-/* Must be unset for first lines to keep text-indent.*/
-.new-style-line-first-elem::before {
-    content: '';
-    display: block;
-}
-/* FIXME: fails in some cases whith mixed elements on a line, but good for
- * most cases. It's better to have the parent element to be nowrap, but
- * that doesn't fit in well in all cases, e.g. bad while narrowing, bad
- * when not all lines of a container are already marked up.
- */
-.new-style-line{
-    white-space: nowrap;
 }
 
 /*
@@ -1617,21 +1598,14 @@ i, cite, em, var, dfn {
  * just for the hyphens, but in the phase of finding and narrowing lines
  * that is not essential.
  */
-
 .justification-context-block .line-in-progress-first-elem::before,
-.justification-context-block .new-style-line-first-elem::before {
+.justification-context-block .r00-l-first::before {
     content: '';
     display: block;
 }
-.justification-context-block:firstChild .line-in-progress-first-elem::before{
-    content: unset;
-    display: unset;
-}
 
-.justification-context-block .line-in-progress-first-elem.r00-first-line::before,
-.new-style-line-first-elem.r00-first-line::before,
-.runion-line.r00-first-line.r00-l-first::before
-{
+.justification-context-block .r00-first-line.line-in-progress-first-elem::before,
+.runion-line.r00-first-line.r00-l-first::before {
     content: unset;
     display: unset;
 }
@@ -1643,8 +1617,7 @@ i, cite, em, var, dfn {
  * looking for.
  * The heuristic that the adds the hyphen class may still have flaws!
  */
-.runion-line.r00-l-hyphen::after,
-.new-style-line.r00-l-hyphen::after {
+.runion-line.r00-l-hyphen::after {
     content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
                      doesn't do anything*/
 }

@@ -771,9 +771,9 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
     }
     if(addFinalClasses) {
         for(let elem of elements)
-            elem.classList.add('new-style-line');
-        elements[0].classList.add('new-style-line-first-elem');
-        elements[elements.length-1].classList.add('new-style-line-last-elem');
+            elem.classList.add('runion-line');
+        elements[0].classList.add('r00-l-first');
+        elements[elements.length-1].classList.add('r00-l-last');
     }
     else{
         // add in progress classes
