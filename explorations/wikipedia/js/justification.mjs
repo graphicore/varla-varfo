@@ -1296,6 +1296,7 @@ function* _justifyLines(carryOverElement) {
         let continueWithNextSiblings = startNode !== carryOverElement
           , findLinesArguments = [[carryOverElement, [startNode, continueWithNextSiblings], skipUntilAfter]]
           ;
+        // here we hit the "missing textNode paradox" it's there but not there...
         for(let line of findLines(...findLinesArguments)) {
             lines.push(line);
             if(lines.length === 2)
@@ -1304,6 +1305,7 @@ function* _justifyLines(carryOverElement) {
 
         if(lastLine) {
             let lastLineLastElem = lastLine[lastLine.length - 1];
+            lastLineLastElem.classList.remove('new-style-current-last-line-elem');
             yield lastLine;
             isInitialLine = false;
         }
@@ -1347,6 +1349,8 @@ function* _justifyLines(carryOverElement) {
             if(!isNarrowAdjusted)
                 linesToWiden.push(lastLine);
         }
+
+        lastLine[lastLine.length - 1].classList.add('new-style-current-last-line-elem');
 
         // throw new Error('killed here to analyze');
 
