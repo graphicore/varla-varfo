@@ -1523,7 +1523,6 @@ export class JustificationController{
         this._skip = skip;
         this._options = options || {};
         this._gen = null;
-        this._elementLines = null;
         this._timeout = null;
         this._running = false;
         this._statusReporters = new Set();
@@ -1607,23 +1606,23 @@ export class JustificationController{
         this.run();
     }
     _unjustify() {
-        let [, skipClass] = this._skip;
-        if(this._elementLines) {
-            for(let line of this._elementLines) {
-                for(let elem of line) {
-                    elem.replaceWith(...elem.childNodes);
-                }
-            }
-            this._elementLines = null;
-        }
+        let [, skipClass] = this._skip
+          ,  lineClass = 'runion-line'
+          , justifiedBlockClass = 'runion-justified-block'
+          , justificationContextClass = 'justification-context-block'
+          ;
 
-        let justifiedBlockClass = '.runion-justified-block';
-        for(let elem of [this._elem, ...this._elem.querySelectorAll(justifiedBlockClass)])
+        for(let lineElem of this._elem.querySelectorAll(`.${lineClass}`))
+            lineElem.replaceWith(...lineElem.childNodes);
+
+        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${justifiedBlockClass}`)])
             elem.classList.remove(justifiedBlockClass);
 
-        for(let elem of this._elem.querySelectorAll(skipClass)) {
+        for(let elem of this._elem.querySelectorAll(skipClass))
             elem.classList.remove(skipClass);
-        }
+
+        for(let elem of this._elem.querySelectorAll(`.${justificationContextClass}`))
+            elem.remove();
         // IMPORTANT:
         //
         // From MDN:
@@ -1668,7 +1667,6 @@ export class JustificationController{
         let [stepName, data] = yieldVal.value;
         switch(stepName){
             case 'elementLines':
-                this._elementLines = data;
                 break;
             case 'justifyLine':
                 let [justifiedCount , total, ] = data;
