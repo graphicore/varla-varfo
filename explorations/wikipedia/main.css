@@ -1492,13 +1492,30 @@ i, cite, em, var, dfn {
     /* This describes only the change, 0 being no change 1 doubles ws. */
     --word-space: 0; /* multiplier with --word-space-size */
 }
-.runion-01  *,
+
+.runion-01 .runion-line,
 .justification-context-block * {
     /* word-spacing, when using a <length>:
      *          Specifies extra spacing in addition to the intrinsic
      *          inter-word spacing defined by the font.
      */
     word-spacing: calc(var(--word-space-size) * var(--word-space));
+
+     --word-space: clamp(
+            var(--justification-wordspace-min),
+            calc( var(--justification-wordspace-default) + var(--justification-step) * var(--justification-step-wordspace)),
+            var(--justification-wordspace-max)
+        );
+    --letter-space: clamp(
+            var(--justification-tracking-min),
+            calc( var(--justification-tracking-default) + var(--justification-step) * var(--justification-step-tracking)),
+            var(--justification-tracking-max)
+        );
+    --font-stretch: clamp(
+            var(--justification-xtra-min),
+            calc( var(--justification-xtra-default) + var(--justification-step) * var(--justification-step-xtra)),
+            var(--justification-xtra-max)
+        );
 }
 
 .runion-01 .runion-justified-block {
