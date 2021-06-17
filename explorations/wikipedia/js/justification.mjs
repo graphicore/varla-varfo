@@ -20,22 +20,22 @@ function* _deepTextGen(node, [skipSelector, skipClass]) {
     if(node && skipSelector && node.nodeType === Node.ELEMENT_NODE && node.matches(skipSelector)){
         if(skipClass)
             node.classList.add(skipClass);
+        return;
     }
-    else if(node) {
-        // Only if node is an element, otherwise, assert it's a text
-        // node and continue with it and then it's nextSiblinds...
-        // this way we can start the generator in the middle of an element.
-        if(node.nodeType === Node.ELEMENT_NODE && !continueWithNextSiblings)
-            node = node.firstChild;
-        while(node !== null) {
-            if(node.nodeType === Node.TEXT_NODE)
-                yield node;
-            else if(node.nodeType === Node.ELEMENT_NODE) {
-                yield* _deepTextGen(node, [skipSelector, skipClass]);
-            }
-            // else: skip, is COMMENT_NODE or such
-            node = node.nextSibling;
+    // Only if node is an element, otherwise, assert it's a text
+    // node and continue with it and then it's nextSiblinds...
+    // this way we can start the generator in the middle of an element.
+    if(node.nodeType === Node.ELEMENT_NODE && !continueWithNextSiblings)
+        // Only descent into the node but do not use node.nextSibling.
+        node = node.firstChild;
+    while(node !== null) {
+        if(node.nodeType === Node.TEXT_NODE)
+            yield node;
+        else if(node.nodeType === Node.ELEMENT_NODE) {
+            yield* _deepTextGen(node, [skipSelector, skipClass]);
         }
+        // else: skip, is COMMENT_NODE or such
+        node = node.nextSibling;
     }
 }
 
@@ -139,10 +139,13 @@ class Line {
             nodes = this.nodes;
             range = this.range;
         }
+        let forReporting = nodes.slice();
         while(node !== nodes[nodes.length-1]) {
             nodes.pop();
-            if(!nodes.length)
-                throw new Error('Node not found in nodes!');
+            if(!nodes.length) {
+                console.warn('node:', node, ' not in nodes:', ...forReporting);
+                throw new Error(`undoSetIndex: node not found "${node.data}"!`);
+            }
         }
         this.setIndex(node, index);
     }
@@ -272,47 +275,60 @@ function _isOutOfFlowContext(elem) {
  *       pipeline with the following transformations, if we keep doing
  *       those from back to front.
  */
-function* findLines(elem, skip=[null, null]) {
+function* findLines(deepTextElem, skip=[null, null]) {
     var textNodesGen
-      , container // = elem.nodeType === Node.ELEMENT_NODE ? elem : elem.parentElement
-      , skipUntilAfter = null
+      , container
+      , skipUntil = null
+      , skipUntilInclude = false
       , currentLine = null
       , last = null
+      , initialEndNodeIndex = null
       ;
 
-    if(Array.isArray(elem)){
-        [container, elem, skipUntilAfter] = elem;
+    if(Array.isArray(deepTextElem)) {
+        [container, deepTextElem, skipUntil] = deepTextElem;
+        if(skipUntil instanceof Line) {
+            // In this case we expect that we reconsider a line that was
+            // produced by this generator before, only intended for the
+            // narrowing case, where the line can have more content after
+            // adjusting the font spec.
+            currentLine = skipUntil;
+            skipUntil = currentLine.range.endContainer;
+            skipUntilInclude = true;
+            initialEndNodeIndex = currentLine.range.endOffset;
+            last = [skipUntil, initialEndNodeIndex];
+        }
     }
     else
-        container = elem;
+        container = deepTextElem;
 
-    // console.log('findLines starting _deepTextGen with:', elem, elem.textContent);
-    textNodesGen = _deepTextGen(elem, skip);
+    textNodesGen = _deepTextGen(deepTextElem, skip);
 
     // NOTE: i/maxI is for development and debugging only to limit
     // the algorithm.
     let i=0
       , maxI = Infinity;//3000; --> this can be controlled by the caller
-    while(true) {
-        let rv = textNodesGen.next();
-        if(rv.done) {
-            // No more textNodes.
-            break;
-        }
-        let endNode = rv.value;
-        if(skipUntilAfter) {
-            //console.log('SKIPPING:', endNode.textContent);
-            if(skipUntilAfter === endNode){
-                // console.log('That was the last skip');
-                // the node after this node wont be skipped anymore
-                skipUntilAfter = null;
+    for(let endNode of textNodesGen) {
+        // TODO: the skipUntil stuff could be part of _deepTextGen
+        if(skipUntil) {
+            if(skipUntil === endNode) {
+                skipUntil = null;
+                if(!skipUntilInclude)
+                    // the node after this node won't be skipped anymore
+                    continue;
+                // this node is not skipped anymore
             }
-            // continue anyways
-
-            continue;
+            else continue;
         }
-
         let endNodeIndex = 0;
+        if(initialEndNodeIndex !== null) {
+            endNodeIndex = initialEndNodeIndex;
+            initialEndNodeIndex = null;
+            if(endNode !== currentLine.range.endContainer) {
+                throw new Error('Assertion failed, endNode must be '
+                                     + 'currentLine.range.endContainer');
+            }
+        }
 
         // Seems necessary to keep/not filter some of these e.g.
         // keep ' ' when tuning word-space, also for detecting if
@@ -850,6 +866,7 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
                                                 secondLine, isInitialLine) {
     let spans = [], nodes
       , bothLinesTextContent
+      , firstLineTextContent = firstLine.range.toString()
       ;
     {
         let range = new Range();
@@ -902,27 +919,25 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     // the first line further.
 
     // find the current first line:
-    let getStartLineContent=()=> {
+    let getStartLineContent=(findLinesArguments)=> {
             // TODO: findLines could be more efficient if we could give it
             // the last line and see if it got wider...
-            let startLineResult = findLines(...findLinesArguments).next();
-            if(startLineResult.done)
-                // We just put that line there, it must be there!
-                throw new Error('Assertion failed, finding a line is mandatory.');
-            return [startLineResult.value.range.toString(), startLineResult.value];
+            for(let startLine of findLines(...findLinesArguments))
+                return [startLine.range.toString(), startLine];
+            // We just put that line there, it must be there!
+            throw new Error('Assertion failed, finding a line is mandatory.');
         }
-      , [startLineContent, ] = getStartLineContent()
+      , [startLineContent, ] = getStartLineContent(findLinesArguments)
       ;
-    // console.log('startNodeElement', startNodeElement);
-    // FIXME: Seems like this is not always true, as the browser may decide to
-    // change line breaking. startLineContent appears to be correct in the
-    // particular I was able to observe.
+
     // assert it has the same content as the initial firstLine
-    // let startNodeElement = _getDirectChild(carryOverElement, spans[0])
-    //if(firstLineTextContent !== startLineContent)
-    //    throw new Error(`Assertion failed, firstLineTextContent must equal `
-    //        + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
-    //        + `vesus "${startLineContent}".\nstartNodeElement was ${startNodeElement.tagName} ${startNodeElement.textContent}`);
+    // FIXME: this seems to find legitimate issues (I have one in Firefox 4
+    // column layout).
+    if(firstLineTextContent !== startLineContent)
+         // throw new Error
+         console.warn(`Assertion failed, firstLineTextContent must equal `
+             + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
+             + `vesus "${startLineContent}"`);
 
    let resultLine = null
       , currentLine = null
@@ -956,7 +971,27 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
         step = adjustmentVal.value;
         adjust(spans, step);
         let currentLineContent;
-        [currentLineContent, currentLine] = getStartLineContent();
+        if(!currentLine)
+            [currentLineContent, currentLine] = getStartLineContent(findLinesArguments);
+        else {
+            let [firstFindLinesArg, skip] = findLinesArguments
+                // _deepTextGen must be initiated with the same arguments
+                // so it produces the same list of TextNodes again, however
+                // we can skip some of those to get quicker to the interesting
+                // part, which is the position where currentLine had a line
+                // break in the iteration before.
+                //
+                // firstFindLinesArg = [container, deepTextElem, skipUntil] = elem;
+              , newFirstFindLinesArg = [
+                      firstFindLinesArg[0] // i.e. container; carryOverElement,
+                    , firstFindLinesArg[1] // deepTextElem = [node, continueWithNextSiblings]
+                      // NOTE: this will modify currentLine.
+                    , currentLine // skipUntil, to reconsider the line
+                ]
+              , newFindLinesArguments = [newFirstFindLinesArg, skip]
+              ;
+            [currentLineContent, currentLine] = getStartLineContent(newFindLinesArguments);
+        }
         if(startLineContent !== currentLineContent) {
             if(startLineContent.length >= currentLineContent.length) {
                 // Turns out that this happens sometimes depending on how
@@ -1170,7 +1205,14 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
         }
 
         let continueWithNextSiblings = startNode !== carryOverElement
-          , findLinesArguments = [[carryOverElement, [startNode, continueWithNextSiblings], skipUntilAfter]]
+          , findLinesArguments = [[
+                carryOverElement, // container, needed for bounding rect
+                // for _deepTextGen [node, continueWithNextSiblings]
+                // The second argument  only has an effect if the first
+                // argument is a ELEMENT_NODE.
+                [startNode, continueWithNextSiblings], //
+                skipUntilAfter // skips nodes, until this node, including this node
+            ]]
           ;
         // Here we hit the "missing textNode mystery" in Chrome/Chromium:
         // it's there but not there...
@@ -1321,7 +1363,7 @@ function* _justifyBlockElement(elem, stops, [skipSelector, skipClass], options) 
                     // also change the elements in place...
                     let t0 = performance.now();
                     yield* _justifyInlines(notBlocks, stops);
-                    //for(let _ of _justifyInlines(notBlocks)){};
+                    // for(let _ of _justifyInlines(notBlocks, stops)){};
                     total += (performance.now() - t0);
                     notBlocks = [];
                     yield ['DONE _justifyInlines'];
@@ -1345,7 +1387,7 @@ function* _justifyBlockElement(elem, stops, [skipSelector, skipClass], options) 
     if(notBlocks.length) {
         let t0 = performance.now();
         yield* _justifyInlines(notBlocks, stops);
-        //for(let _ of _justifyInlines(notBlocks)){};
+        // for(let _ of _justifyInlines(notBlocks, stops)){};
         total += (performance.now() - t0);
     }
 
