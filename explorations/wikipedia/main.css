@@ -610,6 +610,10 @@ button.toggle-user_settings {
 }
 
 .widgets_container {
+
+    --font-family: RobotoFlex;
+    --font-stretch: 460;
+
     max-width: 27rem;
     border: 1px solid black;
     background: #fffffff4;
@@ -639,12 +643,10 @@ button.toggle-user_settings {
 }
 
 .widgets_container legend{
-    font-family: AmstelVar;
     --font-weight: 600;
 }
 
 .widgets_container h3 {
-    font-family: AmstelVar;
     margin: .5em 0;
     --font-weight: 500;
 }
@@ -1234,7 +1236,7 @@ img {
 #mw-panel {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 400;
+    --font-stretch: 460;
 }
 .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
     --font-size:  calc(3/4 * var(--default-font-size));
@@ -1245,7 +1247,7 @@ img {
 h1, h2, h3, h4 {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 400;
+    --font-stretch: 460;
 }
 h1 {
     --font-size: calc(9/5 * var(--default-font-size));
@@ -1255,22 +1257,17 @@ h2 {
     --font-size: calc(3/2 * var(--default-font-size));
     --font-weight: 500;
 }
-h3 {
+h3, h4 {
     --font-size: calc(3/2 * var(--default-font-size));
     --font-weight: 400;
 }
 
 .mw-body-content h3, .mw-body-content h4 {
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 400;
     --font-size: calc(3/2 * var(--default-font-size));
     --font-weight: 400;
 }
 
 .vector-menu-portal h3 {
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-size: calc(3/4 * var(--default-font-size));
     --font-weight: 400;
 }
