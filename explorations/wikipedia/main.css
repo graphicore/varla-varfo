@@ -491,7 +491,7 @@ a {
     background-size: 100% 1px;
 
     color: #54595d;
-    margin: 0.5em 0 0 0.66666667em;
+    margin: 0.5em 0 0 0;
     border: 0;
     padding: 0.25em 0;
     cursor: default;
@@ -1281,7 +1281,7 @@ h3, h4 {
 
 .vector-menu-portal h3 {
     --font-size: calc(3/4 * var(--default-font-size));
-    --font-weight: 400;
+    --font-weight: 500;
 }
 
 .mw-editsection, .mw-editsection-like {
