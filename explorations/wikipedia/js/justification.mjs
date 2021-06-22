@@ -836,20 +836,43 @@ function _getFontSpec(referenceElement) {
     let elemStyle = referenceElement.ownerDocument.defaultView.getComputedStyle(referenceElement)
       , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
       , fontSizePt = fontSizePx * 0.75
-        //This is Amstelvar opsz 14 PT, 400 weight, 100 width:
+      , fontFamily = elemStyle.getPropertyValue('--font-family').trim()
+        // This is AmstelVar
+        //   opsz 14 PT, 400 weight, 100 width:
         //          (min, default, max)
         //      XTRA: 515, 562, 580 || increment :1 range: 75
         //      Track: -.4, 0, .2 || increment: ? range: .6
         //      word-space: 8/14, 14/14, 18/14 || increment: ? range: 10/14
         //
-        // opsz 8, 400 weight, 100 width:
+        //   opsz 8, 400 weight, 100 width:
         //      XTRA: 545, 562, 580 || increment: 1 range 35
         //      Track: -.1, 0, .25 || increment: ? range .35
         //      word-space: 6/8, 8/8, 12/8 || increment: ? range: 4/8
-      , fontSpecConfig = {
+      , fontSpecConfigAmstelVar = {
             14: {XTRA: [515, 562, 580], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
            , 8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/,   12/8 - 1]}
         }
+        // This is RobotoFlex
+        //   opsz 14 PT, 400 weight, 100 width:
+        //          (min, default, max)
+        //      XTRA: 460, 468, 471
+        //      Track: -.1, 0, .13
+        //      word-space: 12/14, 14/14, 19/14
+        //
+        //   opsz 8, 400 weight, 100 width:
+        //      XTRA: 462, 468, 475
+        //      Track: -.06, 0, .2
+        //      word-space: 7/8, 8/8, 14/8
+
+      , fontSpecConfigRobotoFlex = {
+            14: {XTRA: [460, 468, 471], tracking:[-0.1, 0, 0.13],  wordspace: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
+           , 8: {XTRA: [462, 468, 475], tracking:[-0.06, 0, 0.2], wordspace: [7/8 - 1, 1 - 1 /*8/8*/,   14/8 - 1]}
+        }
+      , fontSpecConfigs = {
+            AmstelVar: fontSpecConfigAmstelVar
+          , RobotoFlex: fontSpecConfigRobotoFlex
+        }
+      , fontSpecConfig = fontSpecConfigs[fontFamily]
       , spec = {}
       , upperFontSize = 14
       , lowerFontSize = 8
@@ -858,8 +881,18 @@ function _getFontSpec(referenceElement) {
     for(let k of Object.keys(fontSpecConfig[upperFontSize]))
         spec[k] = _interpolateArray(t, fontSpecConfig[upperFontSize][k],
                                       fontSpecConfig[lowerFontSize][k]);
-    console.log('Font Spec for',fontSizePt, 'pt:', spec);
+    console.log(`Font Spec for ${fontFamily} @ ${fontSizePt} pt:`, spec);
     return [spec, fontSizePx, fontSizePt];
+}
+
+
+function _getFontSpecKey(elem) {
+    let elemStyle = elem.ownerDocument.defaultView.getComputedStyle(elem)
+      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
+      , fontSizePt = fontSizePx * 0.75
+      , fontFamily = elemStyle.getPropertyValue('--font-family')
+      ;
+    return `${fontFamily}@${fontSizePt}pt`;
 }
 
 function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
@@ -1341,8 +1374,7 @@ function* _justifyInlines(notBlockNodes, stops) {
     range.deleteContents();
 }
 
-function* _justifyBlockElement(elem, stops, [skipSelector, skipClass], options) {
-    // console.log('_justifyBlockElement', elem);
+function* _justifyBlockElement(elem, fontSpecKey, stops, [skipSelector, skipClass], options) {
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
@@ -1372,7 +1404,13 @@ function* _justifyBlockElement(elem, stops, [skipSelector, skipClass], options) 
                 }
                 if(!skip){
                     // changes the node in place
-                    total += yield* _justifyBlockElement(node, stops, [skipSelector, skipClass], options);
+
+                    // FIXME: could/should be handled in _justifyNextGenGenerator
+                    let fontSpecChanges = _getFontSpecKey(node) !== fontSpecKey;
+                    if(!fontSpecChanges)
+                        total += yield* _justifyBlockElement(node, fontSpecKey, stops, [skipSelector, skipClass], options);
+                    else
+                        total += yield* _justifyNextGenGenerator(node, [skipSelector, skipClass], options);
 
                 }
                 else if(skipClass)
@@ -1390,11 +1428,6 @@ function* _justifyBlockElement(elem, stops, [skipSelector, skipClass], options) 
         // for(let _ of _justifyInlines(notBlocks, stops)){};
         total += (performance.now() - t0);
     }
-
-    // Makes white-space: no-wrap; must be removed on unjustify.
-    elem.classList.add('runion-justified-block');
-
-    yield ['DONE _justifyBlockElement'];
     return total;
 }
 
@@ -1413,6 +1446,7 @@ function _getWordSpaceForElement(elem) {
     return wordSpacingPx;
 }
 
+// this can essentially be used as just a wrapper around _justifyBlockElement
 function* _justifyNextGenGenerator(elem, skip, options) {
     // Just like the original _justifyGenerator, this needs to perform
     // some general environment massages.
@@ -1424,6 +1458,7 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     console.log('--word-space-size', `${wsPx}px`);
 
     let [fontSpec/*, fontSizePx, fontSizePt*/] = _getFontSpec(elem)
+      , fontSpecKey = _getFontSpecKey(elem)
       , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
       , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
       , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
@@ -1465,11 +1500,16 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     elem.style.setProperty('--justification-wordspace-max', `${wordspaceMax}`);
 
     let t0 = performance.now();
-    let total = yield* _justifyBlockElement(elem, [narrowingStops, wideningStops], skip, options);
+    let total = yield* _justifyBlockElement(elem, fontSpecKey, [narrowingStops, wideningStops], skip, options);
     let t1 = performance.now();
+    // Makes white-space: no-wrap; must be removed on unjustify.
+    elem.classList.add('runion-justified-block');
+    yield ['DONE _justifyBlockElement'];
+
     console.log(`time in _justifyBlockElement ${(t1-t0) /1000} s`);
     console.log(`time in _justifyInlines ${total/1000} s`);
     yield ['did _justifyBlockElement'];
+    return total;
 }
 
 export class JustificationController{
@@ -1564,38 +1604,37 @@ export class JustificationController{
         let [, skipClass] = this._skip
           ,  lineClass = 'runion-line'
           , justifiedBlockClass = 'runion-justified-block'
+
           , justificationContextClass = 'justification-context-block'
           ;
 
         for(let lineElem of this._elem.querySelectorAll(`.${lineClass}`))
             lineElem.replaceWith(...lineElem.childNodes);
 
-        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${justifiedBlockClass}`)])
+        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${justifiedBlockClass}`)]) {
             elem.classList.remove(justifiedBlockClass);
-
+            for(let propertyName of [
+                                  '--word-space-size'
+                                , '--justification-step-xtra'
+                                , '--justification-xtra-min'
+                                , '--justification-xtra-default'
+                                , '--justification-xtra-max'
+                                , '--justification-step-tracking'
+                                , '--justification-tracking-min'
+                                , '--justification-tracking-default'
+                                , '--justification-tracking-max'
+                                , '--justification-step-wordspace'
+                                , '--justification-wordspace-min'
+                                , '--justification-wordspace-default'
+                                , '--justification-wordspace-max'
+                                ])
+                elem.style.removeProperty(propertyName);
+        }
         for(let elem of this._elem.querySelectorAll(skipClass))
             elem.classList.remove(skipClass);
 
         for(let elem of this._elem.querySelectorAll(`.${justificationContextClass}`))
             elem.remove();
-
-
-        for(let propertyName of [
-                              '--word-space-size'
-                            , '--justification-step-xtra'
-                            , '--justification-xtra-min'
-                            , '--justification-xtra-default'
-                            , '--justification-xtra-max'
-                            , '--justification-step-tracking'
-                            , '--justification-tracking-min'
-                            , '--justification-tracking-default'
-                            , '--justification-tracking-max'
-                            , '--justification-step-wordspace'
-                            , '--justification-wordspace-min'
-                            , '--justification-wordspace-default'
-                            , '--justification-wordspace-max'
-                            ])
-            this._elem.style.removeProperty(propertyName);
 
         // IMPORTANT:
         //

@@ -612,7 +612,7 @@ button.toggle-user_settings {
 .widgets_container {
 
     --font-family: RobotoFlex;
-    --font-stretch: 460;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 
     max-width: 27rem;
     border: 1px solid black;
@@ -853,6 +853,18 @@ label.portal_augmentation-amplify_grade::after {
 
 
 }
+
+
+.thumb {
+    --font-family: RobotoFlex;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    /*
+     *  9 pt if default is 12 pt, same as in wikipedia page UI:
+     * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
+     */
+    --font-size: calc(3/4 * var(--default-font-size));
+}
+
 
 /**
 columns /* caution: e.g. firefox has bad support for break-after * /
@@ -1236,7 +1248,7 @@ img {
 #mw-panel {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 460;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
     --font-size:  calc(3/4 * var(--default-font-size));
@@ -1247,7 +1259,7 @@ img {
 h1, h2, h3, h4 {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 460;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 h1 {
     --font-size: calc(9/5 * var(--default-font-size));
