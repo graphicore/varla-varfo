@@ -1261,22 +1261,44 @@ h1, h2, h3, h4 {
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
-h1 {
-    --font-size: calc(9/5 * var(--default-font-size));
-    --font-weight: 600;
+h1 { /* headline */
+    /*--font-size: calc(9/5 * var(--default-font-size));*/
+    --font-size: calc(3 * var(--default-font-size));
+    --font-weight: 700;
 }
-h2 {
-    --font-size: calc(3/2 * var(--default-font-size));
-    --font-weight: 500;
-}
-h3, h4 {
+
+#siteSub {
+    /* This functions as the "subhead", but it seems to be:
+     * "From Wikipedia, the free encyclopedia" in every case!
+     */
+    --font-family: AmstelVar;
+    --grad-animation-name: AmstelVar-grad-by-font-size;
     --font-size: calc(3/2 * var(--default-font-size));
     --font-weight: 400;
 }
 
-.mw-body-content h3, .mw-body-content h4 {
-    --font-size: calc(3/2 * var(--default-font-size));
+h2 { /* subsection headline */
+    /*--font-size: calc(3/2 * var(--default-font-size));*/
+    --font-size: calc(7/3 * var(--default-font-size));
+    --font-weight: 600;
+}
+h3 { /* sub-subsection headline */
+    /*--font-size: calc(3/2 * var(--default-font-size));*/
+    --font-size: calc(7/3 * var(--default-font-size));
+    --font-weight: 500;
+}
+h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
+    /*--font-size: calc(3/2 * var(--default-font-size));*/
+    --font-size: calc(7/3 * var(--default-font-size));
     --font-weight: 400;
+}
+
+.templatequote {
+    --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-size: calc(2 * var(--default-font-size));
+    --font-weight: 100;
 }
 
 .vector-menu-portal h3 {
