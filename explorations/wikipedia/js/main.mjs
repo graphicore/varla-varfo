@@ -891,8 +891,10 @@ function fixCSSKeyframes(document) {
     }
 }
 
-function massageWikipediaMarkup(document) {
-    document.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
+function massageWikipediaMarkup(documentOrElement) {
+    documentOrElement.querySelectorAll('.thumbinner').forEach(e=>e.style.width='');
+    (documentOrElement.body || documentOrElement).querySelectorAll('style').forEach(e=>e.remove());
+
     // These "thumbs" with ".tright" are originally "float: right" but in column
     // layout, there's not much use of floating elements, because we strive
     // to make columns narrow, so there's not enough space for floating.
@@ -904,7 +906,7 @@ function massageWikipediaMarkup(document) {
     // CAUTION: This only needs to be good enough for the demo document,
     //          it will likely fail on other wikipedia articles.
     let selectorSectioningStuff = '#toc, h1, h2, h3';
-    for(let tright of document.querySelectorAll('.thumb.tright')){
+    for(let tright of documentOrElement.querySelectorAll('.thumb.tright')){
         let sibling = tright.nextElementSibling;
         while(sibling){
             if(sibling.matches(selectorSectioningStuff)) {
@@ -916,48 +918,127 @@ function massageWikipediaMarkup(document) {
     }
 }
 
+async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, location, console}, evt) {
+    let a = evt.target.closest('a');
+    if(!a) return false;
+    let originalURL = new URL(a.href)
+      , handledHostnames = new Set([
+            location.hostname,
+            'en.wikipedia.org'
+        ])
+      ;
+    if(!handledHostnames.has(originalURL.hostname)) {
+        console.log('[handleWikiLink] unhandled host-name:', originalURL.hostname);
+        return false;
+    }
+
+    const wikiPath = '/wiki/';
+    if(originalURL.pathname.indexOf(wikiPath) !== 0) {
+        console.log('[handleWikiLink] unhandled path-name:', originalURL.pathname);
+        return false;
+    }
+    let page = originalURL.pathname.slice(wikiPath.length).trim();
+
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+
+    // API:
+    // https://en.wikipedia.org/w/api.php
+    // e.g.: https://en.wikipedia.org/w/api.php?action=help&recursivesubmodules=1
+    // https://en.wikipedia.org/w/api.php?action=query&titles=Belgrade&prop=extracts&format=json&exintro=1
+    var searchParams = new URLSearchParams({
+            format: 'json'
+          , origin: '*' // mediawiki CORS magic!!!
+          // We can get the language links for the page from the query action:
+          //        https://en.wikipedia.org/w/api.php?action=help&modules=query
+          //        prop: '2Blanglinks'
+          //        see: https://en.wikipedia.org/w/api.php?action=help&modules=query%2Blanglinks
+          // , action: 'query'
+          // , prop: 'extracts'
+          // , titles: 'Belgrade'
+          , action: 'parse'
+          , prop: 'text'
+          , formatversion: 2
+          , page: page
+        })
+      , url
+      ;
+    searchParams.sort();
+    // Only english wikipedia for the moment.
+    url = new URL('w/api.php', 'https://en.wikipedia.org/');
+    url.search = searchParams;
+
+    let response = await fetch(url)
+      , data = await response.json()
+      , domTool = new DOMTool(document)
+      , frag = domTool.createFragmentFromHTML(data.parse.text)
+      , target = document.querySelector('.mw-parser-output')
+      , h1 = document.querySelector('h1')
+      ;
+    h1.textContent = data.parse.title;
+    target.replaceWith(...frag.children);
+    target = document.querySelector('.mw-parser-output');
+    massageWikipediaMarkup(target);
+    return true;
+}
+
 function main() {
     massageWikipediaMarkup(document);
     setDefaultFontSize(document);
 
-    let runionTargetSelector = '.runify-01, .mw-parser-output';
-
-    // FIXME: we should be able to use this with more than one element.
-    //        as runion_01 is applied to all matching elements as well
-    // FIXME:
-    //      run this only always after runion_01 is finished!
-    let runion01Elem = document.querySelector(runionTargetSelector)
-      , skip = [
+    let justificationController = null
+      , userSettingsWidget = null
+      , userSettingsWidgetContainer = document.querySelector('.insert_user_settings')
+      , runionTargetSelector = '.runify-01, .mw-parser-output'
+      , justificationSkip = [
             /* skipSelector selects elements to skip*/
             '.hatnote, #toc, h1, h2, h3, ul, ol, blockquote, table, .do-not-jsutify',
             /* skipClass: added to skipped elements */
             'skip-justify'
-        ]
-      , justificationController = new JustificationController(runion01Elem, skip)
+       ]
+      , toggleUserSettingsWidget = null
       ;
 
 
+    let initContent = () => {
+        if(justificationController !== null) {
+            justificationController.destroy();
+            justificationController = null;
+        }
+        if(userSettingsWidget !== null) {
+            userSettingsWidget.destroy();
+            userSettingsWidget = null;
+        }
+        // FIXME: we should be able to use this with more than one element.
+        //        as runion_01 is applied to all matching elements as well
+        // FIXME:
+        //      run this only always after runion_01 is finished!
+        let runion01Elem = document.querySelector(runionTargetSelector);
+        justificationController = new JustificationController(runion01Elem, justificationSkip);
+        userSettingsWidget = new WidgetsContainerWidget(
+                        userSettingsWidgetContainer,
+                        [
+                            [PortalAugmentationWidget, justificationController],
+                            UserPreferencesWidget
+                        ]);
+        let toggle = (/*evt*/)=>{
+            let top = `${window.scrollY}px`;
+            if(!userSettingsWidget.isActive ||
+                    top === userSettingsWidget.container.style.getPropertyValue('top'))
+                // If it is active and in view we turn if off.
+                userSettingsWidget.toggle();
 
-    let userSettingsWidget = new WidgetsContainerWidget(
-                    document.querySelector('.insert_user_settings'),
-                    [
-                        [PortalAugmentationWidget, justificationController],
-                        UserPreferencesWidget
-                    ]);
-    let toggle = (/*evt*/)=>{
-        let top = `${window.scrollY}px`;
-        if(!userSettingsWidget.isActive ||
-                top === userSettingsWidget.container.style.getPropertyValue('top'))
-            // If it is active and in view we turn if off.
-            userSettingsWidget.toggle();
-
-        if(userSettingsWidget.isActive)
-            userSettingsWidget.container.style.setProperty('top', top);
-
+            if(userSettingsWidget.isActive)
+                userSettingsWidget.container.style.setProperty('top', top);
+        };
+        for(let elem of document.querySelectorAll('.toggle-user_settings')) {
+            if(toggleUserSettingsWidget !== null) {
+                elem.removeEventListener('click', toggleUserSettingsWidget);
+            }
+            elem.addEventListener('click', toggle);
+        }
+        toggleUserSettingsWidget = toggle;
     };
-    for(let elem of document.querySelectorAll('.toggle-user_settings'))
-        elem.addEventListener('click', toggle);
-
 
     // Must be executed on viewport changes as well as on userSettings
     // changes. User-Zoom changes should also trigger resize, so our own
@@ -1008,10 +1089,24 @@ function main() {
                 justificationController.run();
         }
       ;
+
+    initContent();
     // This will most likely be executed by the USER_SETTINGS_EVENT handler
     // so here's a way to cancel this fail-safe initial call.
     scheduleUpdateViewport();
     window.addEventListener('resize', scheduleUpdateViewport);
     window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
+
+    window.document.addEventListener(
+                    'click'
+                  , evt=>handleWikiLink(window, evt)
+                            .then((updated)=>{
+                                if(!updated)
+                                    return false;
+                                initContent();
+                                scheduleUpdateViewport();
+                            })
+                            .then(null,err=>window.console.error(err))
+                  , false);
 }
 window.onload = main;
