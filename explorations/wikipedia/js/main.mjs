@@ -921,12 +921,23 @@ function massageWikipediaMarkup(documentOrElement) {
 async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, location, console}, evt) {
     let a = evt.target.closest('a');
     if(!a) return false;
+    let changeLang = null
+      , currentLang = document.documentElement.getAttribute('lang')
+      ;
+
+    // The link is going to change the language of the document
+    // this is a good indication for the wikipedia markup not in general
+    if(a.hasAttribute('hreflang')){
+        changeLang = a.getAttribute('hreflang');
+    }
     let originalURL = new URL(a.href)
       , handledHostnames = new Set([
             location.hostname,
-            'en.wikipedia.org'
+            `${currentLang}.wikipedia.org`,
+            ...(changeLang ? [`${changeLang}.wikipedia.org`] : []),
         ])
       ;
+
     if(!handledHostnames.has(originalURL.hostname)) {
         console.log('[handleWikiLink] unhandled host-name:', originalURL.hostname);
         return false;
@@ -937,7 +948,7 @@ async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, loca
         console.log('[handleWikiLink] unhandled path-name:', originalURL.pathname);
         return false;
     }
-    let page = originalURL.pathname.slice(wikiPath.length).trim();
+    let page = decodeURIComponent(originalURL.pathname.slice(wikiPath.length)).trim();
 
     evt.preventDefault();
     evt.stopImmediatePropagation();
@@ -964,13 +975,20 @@ async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, loca
       , url
       ;
     searchParams.sort();
-    // Only english wikipedia for the moment.
-    url = new URL('w/api.php', 'https://en.wikipedia.org/');
+    // construct url because we likely serve from location.hostname
+    // which is e.g. https://graphicore.github.io/ or localhost:8080
+    url = new URL('w/api.php', `https://${changeLang || currentLang}.wikipedia.org/`);
     url.search = searchParams;
 
     let response = await fetch(url)
       , data = await response.json()
-      , domTool = new DOMTool(document)
+      ;
+
+
+    // FIXME: handle error documents returned from the API here!
+    // console.log('from', url ,'received data:', data);
+
+    let domTool = new DOMTool(document)
       , frag = domTool.createFragmentFromHTML(data.parse.text)
       , target = document.querySelector('.mw-parser-output')
       , h1 = document.querySelector('h1')
@@ -979,6 +997,15 @@ async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, loca
     target.replaceWith(...frag.children);
     target = document.querySelector('.mw-parser-output');
     massageWikipediaMarkup(target);
+    if(changeLang) {
+        // TODO: changing the "dir" attribute and changing the layout
+        // to rtl direction is not supported yet. However, we don't have
+        // fonts for those cases yet as well.
+        for(let elem of document.querySelectorAll(
+                `[lang=${currentLang}]:not([hreflang],p *, i, span, em, b, strong)`)){
+            elem.setAttribute('lang', changeLang);
+        }
+    }
     return true;
 }
 
