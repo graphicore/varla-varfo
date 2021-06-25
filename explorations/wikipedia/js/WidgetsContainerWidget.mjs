@@ -74,5 +74,18 @@ export default class WidgetsContainerWidget {
         else
             this.activate();
     }
+    destroy() {
+        // Hardly implemented so far, but removing this.container from
+        // the document should suffice. It's interesting that close is
+        // implemented similarly, however, I like to explicitly keep the
+        // implementations apart, as the semantic is different. Destroy
+        // means it must be save to have the widget purged from memory
+        // and that it will be garbage collected when the caller/creator
+        // reference(s) is(are) gone.
+        for(let widget of this._widgets)
+            if(widget.destroy)
+                widget.destroy();
+        this._domTool.removeNode(this.container);
+    }
 
 }

@@ -1688,4 +1688,7 @@ export class JustificationController{
         // schedule next round
         this._scheduleIterate();
     }
+    destroy() {
+        this.cancel();
+    }
 }
