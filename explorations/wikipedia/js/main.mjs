@@ -594,8 +594,8 @@ function _runion_01_columns(availableWidthEn) {
         // otherwise inbetween.
         // never smaller than 1
         // As long as we don't adjust YTRA min should be 5% that's 1 + 0.05.
-       , minLineHeight = 1.05
-       , maxLineHeight = 1.2
+       , minLineHeight = 1.1
+       , maxLineHeight = 1.3
        , calcLineHeight=(lineLengthEn)=>{
             const lineLengthPos = lineLengthEn-minLineLength
                 , lineLengthRange = maxLineLength - minLineLength
