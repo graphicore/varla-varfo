@@ -1,6 +1,8 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
 import DOMTool from '../../calibrate/js/domTool.mjs';
 
+export const ID = Symbol('id');
+
 const WIDGETS_CONTAINER_NO_CLOSE_TEMPLATE = `
 <!-- insert: child widgets -->
 `;
@@ -28,6 +30,7 @@ export default class WidgetsContainerWidget {
             elem.addEventListener('click', ()=>this.close());
 
 
+        this._widgetsById = null;
         this._widgets = [];
         let children = this._baseElement.ownerDocument.createDocumentFragment();
         for(let Widget of widgets) {
@@ -86,6 +89,22 @@ export default class WidgetsContainerWidget {
             if(widget.destroy)
                 widget.destroy();
         this._domTool.removeNode(this.container);
+    }
+    getWidgetById(id) {
+        if(!this._widgetsById){
+            this._widgetsById = new Map();
+            for(let widget of this._widgets) {
+                if(!(ID in widget))
+                    continue;
+                if(this._widgetsById.has(widget[ID]))
+                    throw new Error(`Widget-ID already in use: ${widget[ID]}`);
+                this._widgetsById.set(widget[ID], widget);
+            }
+        }
+        let widget = this._widgetsById.get(id);
+        if(!widget)
+            throw new Error(`KeyError getWidgetById not found: ${id}`);
+        return widget;
     }
 
 }

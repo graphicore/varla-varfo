@@ -1,9 +1,8 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
 import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
-import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
+import WidgetsContainerWidget, {ID}  from './WidgetsContainerWidget.mjs';
 import {JustificationController} from './justification.mjs';
 
-const ID = Symbol('id');
 class _ContainerWidget {
     constructor(baseElement) {
         this._baseElement = baseElement;
@@ -185,6 +184,93 @@ class SimpleButtonWidget {
             let elem = this.container.querySelector(`button.${templateVars.klass}`);
             elem.addEventListener('click', ()=>this._onClick());
         }
+    }
+}
+
+
+const ARTICLE_URL_TEMPLATE = `
+    <legend>Article URL</legend>
+    <label class="article_url-text_input" title="Enter a Wikipedia article url: https://{language}.wikipedia.org/wiki/{page}">URL:
+        <input type="text" value="initial://" />
+    </label><br />
+    <button class="article_url-load">Load</button><br />
+    <strong>Loading Status</strong>
+    <pre class="article_url-loading_status">Hello
+    World</pre>
+    <strong>Current Article:</strong><span class="article_url-current_article"></span>
+`;
+
+class ArticleURLWidget {
+    constructor(baseElement, templateVars, state) {
+        this._baseElement = baseElement;
+        this._domTool = new DOMTool(this._baseElement.ownerDocument);
+
+        if(state)
+            console.log('ArticleURLWidget loading with state:', state);
+        if(ID in templateVars)
+            this[ID] = templateVars[ID];
+
+        var template = ARTICLE_URL_TEMPLATE;
+        {
+            // TODO: _templateVars in case when templateVars needs augmentation, remove?
+            let _templateVars = [...Object.entries(templateVars || {})];
+            for(let [k,v] of _templateVars)
+                template = template.replaceAll('{' + k + '}', v);
+        }
+        var dom = this._domTool.createElementfromHTML(
+            'fieldset', {'class': 'article_url'},
+            template
+        );
+        this.container = dom;
+        this._baseElement.appendChild(dom);
+
+
+        if(state) {
+            if(state.state)
+                this.container.querySelector('.article_url-loading_status')
+                    .textContent = state.state
+                    ;
+
+        }
+
+        // so far don't do local Storage and change handling
+        // this._localStorageKey = localStorageKey;
+        // // parent change propagation
+        // this._onChange = onChange;
+        // this._elem = this.container.querySelector(`.${templateVars.klass} input[type="text"]`);
+        // {
+        //     let onChange = evt=> {
+        //             this._domTool.window.localStorage.setItem(localStorageKey,
+        //                             evt.target.checked ? 'true' : 'false');
+        //             this._onChange(evt.target.checked);
+        //         }
+        //       ;
+        //     let storedValue = this._domTool.window.localStorage.getItem(localStorageKey)
+        //       ;
+        //     if(storedValue !== null)
+        //         this._elem.checked = storedValue === 'true' ? true : false;
+        //
+        //     this._elem.addEventListener('change', onChange);
+        //     onChange({target: this._elem});
+        // }
+    }
+    // setChecked(checked) {
+    //     this._elem.checked = checked;
+    //     _dispatchChangeEvent(this._elem);
+    // }
+    load(url){
+        console.log(`${this.constructor.name}::load: ${url}`);
+    }
+    get state() {
+        return {'state': 'this is required to init for current page'};
+    }
+    clickHandler(evt) {
+        console.log(`${this.constructor.name}::clickHandler: ${evt}`);
+        return handleWikiLink(this._domTool.window, evt)
+        .then(updated=>{
+            return [updated, this.state]
+        })
+        return ;
     }
 }
 
@@ -959,7 +1045,7 @@ async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, loca
     // https://en.wikipedia.org/w/api.php?action=query&titles=Belgrade&prop=extracts&format=json&exintro=1
     var searchParams = new URLSearchParams({
             format: 'json'
-          , origin: '*' // mediawiki CORS magic!!!
+          , origin: '*' // mediawiki CORS magic, THANKS!!!
           // We can get the language links for the page from the query action:
           //        https://en.wikipedia.org/w/api.php?action=help&modules=query
           //        prop: '2Blanglinks'
@@ -1027,7 +1113,7 @@ function main() {
       ;
 
 
-    let initContent = () => {
+    let initContent = (articleURLWidgetState) => {
         if(justificationController !== null) {
             justificationController.destroy();
             justificationController = null;
@@ -1045,9 +1131,12 @@ function main() {
         userSettingsWidget = new WidgetsContainerWidget(
                         userSettingsWidgetContainer,
                         [
+                            [ArticleURLWidget, {[ID]: 'article-url'}, articleURLWidgetState],
                             [PortalAugmentationWidget, justificationController],
                             UserPreferencesWidget
                         ]);
+        console.log(`userSettingsWidget got widget: ${userSettingsWidget.getWidgetById('article-url')[ID]}:`,
+                     userSettingsWidget.getWidgetById('article-url'));
         let toggle = (/*evt*/)=>{
             let top = `${window.scrollY}px`;
             if(!userSettingsWidget.isActive ||
@@ -1117,7 +1206,7 @@ function main() {
         }
       ;
 
-    initContent();
+    initContent(/* articleURLWidgetState */);
     // This will most likely be executed by the USER_SETTINGS_EVENT handler
     // so here's a way to cancel this fail-safe initial call.
     scheduleUpdateViewport();
@@ -1126,11 +1215,13 @@ function main() {
 
     window.document.addEventListener(
                     'click'
-                  , evt=>handleWikiLink(window, evt)
-                            .then((updated)=>{
+                  , evt=>
+                    userSettingsWidget.getWidgetById('article-url')
+                            .clickHandler(evt)
+                            .then(([updated, articleURLWidgetState])=>{
                                 if(!updated)
                                     return false;
-                                initContent();
+                                initContent(articleURLWidgetState);
                                 scheduleUpdateViewport();
                             })
                             .then(null,err=>window.console.error(err))
