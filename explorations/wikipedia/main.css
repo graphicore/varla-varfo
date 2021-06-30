@@ -642,14 +642,21 @@ button.toggle-user_settings {
     --font-weight: 600;
 }
 
-.widgets_container legend{
-    --font-weight: 600;
+.widgets_container legend {
+    --font-weight: 550;
 }
 
 .widgets_container h3 {
     margin: .5em 0;
-    --font-weight: 500;
+    --font-weight: 550;
+
 }
+
+.widgets_container legend,
+.widgets_container h3 {
+    --font-size: calc(1 * var(--default-font-size));
+}
+
 
 label.user_preferences-fine_user_zoom::after {
     content: attr(data-value) 'pt';
