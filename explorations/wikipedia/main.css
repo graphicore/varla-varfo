@@ -676,6 +676,13 @@ label.user_preferences-user_distance::after {
     width: 9em;
 }
 
+.widgets_container input.article_url-text_input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-block-end: .5em;
+}
+
 .page_content-item {
 
 }

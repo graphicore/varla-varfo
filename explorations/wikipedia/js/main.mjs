@@ -189,24 +189,29 @@ class SimpleButtonWidget {
 
 
 const ARTICLE_URL_TEMPLATE = `
-    <legend>Article URL</legend>
-    <label class="article_url-text_input" title="Enter a Wikipedia article url: https://{language}.wikipedia.org/wiki/{page}">URL:
-        <input type="text" value="initial://" />
-    </label><br />
-    <button class="article_url-load">Load</button><br />
-    <strong>Loading Status</strong>
-    <pre class="article_url-loading_status">Hello
-    World</pre>
-    <strong>Current Article:</strong><span class="article_url-current_article"></span>
+    <legend>Load Wikipedia Article</legend>
+    <form>
+    <!-- The reason to ask for a URL and not just a subdomain + pagename
+        is that the URL can be copied directly from Wikipedia. I believe
+        this will be the primary or at least initial interaction process.
+    -->
+    <input class="article_url-text_input"
+        type="text"
+        value=""
+        title="Enter a Wikipedia article URL"
+        placeholder="https://en.wikipedia.org/wiki/Typography"/>
+    <div class="article_url-loading_status"></div>
+    <button class="article_url-load">load</button><br />
+    <form>
 `;
 
 class ArticleURLWidget {
-    constructor(baseElement, templateVars, state) {
+    constructor(baseElement, templateVars, updateAfterChangedContent, state) {
         this._baseElement = baseElement;
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
 
-        if(state)
-            console.log('ArticleURLWidget loading with state:', state);
+        this._updateAfterChangedContent = updateAfterChangedContent;
+
         if(ID in templateVars)
             this[ID] = templateVars[ID];
 
@@ -224,56 +229,66 @@ class ArticleURLWidget {
         this.container = dom;
         this._baseElement.appendChild(dom);
 
+        this._input = this.container.querySelector('input');
+        // Using a form here may be against the HTML nesting rules
+        // (it's here contained within a fieldset), but using the submit
+        // event directly is very handy it e.g. triggers when pressing
+        // enter when the cursor is in the text input element and also
+        // when pressing the load button.
+        this._form = this.container.querySelector('form');
+        this._form.addEventListener('submit', evt=>{
+            evt.preventDefault();
+            this.load();
+        });
+        this._loadingStatus = this.container.querySelector('.article_url-loading_status');
 
         if(state) {
-            if(state.state)
-                this.container.querySelector('.article_url-loading_status')
-                    .textContent = state.state
-                    ;
-
+            this.setLoadingStatus(state.state || null);
+            if(state.input)
+                this._input.value = state.input;
         }
-
-        // so far don't do local Storage and change handling
-        // this._localStorageKey = localStorageKey;
-        // // parent change propagation
-        // this._onChange = onChange;
-        // this._elem = this.container.querySelector(`.${templateVars.klass} input[type="text"]`);
-        // {
-        //     let onChange = evt=> {
-        //             this._domTool.window.localStorage.setItem(localStorageKey,
-        //                             evt.target.checked ? 'true' : 'false');
-        //             this._onChange(evt.target.checked);
-        //         }
-        //       ;
-        //     let storedValue = this._domTool.window.localStorage.getItem(localStorageKey)
-        //       ;
-        //     if(storedValue !== null)
-        //         this._elem.checked = storedValue === 'true' ? true : false;
-        //
-        //     this._elem.addEventListener('change', onChange);
-        //     onChange({target: this._elem});
-        // }
+        // So far, don't do local Storage.
     }
-    // setChecked(checked) {
-    //     this._elem.checked = checked;
-    //     _dispatchChangeEvent(this._elem);
-    // }
-    load(url){
-        console.log(`${this.constructor.name}::load: ${url}`);
+    load() {
+        let requestURL = this._input.value;
+        if(requestURL.indexOf('://') === -1)
+            // Add a protocol, we always use https, so we don't require
+            // the user to specify it, but it will also come with a URL
+            // copy pasted from the browser address bar.
+            requestURL = `https://${requestURL}`;
+
+        let [validates, message, parsed] = validateWikiURL(window, requestURL, false);
+        if(!validates) {
+            this.setLoadingStatus(message.join(' '));
+            return false;
+        }
+        this.fetchWikiPage(parsed);
     }
     get state() {
-        return {'state': 'this is required to init for current page'};
+        return {
+            state: this._loadingStatus.textContent
+          , input: this._input.value
+        };
     }
-    clickHandler(evt) {
-        console.log(`${this.constructor.name}::clickHandler: ${evt}`);
-        return handleWikiLink(this._domTool.window, evt)
-        .then(updated=>{
-            return [updated, this.state]
-        })
-        return ;
+    // Only used for errors/problems so far.
+    setLoadingStatus(message) {
+        this._loadingStatus.textContent = message || '';
+    }
+    fetchWikiPage(parsed) {
+        return fetchWikiPage(window, parsed)
+        .then(
+            fetched=> {
+                // success
+                applyWikiPage(window, fetched);
+                // -> set this._input value!
+                this._input.value = `https://${fetched.subDomain}.wikipedia.org/wiki/${fetched.page}`;
+                this.setLoadingStatus(null);
+                this._updateAfterChangedContent();
+            },
+            err=>this.setLoadingStatus(`[${err.name}] ${err.message}`)
+        );
     }
 }
-
 
 const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
     , AMPLIFY_GRADE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-amplify'
@@ -1004,41 +1019,80 @@ function massageWikipediaMarkup(documentOrElement) {
     }
 }
 
-async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, location, console}, evt) {
+function wikiLinkClickHandler({window}, logger, evt) {
     let a = evt.target.closest('a');
     if(!a) return false;
-    let changeLang = null
-      , currentLang = document.documentElement.getAttribute('lang')
-      ;
 
-    // The link is going to change the language of the document
-    // this is a good indication for the wikipedia markup not in general
-    if(a.hasAttribute('hreflang')){
-        changeLang = a.getAttribute('hreflang');
-    }
-    let originalURL = new URL(a.href)
-      , handledHostnames = new Set([
-            location.hostname,
-            `${currentLang}.wikipedia.org`,
-            ...(changeLang ? [`${changeLang}.wikipedia.org`] : []),
-        ])
-      ;
-
-    if(!handledHostnames.has(originalURL.hostname)) {
-        console.log('[handleWikiLink] unhandled host-name:', originalURL.hostname);
+    let [validates, message, parsed] = validateWikiURL(window, a.href, true);
+    if(!validates) {
+        logger.log(...message);
         return false;
+    }
+    // link is accepted.
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+    return parsed;
+}
+
+function validateWikiURL({document, location}, urlString, allowLocal) {
+    let wikiURL = new URL(urlString)
+      , parsed = null
+      // the api subdomain is not necessarily the same as the value of
+      // the lang attribute value, e.g.:
+      //    "zh-min-nan.wikipedia.org" produces a lang attribute of just "nan".
+      , subDomain = null
+      ;
+
+    // allowLocal === true is used for handling links that got clicked
+    // in the page body, but not not for direct user input.
+    if(allowLocal && location.hostname === wikiURL.hostname) {
+        // for links with the same hostname we get e.g.:
+        // http://192.168.178.24:8080/wiki/Altgriechische_Sprache
+        // this has neither an ".wikipedia.org" based hostname, nor a subdomain!
+        // -> this selector has the proper subdomain
+        // 'head link[rel="edit"]'
+        // e.g. https://en.wikipedia.org/w/index.php?title=Typography&action=edit
+        if(document.documentElement.hasAttribute('data-wikipedia-subdomain')){
+            // we set this when applying a fetched article
+            subDomain = document.documentElement.getAttribute('data-wikipedia-subdomain');
+        }
+        else {
+            // Initially there's no explicitly set subdomain.
+            // Let's go fishing!
+            let link = document.querySelector('head > link[rel="edit"]')
+              , url = new URL(link && link.getAtrribute('href') || '')
+              ;
+            subDomain = url.hostname.split('.')[0];
+        }
+        if(!subDomain)
+            return [false, ['[validateWikiURL] can\'t figure api sub domain.'], parsed];
+    }
+    else if(wikiURL.hostname.endsWith('.wikipedia.org')) {
+        // These URLs usually come from the languages category links.
+        let hostnameParts = wikiURL.hostname.split('.');
+        if(hostnameParts.length !== 3) {
+            return [false, ['[validateWikiURL] too many sub domains', ...hostnameParts.slice(0, -2)], parsed];
+        }
+        subDomain = hostnameParts[0];
+    }
+    else {
+        return [false, ['[validateWikiURL] unhandled domain:', wikiURL.hostname], parsed];
     }
 
     const wikiPath = '/wiki/';
-    if(originalURL.pathname.indexOf(wikiPath) !== 0) {
-        console.log('[handleWikiLink] unhandled path-name:', originalURL.pathname);
-        return false;
+    if(wikiURL.pathname.indexOf(wikiPath) !== 0) {
+        return [false, ['[validateWikiURL] unhandled path-name:', wikiURL.pathname], parsed];
     }
-    let page = decodeURIComponent(originalURL.pathname.slice(wikiPath.length)).trim();
 
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
+    parsed = {
+        page: decodeURIComponent(wikiURL.pathname.slice(wikiPath.length)).trim()
+      , subDomain: subDomain
+    };
 
+    return [true, null, parsed];
+}
+
+async function fetchWikiPage({URL, URLSearchParams, fetch, window}, {subDomain, page}) {
     // API:
     // https://en.wikipedia.org/w/api.php
     // e.g.: https://en.wikipedia.org/w/api.php?action=help&recursivesubmodules=1
@@ -1054,7 +1108,7 @@ async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, loca
           // , prop: 'extracts'
           // , titles: 'Belgrade'
           , action: 'parse'
-          , prop: 'text'
+          , prop: 'text|headhtml'
           , formatversion: 2
           , page: page
         })
@@ -1063,33 +1117,74 @@ async function handleWikiLink({URL, URLSearchParams, fetch, JSON, document, loca
     searchParams.sort();
     // construct url because we likely serve from location.hostname
     // which is e.g. https://graphicore.github.io/ or localhost:8080
-    url = new URL('w/api.php', `https://${changeLang || currentLang}.wikipedia.org/`);
+    url = new URL('w/api.php', `https://${subDomain}.wikipedia.org/`);
     url.search = searchParams;
 
-    let response = await fetch(url)
-      , data = await response.json()
-      ;
+    let response;
+    try {
+        response = await fetch(url);
+    }
+    catch (e) {
+        if(e instanceof TypeError) {
+            // Sadly, if I enter a wrong subdomain, console reports e.g.
+            // main.mjs:1143 GET https://xxxx.wikipedia.org/w/api.php[...] net::ERR_NAME_NOT_RESOLVED
+            // But that is not reported in the response object.
+            // So this is for that very special case, to improve the feedback
+            // to the user.
+            throw new Error(`${e}. This happens e.g. when the subdomain `
+                           + `(here: "${subDomain}") can't be resolved.`);
+        }
+        // re-raise, will be reported
+        throw e;
+    }
+
+    if(!response.ok)
+        throw new Error(`[fetch failed] ${response.status} ${response.status} `
+                       + `${response.statusText}`);
 
 
-    // FIXME: handle error documents returned from the API here!
-    // console.log('from', url ,'received data:', data);
+    let data = await response.json();
+    if(data.error) {
+        // Handle error documents returned from the API here.
+        // data.error.code e.g. "missingtitle"
+        // data.error.info e.g. "The page you specified doesn't exist."
+        throw new Error(`[${data.error.code}] for page "${page}" in `
+                      + `${subDomain}.wikipedia.org: ${data.error.info}`);
+    }
+    return {page, subDomain, data};
+}
 
+function applyWikiPage({document}, {subDomain, data}) {
     let domTool = new DOMTool(document)
+      , currentLang = document.documentElement.getAttribute('lang')
+        // it doesn't come with closing tags ...
+      , headHtml = `${data.parse.headhtml}</body></html>`
+        // the fragment parser does not return the <html> element
+      , domParser = new DOMParser()
+      , doc = domParser.parseFromString(headHtml, 'text/html')
+      , fetchedLang = doc.querySelector('html').getAttribute('lang')
       , frag = domTool.createFragmentFromHTML(data.parse.text)
       , target = document.querySelector('.mw-parser-output')
       , h1 = document.querySelector('h1')
       ;
+
+    // at this point all content must be good
+    document.documentElement.setAttribute('data-wikipedia-subdomain', subDomain);
     h1.textContent = data.parse.title;
     target.replaceWith(...frag.children);
     target = document.querySelector('.mw-parser-output');
     massageWikipediaMarkup(target);
-    if(changeLang) {
+    if(fetchedLang !== currentLang) {
         // TODO: changing the "dir" attribute and changing the layout
         // to rtl direction is not supported yet. However, we don't have
         // fonts for those cases yet as well.
         for(let elem of document.querySelectorAll(
-                `[lang=${currentLang}]:not([hreflang],p *, i, span, em, b, strong)`)){
-            elem.setAttribute('lang', changeLang);
+                // Some elements have a different language as their content
+                // and hence set lang, e.g. a word in an <em> in Greek also,
+                // wikipedia links that change language have a hreflang
+                // attribute.
+                `[lang=${currentLang}]:not(a[hreflang],p *, i, span, em, b, strong)`)) {
+            elem.setAttribute('lang', fetchedLang);
         }
     }
     return true;
@@ -1113,12 +1208,15 @@ function main() {
       ;
 
 
-    let initContent = (articleURLWidgetState) => {
+    let initContent = () => {
+        let articleURLWidgetState = null;
         if(justificationController !== null) {
             justificationController.destroy();
             justificationController = null;
         }
         if(userSettingsWidget !== null) {
+            // carry over
+            articleURLWidgetState = userSettingsWidget.getWidgetById('article-url').state;
             userSettingsWidget.destroy();
             userSettingsWidget = null;
         }
@@ -1131,12 +1229,10 @@ function main() {
         userSettingsWidget = new WidgetsContainerWidget(
                         userSettingsWidgetContainer,
                         [
-                            [ArticleURLWidget, {[ID]: 'article-url'}, articleURLWidgetState],
+                            [ArticleURLWidget, {[ID]: 'article-url'}, updateAfterChangedContent, articleURLWidgetState],
                             [PortalAugmentationWidget, justificationController],
                             UserPreferencesWidget
                         ]);
-        console.log(`userSettingsWidget got widget: ${userSettingsWidget.getWidgetById('article-url')[ID]}:`,
-                     userSettingsWidget.getWidgetById('article-url'));
         let toggle = (/*evt*/)=>{
             let top = `${window.scrollY}px`;
             if(!userSettingsWidget.isActive ||
@@ -1204,27 +1300,25 @@ function main() {
             if(cancelJustification && justificationWasRunning)
                 justificationController.run();
         }
+      , updateAfterChangedContent = ()=>{
+            initContent();
+            // This will most likely be executed by the USER_SETTINGS_EVENT handler
+            // so here's a way to cancel this fail-safe initial call.
+            scheduleUpdateViewport();
+        }
       ;
 
-    initContent(/* articleURLWidgetState */);
-    // This will most likely be executed by the USER_SETTINGS_EVENT handler
-    // so here's a way to cancel this fail-safe initial call.
-    scheduleUpdateViewport();
+    updateAfterChangedContent();
     window.addEventListener('resize', scheduleUpdateViewport);
     window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
 
-    window.document.addEventListener(
-                    'click'
-                  , evt=>
-                    userSettingsWidget.getWidgetById('article-url')
-                            .clickHandler(evt)
-                            .then(([updated, articleURLWidgetState])=>{
-                                if(!updated)
-                                    return false;
-                                initContent(articleURLWidgetState);
-                                scheduleUpdateViewport();
-                            })
-                            .then(null,err=>window.console.error(err))
-                  , false);
+    window.document.addEventListener('click', evt=>{
+        let parsed = wikiLinkClickHandler(window, window.console, evt);
+        if(!parsed)
+            return false;
+        // This way, the URL will be displayed in the
+        // "Load Wikipedia Article" widget.
+        return userSettingsWidget.getWidgetById('article-url').fetchWikiPage(parsed);
+     } , false);
 }
 window.onload = main;
