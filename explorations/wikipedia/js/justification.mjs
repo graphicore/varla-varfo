@@ -239,8 +239,22 @@ function _getContainingRect(lineRangeOrNode) {
         // rely on it.
         if(     //   lineRect.top >= rect.top
                 //   lineRect.bottom <= rect.bottom
-                   lineRect.left >= rect.left
-                && lineRect.right <= rect.right) {
+                   (lineRect.left >= rect.left)
+                   // On the right side we get cases where the browser
+                   // takes the liberty to slightly be over/out of the
+                   // parent bounding box, e.g. on the typography in
+                   // Russian "Типографика" page under "История"
+                   // for the line:
+                   //     "нок. Отныне создавать книги стало го-"
+                   // I got:
+                   //      "rig 543.0333557128906 <= 542.3999938964844 false"
+                   // which is a very small rule violation, but still breaks,
+                   // hence, I add a second more forgiving rule:
+                   //           rect.right - lineRect.right >= -2
+                   // It's not quite clear to me how the browser decides
+                   // which magnitude of rule breaking is OK, so this is
+                   // so far a game of guessing.
+                && (lineRect.right <= rect.right || rect.right - lineRect.right >= -2 )) {
             return [rect, lineParent];
         }
         // TODO: since this still sometimes goes wring, below
