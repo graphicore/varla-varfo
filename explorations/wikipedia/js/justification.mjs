@@ -993,8 +993,16 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     // may be better for performance, i.e. because of less iterations,
     // and still produce similar results.
     function* genNarrowAdjustments(stops, startValue) {
-        for(let step=startValue-1, l=-stops;step>=l; step--)
-            yield step;
+        let step=startValue-1
+          , l = -stops
+          ;
+        while(true) {
+            // l can be a real number, not just integer
+            yield Math.max(l, step);
+            if(step<l)
+                break;
+            step--;
+        }
     }
 
     let startValue = 0
@@ -1154,6 +1162,8 @@ function _justifyLineByWidening(stops, lineElements, container, options=null) {
     // This block is just a visualization, on "how bad" a line is,
     // i.e. more unusedWhiteSpace is worse, appears darker red,
     // "good" lines become lighter red to white.
+    // FIXME: maybe this should rather show how much had to be done to
+    //        the line, like the narrowing indicator.
     {
         // wsRatio will be 1 for ideal lines and < 1 for less than full lines.
         let lineBCR = lineRange.getBoundingClientRect()
@@ -1462,11 +1472,6 @@ function _getWordSpaceForElement(elem) {
 
 // this can essentially be used as just a wrapper around _justifyBlockElement
 function* _justifyNextGenGenerator(elem, skip, options) {
-    // Just like the original _justifyGenerator, this needs to perform
-    // some general environment massages.
-
-    // ... assert elem has class 'runion-01'...
-
     let wsPx = _getWordSpaceForElement(elem);
     elem.style.setProperty('--word-space-size', `${wsPx}px`);
     console.log('--word-space-size', `${wsPx}px`);
@@ -1479,24 +1484,41 @@ function* _justifyNextGenGenerator(elem, skip, options) {
       // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
       // seems to work fine and is noticeably quicker,
       , stopsFidelityFactor = 1
-        // To be able to use integer stops, where step size is the same
-        // between narrowing and widening, the last possible step will be
-        // a the decimal partial step.
+        // To be able to use a scale, where step/unit size is the same
+        // between narrowing and widening, the last possible step of each
+        // parameter will be a the decimal partial step and then be
+        // clipped by min/max.
+        // This provides a simple interface for CSS where we can
+        // just set a "step" magnitude via "--jsutification-step".
+        // CAUTION: step sizes only appear to be the same, because of
+        // min/max for each parameter and the composition of all
+        // parameters, the actual difference a step makes changes.
       , narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor)
       , wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor)
-
-      , xtraStepSize = Math.max(
-                        Math.abs(xtraMin - xtraDefault) / narrowingStops,
-                        Math.abs(xtraMax - xtraDefault) / wideningStops
-        )
-      , trackingStepSize = Math.max(
-                        Math.abs(trackingMin - trackingDefault) / narrowingStops,
-                        Math.abs(trackingMax - trackingDefault) / wideningStops
-        )
-      , wordspaceStepSize = Math.max(
-                        Math.abs(wordspaceMin - wordspaceDefault) / narrowingStops,
-                        Math.abs(wordspaceMax - wordspaceDefault) / wideningStops
-        )
+      , xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
+      , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
+      , xtraStepSize = options.XTRA
+                  ? Math.max(
+                        xtraNarrowingRange / narrowingStops,
+                        xtraWideningRange / wideningStops
+                        )
+                  : 0
+      , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
+      , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
+      , trackingStepSize = options.letterSpacing
+                  ? Math.max(
+                        trackingNarrowingRange / narrowingStops,
+                        trackingWideningRange / wideningStops
+                        )
+                  : 0
+      , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
+      , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
+      , wordspaceStepSize = options.wordSpacing
+                  ? Math.max(
+                        wordspaceNarrowingRange / narrowingStops,
+                        wordspaceWideningRange / wideningStops
+                    )
+                  : 0
       ;
     elem.style.setProperty('--justification-step-xtra', `${xtraStepSize}`);
     elem.style.setProperty('--justification-xtra-min', `${xtraMin}`);
@@ -1513,8 +1535,28 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     elem.style.setProperty('--justification-wordspace-default', `${wordspaceDefault}`);
     elem.style.setProperty('--justification-wordspace-max', `${wordspaceMax}`);
 
+    // This prevents that we apply "empty steps", that don't change anything,
+    // since we can separately turn off the justification parameters.
+    let effectiveNarrowingStops = Math.max(0, ...[
+          xtraNarrowingRange / xtraStepSize
+        , trackingNarrowingRange / trackingStepSize
+        , wordspaceNarrowingRange / wordspaceStepSize
+        ].filter(x=>isFinite(x))
+    );
+
+    let effectiveWideningStops = Math.max(0, ...[
+          xtraWideningRange / xtraStepSize
+        , trackingWideningRange / trackingStepSize
+        , wordspaceWideningRange / wordspaceStepSize
+        ].filter(x=>isFinite(x))
+    );
+
+    // console.log('effectiveNarrowingStops, effectiveWideningStops:'
+    //                  , effectiveNarrowingStops, effectiveWideningStops);
+
     let t0 = performance.now();
-    let total = yield* _justifyBlockElement(elem, fontSpecKey, [narrowingStops, wideningStops], skip, options);
+    let total = yield* _justifyBlockElement(elem, fontSpecKey
+            , [effectiveNarrowingStops, effectiveWideningStops], skip, options);
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
     elem.classList.add('runion-justified-block');
@@ -1540,9 +1582,10 @@ export class JustificationController{
     get running() {
         return this._running;
     }
-    setOption(name, value) {
-        // Has no restart usesetOptions instead.
+    setOption(name, value, reset=true) {
         this._options[name] = value;
+        if(reset)
+            this.reset();
     }
     /* usage: ctrl.setOption(false, ['XTRA', false]);
      *
@@ -1550,12 +1593,11 @@ export class JustificationController{
      *    'letterSpacing', bool default: true
      *    'wordSpacing', bool default: true
      */
-
-    setOptions(restart, ...name_value) {
+    setOptions(reset, ...name_value) {
         for(let [name, value] of name_value)
             this.setOption(name, value);
-        if(restart)
-            this.restart();
+        if(reset)
+            this.reset();
     }
     getOption(name) {
         return name in this._options
@@ -1613,6 +1655,12 @@ export class JustificationController{
     restart() {
         this.cancel();
         this.run();
+    }
+    reset() {
+        if(this.running)
+            this.restart()
+        else
+            this.cancel();
     }
     _unjustify() {
         let [, skipClass] = this._skip
