@@ -1578,7 +1578,7 @@ i, cite, em, var, dfn {
 /* FIXME: Apply the class .fix-short-section automatically, it's
  * currently set manually on the <p> of the sub-section "Etymology".
  */
-.runion-01 .runion-justified-block.fix-short-section {
+.runion-01 .fix-short-section {
     column-span: all;
     width: calc(.5em * var(--column-width-en, 0));
 }

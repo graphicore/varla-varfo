@@ -1493,6 +1493,9 @@ function* _justifyBlockElement(elem, fontSpecKey, stops, [skipSelector, skipClas
         // for(let _ of _justifyInlines(notBlocks, stops)){};
         total += (performance.now() - t0);
     }
+    // Makes it "white-space: nowrap;" to force some in fringe-cases
+    // breaking lines into being single lines.
+    elem.classList.add('runion-justified-block');
     return total;
 }
 
@@ -1516,6 +1519,8 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     let wsPx = _getWordSpaceForElement(elem);
     elem.style.setProperty('--word-space-size', `${wsPx}px`);
     console.log('--word-space-size', `${wsPx}px`);
+
+    elem.classList.add('runion-justification-host');
 
     let [fontSpec/*, fontSizePx, fontSizePt*/] = _getFontSpec(elem)
       , fontSpecKey = _getFontSpecKey(elem)
@@ -1600,7 +1605,7 @@ function* _justifyNextGenGenerator(elem, skip, options) {
             , [effectiveNarrowingStops, effectiveWideningStops], skip, options);
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
-    elem.classList.add('runion-justified-block');
+
     yield ['DONE _justifyBlockElement'];
 
     console.log(`time in _justifyBlockElement ${(t1-t0) /1000} s`);
@@ -1705,17 +1710,17 @@ export class JustificationController{
     }
     _unjustify() {
         let [, skipClass] = this._skip
-          ,  lineClass = 'runion-line'
+          , lineClass = 'runion-line'
           , justifiedBlockClass = 'runion-justified-block'
-
+          , justificationHostClass = 'runion-justification-host'
           , justificationContextClass = 'justification-context-block'
           ;
 
         for(let lineElem of this._elem.querySelectorAll(`.${lineClass}`))
             lineElem.replaceWith(...lineElem.childNodes);
 
-        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${justifiedBlockClass}`)]) {
-            elem.classList.remove(justifiedBlockClass);
+        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${justificationHostClass}`)]) {
+            elem.classList.remove(justificationHostClass);
             for(let propertyName of [
                                   '--word-space-size'
                                 , '--justification-step-xtra'
@@ -1733,8 +1738,9 @@ export class JustificationController{
                                 ])
                 elem.style.removeProperty(propertyName);
         }
-        for(let elem of this._elem.querySelectorAll(skipClass))
-            elem.classList.remove(skipClass);
+        for( let rmClass of [skipClass, justifiedBlockClass])
+            for(let elem of this._elem.querySelectorAll(`.${rmClass}`))
+                elem.classList.remove(rmClass);
 
         for(let elem of this._elem.querySelectorAll(`.${justificationContextClass}`))
             elem.remove();
