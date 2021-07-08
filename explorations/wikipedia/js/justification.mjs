@@ -289,7 +289,7 @@ function _isOutOfFlowContext(elem) {
  *       pipeline with the following transformations, if we keep doing
  *       those from back to front.
  */
-function* findLines(deepTextElem, skip=[null, null]) {
+function* findLines(deepTextElem, skip=[null, null] /*, debug=false*/) {
     var textNodesGen
       , container
       , skipUntil = null
@@ -298,7 +298,6 @@ function* findLines(deepTextElem, skip=[null, null]) {
       , last = null
       , initialEndNodeIndex = null
       ;
-
     if(Array.isArray(deepTextElem)) {
         [container, deepTextElem, skipUntil] = deepTextElem;
         if(skipUntil instanceof Line) {
@@ -432,12 +431,12 @@ function* findLines(deepTextElem, skip=[null, null]) {
                     withinHorizontalBounds = true;
                 }
                 else if(lastRect.left >= currentLine.columnRect.left) {
-                    // There's some amount of error that the brower allows
+                    // There's some amount of error that the browesr allows
                     // itself to make better lines. This means that
                     // `lastRect.right <= currentLine.columnRect.right`
                     // can be false, but still part of the line! It's
                     // hard to guess an appropriate error margin, but not
-                    // doing so results in crippled hypjenation i.e. we
+                    // doing so results in crippled hyphenation i.e. we
                     // are hyphenating a char to early.
                     if((lastRect.right - currentLine.columnRect.right) <= 2 /* CSS-px of error margin*/) {
                         withinHorizontalBounds = true;
@@ -451,9 +450,39 @@ function* findLines(deepTextElem, skip=[null, null]) {
 
                 if (Math.floor(lastRect.bottom - firstRect.bottom) < 1
                         // e.g. our <sup> tags are not touching on bottom
-                        || Math.floor(lastRect.top - firstRect.top) < 1) {
+                        || Math.floor(lastRect.top - firstRect.top) < 1
+
+                        // This prevents a fail in Firefox, if the line
+                        // begins with <sup> elements and is then followed
+                        // by regular text, logged:
+                        //     3 == Math.floor(lastRect.bottom - firstRect.bottom)
+                        //    15 == Math.floor(lastRect.top - firstRect.top)
+                        // For some reason we get a lastRect without
+                        // expansion (width/height):
+                        //     DOMRect {
+                        //        x: 276.3500061035156, y: 153.1999969482422,
+                        //        width: 0, height: 0,
+                        //        top: 153.1999969482422, right: 276.3500061035156,
+                        //        bottom: 153.1999969482422, left: 276.3500061035156 }
+                        //  Without a height and width it has no impact anyways.
+                        || (lastRect.height === 0 && lastRect.width === 0)
+                        ) {
                     withinVerticalBounds = true;
                 }
+                // else if (debug) {
+                //     console.log('not withinVerticalBounds\n',
+                //         Math.floor(lastRect.bottom - firstRect.bottom),
+                //         ' => Math.floor(lastRect.bottom - firstRect.bottom) < 1\n',
+                //         Math.floor(lastRect.top - firstRect.top),
+                //         ' => Math.floor(lastRect.top - firstRect.top) < 1\n',
+                //         lastRect, '=>lastRect\n',
+                //         firstRect, '=> firstRect\n'
+                //     );
+                //     console.log(currentLine.range.toString());
+                //     console.log(currentLine.range.getBoundingClientRect(), '=> getBoundingClientRect');
+                // }
+
+
                 changed = !(withinHorizontalBounds && withinVerticalBounds);
             }
             let [lastEndNode, lastEndNodeIndex] = last || [null, null];
@@ -966,27 +995,39 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     // the first line further.
 
     // find the current first line:
-    let getStartLineContent=(findLinesArguments)=> {
-            // TODO: findLines could be more efficient if we could give it
-            // the last line and see if it got wider...
-            for(let startLine of findLines(...findLinesArguments))
-                return [startLine.range.toString(), startLine];
+    let getStartLineContent=(findLinesArguments, expectedLineContent=null)=> {
+            for(let startLine of findLines(...findLinesArguments)) {
+                let startLineContent = startLine.range.toString();
+                // initial run
+                if(expectedLineContent && startLineContent !== expectedLineContent) {
+                    // run again with enabled debugging to print reporting to console
+                    // let _getDebugArgs = (debug)=>{
+                    //     let _debug = [debug];
+                    //     if(findLinesArguments.length === 1)
+                    //         _debug.unshift([null, null]);
+                    //     return _debug;
+                    // };
+                    // for(let _ of findLines(...findLinesArguments, ..._getDebugArgs(true)))
+                    //    break;
+                    // console.log('startLine:', startLine);
+
+                    // assert it has the same content as the initial firstLine
+                    // FIXME: this finds legitimate issues!
+                    // throw new Error(
+                    console.warn(
+                          `Assertion failed, expectedLineContent must equal `
+                        + `startLineContent but it does not:\n"${expectedLineContent}"\n`
+                        + `vesus "${startLineContent}"`);
+                }
+                return [startLineContent, startLine];
+            }
             // We just put that line there, it must be there!
             throw new Error('Assertion failed, finding a line is mandatory.');
         }
-      , [startLineContent, ] = getStartLineContent(findLinesArguments)
+      , [startLineContent, ] = getStartLineContent(findLinesArguments, firstLineTextContent)
       ;
 
-    // assert it has the same content as the initial firstLine
-    // FIXME: this seems to find legitimate issues (I have one in Firefox 4
-    // column layout).
-    if(firstLineTextContent !== startLineContent)
-         // throw new Error
-         console.warn(`Assertion failed, firstLineTextContent must equal `
-             + `startLineContent but it does not:\n"${firstLineTextContent}"\n`
-             + `vesus "${startLineContent}"`);
-
-   let resultLine = null
+    let resultLine = null
       , currentLine = null
       ;
     // CAUTION: there are many options to do this differently, and some
@@ -1658,7 +1699,7 @@ export class JustificationController{
     }
     reset() {
         if(this.running)
-            this.restart()
+            this.restart();
         else
             this.cancel();
     }

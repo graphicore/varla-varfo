@@ -1653,6 +1653,17 @@ i, cite, em, var, dfn {
  */
 .justification-context-block .new-style-current-last-line-elem::after {
     content: '';
+    /* This "display: block" is not required for the "missing textNode mystery".
+     * Instead, it fixes an issue with Firefox, where a line does not break
+     * when it is the current last line and suddenly for some reason (maybe
+     * enough space plus our special markup) can get another word/syllable/piece
+     * from the next line. Subsequently the assertion in _findAndJustifyLineByNarrowing
+     * fails: that the content of firstLine with .range.toString()) is the
+     * same as the content of the re-packed and re-detected startLine.
+     * StarLine will have the content of the word/syllable/piece that
+     * got moved up to the last line.
+     */
+    display: block;
 }
 
 /* Prevent Firefox from creating arbitrary breaks while justifying.
