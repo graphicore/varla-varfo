@@ -289,7 +289,7 @@ function _isOutOfFlowContext(elem) {
  *       pipeline with the following transformations, if we keep doing
  *       those from back to front.
  */
-function* findLines(deepTextElem, skip=[null, null] /*, debug=false*/) {
+function* findLines(deepTextElem, skip=[null, null] , debug=false) {
     var textNodesGen
       , container
       , skipUntil = null
@@ -469,19 +469,27 @@ function* findLines(deepTextElem, skip=[null, null] /*, debug=false*/) {
                         ) {
                     withinVerticalBounds = true;
                 }
-                // else if (debug) {
-                //     console.log('not withinVerticalBounds\n',
-                //         Math.floor(lastRect.bottom - firstRect.bottom),
-                //         ' => Math.floor(lastRect.bottom - firstRect.bottom) < 1\n',
-                //         Math.floor(lastRect.top - firstRect.top),
-                //         ' => Math.floor(lastRect.top - firstRect.top) < 1\n',
-                //         lastRect, '=>lastRect\n',
-                //         firstRect, '=> firstRect\n'
-                //     );
-                //     console.log(currentLine.range.toString());
-                //     console.log(currentLine.range.getBoundingClientRect(), '=> getBoundingClientRect');
-                // }
-
+                else if (debug) {
+                    let printRect = (rect)=>{
+                        let result = ['rect\n    '];
+                        for(let k in rect) {
+                            if(typeof rect[k] === 'function')
+                                continue;
+                            result.push(`${k}: ${rect[k]}` +'\n    ');
+                        }
+                        return result;
+                    };
+                    console.log('not withinVerticalBounds\n',
+                        Math.floor(lastRect.bottom - firstRect.bottom),
+                        ' => Math.floor(lastRect.bottom - firstRect.bottom) < 1\n',
+                        Math.floor(lastRect.top - firstRect.top),
+                        ' => Math.floor(lastRect.top - firstRect.top) < 1\n',
+                        ...printRect(lastRect), '=>lastRect\n',
+                        ...printRect(firstRect), '=> firstRect\n'
+                    );
+                    console.log(currentLine.range.toString());
+                    console.log(currentLine.range.getBoundingClientRect(), '=> getBoundingClientRect');
+                }
 
                 changed = !(withinHorizontalBounds && withinVerticalBounds);
             }
@@ -1001,20 +1009,20 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
                 // initial run
                 if(expectedLineContent && startLineContent !== expectedLineContent) {
                     // run again with enabled debugging to print reporting to console
-                    // let _getDebugArgs = (debug)=>{
-                    //     let _debug = [debug];
-                    //     if(findLinesArguments.length === 1)
-                    //         _debug.unshift([null, null]);
-                    //     return _debug;
-                    // };
-                    // for(let _ of findLines(...findLinesArguments, ..._getDebugArgs(true)))
-                    //    break;
-                    // console.log('startLine:', startLine);
+                     let _getDebugArgs = (debug)=>{
+                         let _debug = [debug];
+                         if(findLinesArguments.length === 1)
+                             _debug.unshift([null, null]);
+                         return _debug;
+                     };
+                     for(let _ of findLines(...findLinesArguments, ..._getDebugArgs(true)))
+                        break;
+                     console.log('startLine:', startLine);
 
                     // assert it has the same content as the initial firstLine
                     // FIXME: this finds legitimate issues!
-                    // throw new Error(
-                    console.warn(
+                    throw new Error(
+                    //console.warn(
                           `Assertion failed, expectedLineContent must equal `
                         + `startLineContent but it does not:\n"${expectedLineContent}"\n`
                         + `vesus "${startLineContent}"`);
