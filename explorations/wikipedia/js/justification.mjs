@@ -881,6 +881,100 @@ function _interpolateArray(t, upperValues, lowerValues) {
 }
 
 
+const FONT_SPEC_CONFIG_AMSTEL_VAR = {
+    // weight
+        // width
+            // opsz
+    900: {
+        100: {
+
+            144: {XTRA: [540, 562, 569], tracking: [-0.4 , 0, 0.9], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 171/144 - 1]}
+           , 14: {XTRA: [500, 562, 580], tracking: [-0.3 , 0, 0.15], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 22/14 - 1]}
+           ,  8: {XTRA: [540, 562, 570], tracking: [-0.05 , 0, 0.15], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
+        }
+    }
+  , 400: {
+        125: {
+            // FIXME: PDF is not clear regarding tracking: also [-1, 0, 1]
+            //          also suggest -1 instead of -0.1!
+            144: {XTRA: [550, 562, 570], tracking: [-0.1, 0, 0.8], wordspace: [96/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
+            // FIXME: PDF is not clear regarding tracking: also [-0.3, 0, 0.2]
+            // FIXME: PDF is not clear regarding XTRA: also [540, 562, 575]
+           , 14: {XTRA: [540, 562, 580], tracking: [-0.3, 0, 0.3], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+           ,  8: {XTRA: [510, 562 ,571], tracking: [-0.1, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
+        }
+        // default reading text spec:
+      , 100: {
+            144: {XTRA: [545, 562, 570], tracking:[-0.3, 0, 0.7],  wordspace: [120/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
+           , 14: {XTRA: [515, 562, 575], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+            // FIXME: PDF is not clear regarding tracking: also [-0.1, 0, 0.2]
+           ,  8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/, 12/8 - 1]}
+        }
+      , 50: {
+            144: {XTRA: [550, 562, 568], tracking: [-0.3, 0, 0.5], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
+            // FIXME: PDF is not clear regarding XTRA: also [562, 562, 575]
+           , 14: {XTRA: [540, 562, 575], tracking: [0, 0, 0.2], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+           ,  8: {XTRA: [540, 562, 568], tracking: [-0.1, 0, 0.15], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
+        }
+    }
+  , 100: {
+        100: {
+            // FIXME: PDF is not clear regarding wordspace: also [126/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]
+            144: {XTRA: [552, 562, 568], tracking: [-0.2, 0, 0.7], wordspace: [126/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
+            // FIXME: PDF is not clear regarding XTRA: also [515, 562, 575]
+           , 14: {XTRA: [535, 562, 575], tracking: [-0.2 , 0, 0.2], wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+           ,  8: {XTRA: [545, 562, 570], tracking: [-0.01 , 0, 0.27], wordspace: [8/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
+        }
+    }
+};
+
+const FONT_SPEC_CONFIG_ROBOTO_FLEX = {
+    // weight
+        // width
+            // opsz
+    1000: {
+        100: {
+            144: {XTRA: [458, 468, 473], tracking: [-0.8, 0, 0.5], wordspace: [96/144 - 1, 1 - 1/*144/144*/, 150/144 - 1]}
+           , 14: {XTRA: [458, 468, 472], tracking: [-0.2, 0, 0.13], wordspace: [10/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
+            // FIXME: PDF is not clear regarding XTRA: also [462, 468, 475]
+           ,  8: {XTRA: [444, 468, 475], tracking: [-0.06, 0, 0.2], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
+        }
+    }
+  , 400: {
+        151: {
+            144: {XTRA: [455, 468, 479], tracking: [-0.3, 0, 0.5], wordspace: [118/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
+            // FIXME: PDF is not clear regarding XTRA: also [450, 468, 471]
+           , 14: {XTRA: [458, 468, 475], tracking: [-0.1, 0, 0.13], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
+           ,  8: {XTRA: [462, 468, 475], tracking: [-0.06, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
+        }
+        // default reading text spec:
+      , 100: {
+            144: {XTRA: [460, 468, 471], tracking:[-0.5, 0, 0.5],  wordspace: [114/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
+           , 14: {XTRA: [460, 468, 471], tracking:[-0.1, 0, 0.13],  wordspace: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
+           ,  8: {XTRA: [462, 468, 475], tracking:[-0.06, 0, 0.2], wordspace: [7/8 - 1, 1 - 1 /*8/8*/,   14/8 - 1]}
+        }
+      , 25: {
+            // FIXME: PDF is not clear regarding wordspace: also: [120/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
+            // FIXME: PDF is not clear regarding XTRA: also: [466, 468, 473]
+            144: {XTRA: [468, 468, 473], tracking: [-0.07, 0, 0.15], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 168/144 - 1]}
+            // FIXME: PDF is not clear regarding wordspace: also: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
+           , 14: {XTRA: [463, 468, 472], tracking: [-0.1, 0, 0.13], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 16/14 - 1]}
+            // FIXME: PDF is not clear regarding tracking: also: [-0.06, 0, 0.2]
+           ,  8: {XTRA: [464, 468, 475], tracking: [0, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 10/8 - 1]}
+        }
+    }
+  , 100: {
+        100: {
+            144: {XTRA: [460, 468, 473], tracking: [-0.3, 0, 0.65], wordspace: [126/144 - 1, 1 - 1/*144/144*/, 216/144 - 1]}
+           // FIXME: PDF is not clear regarding XTRA, also: [458, 468, 471]
+           , 14: {XTRA: [458, 468, 472], tracking: [-0.1, 0, 0.13], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 20/14 - 1]}
+           // FIXME: PDF is not clear regarding tracking, also: [-0.04, 0, 0.2]
+           ,  8: {XTRA: [460, 468, 471], tracking: [-0.03, 0, 0.16], wordspace: [8/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
+        }
+    }
+};
+
+
 function _getFontSpec(referenceElement) {
     // TODO: fontSpecConfig etc. will be for more sizes and different
     // per font/family.
@@ -900,6 +994,7 @@ function _getFontSpec(referenceElement) {
         //      Track: -.1, 0, .25 || increment: ? range .35
         //      word-space: 6/8, 8/8, 12/8 || increment: ? range: 4/8
       , fontSpecConfigAmstelVar = {
+
             14: {XTRA: [515, 562, 580], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
            , 8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/,   12/8 - 1]}
         }
