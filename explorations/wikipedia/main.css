@@ -901,15 +901,9 @@ line-height: var(--x-line-height);
  * but from :root{--font-size: 12;}
  */
 --x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
-/* FIXME: not sure if the distance change should be implemented here!
- * actually, the runion takes care of --line-height, so it should do this
- * as well.
- * I wonder if the following meant that for some distances we want to
- * have line-space bigger than 1.2 but never smaller than, or if it
- * was a mix up between min and max, and min was meant.
- * --x-line-height: max(1.2, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05)));
- */
---x-line-height: max(1.1, min(1.3, calc(var(--line-height) + (-1 * var(--font-size-change-by-distance, 0) * 0.05))));
+
+--x-line-height: var(--line-height);
+
 --x-font-grade: calc(var(--font-grade, 0) * var(--amplify-grade, 1) * var(--toggle-grade, 1));
 
 
