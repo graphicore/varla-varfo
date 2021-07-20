@@ -669,49 +669,55 @@ function getELementLineWidthAndEmInPx(elem) {
     return [widthPx, emInPx];
 }
 
-function _runion_01_columns(availableWidthEn) {
+
+      // These _MIN... and _MAX... constants are used at different
+      // positions in the actual COLUMN_CONFIG data.
+const _MIN_LINE_LENGTH_EN = 33
+    , _MAX_LINE_LENGTH_EN = 65
+    , COLUMN_CONFIG = {
+        en: {
+            // at minimal line length === 1
+            // at maximal line length === 1.2
+            // otherwise inbetween.
+            // never smaller than 1
+            // As long as we don't adjust YTRA min should be 5% that's 1 + 0.05.
+            //
+            // used as default for now
+            // as a factor of font-size, actual value relative positioned to line-length
+            // as shorter lines require shorter line-height.
+            minLineHeight: 1.1
+          , maxLineHeight: 1.3
+            // Kind of a duplicate, could be calculated from
+            // the "columns" setting.
+          , minLineLength: _MIN_LINE_LENGTH_EN
+          , maxLineLength: _MAX_LINE_LENGTH_EN
+          , columns:[
+                /* This will likely be dependent on the locale!
+                 * index 0 == columns 1
+                 * [minLineLength, maxLineLength, columnGap] in en
+                 * NOTE: for columnGap, it could be just 1em (2en, default in CSS),
+                 * but also for wider columns it can (and probably should) be wider.
+                 * Since 2 columns are more likely to be wider, I added a bit.
+                 * Otherwise, it would be good to have a better informed rule for that
+                 * as well, but it will be hard to calculate within this algorithm as
+                 * it is.
+                 */
+                [ 0, _MAX_LINE_LENGTH_EN, 0]  // 1
+              , [_MIN_LINE_LENGTH_EN, _MAX_LINE_LENGTH_EN, 3] // 2
+              , [_MIN_LINE_LENGTH_EN, 50, 2.5] // 3
+              , [_MIN_LINE_LENGTH_EN, 40, 2] // 4
+            ]
+        }
+    }
+    ;
+
+function _runion_01_columns(columnConfig, availableWidthEn) {
     // TODO: Could be cool to configure the unknowns via the testing rig.
     // Would need to reach into the window, could, for that matter, also
     // be done by the user-settings dialogue however, this is not meant
     // to be an end-user-facing setting, just a tool to get the algorithm
     // dialed in.
 
-    /*
-     * columnConfig:
-     *    This will likely be dependent on the locale!
-     *    index 0 == columns 1
-     *    [minLineLength, maxLineLength, columnGap] in en
-     *    NOTE: for columnGap, it could be just 1em (2en, default in CSS),
-     *    but also for wider columns it can (and probably should) be wider.
-     *    Since 2 columns are more likely to be wider, I added a bit.
-     *    Otherwise, it would be good to have a better informed rule for that
-     *    as well, but it will be hard to calculate within this algorithm as
-     *    it is.
-     */
-    const minLineLength = 33
-       , maxLineLength = 65
-        // at minimal line length === 1
-        // at maximal line length === 1.2
-        // otherwise inbetween.
-        // never smaller than 1
-        // As long as we don't adjust YTRA min should be 5% that's 1 + 0.05.
-       , minLineHeight = 1.1
-       , maxLineHeight = 1.3
-       , calcLineHeight=(lineLengthEn)=>{
-            const lineLengthPos = lineLengthEn-minLineLength
-                , lineLengthRange = maxLineLength - minLineLength
-                , ratio = lineLengthPos/lineLengthRange
-                , raw = minLineHeight + ((maxLineHeight-minLineHeight) * ratio)
-                ;
-            return Math.min(maxLineHeight, Math.max(minLineHeight, raw));
-         }
-       ;
-    var columnConfig = [
-        [ 0, 65, 0]  // 1
-      , [minLineLength, maxLineLength, 3] // 2
-      , [minLineLength, 50, 2.5] // 3
-      , [minLineLength, 40, 2] // 4
-    ];
     for(let columns=1,max=columnConfig.length; columns<=max; columns++) {
         let [minLineLength, maxLineLength, columnGapEn] = columnConfig[columns-1]
             // NOTE: there's (yet?) no default left/right padding, but the
@@ -721,11 +727,10 @@ function _runion_01_columns(availableWidthEn) {
           , paddingRightEn = 0
           , gaps = columns - 1
           , lineLengthEn = (availableWidthEn - (gaps * columnGapEn)) / columns
-          , lineHeight = calcLineHeight(lineLengthEn)
           ;
         if(lineLengthEn > minLineLength && lineLengthEn <= maxLineLength)
             // compose
-            return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn, lineHeight];
+            return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
     }
 
     // Add padding, we don’t use more than the configured columns.
@@ -749,14 +754,23 @@ function _runion_01_columns(availableWidthEn) {
             // Another strategy could be e.g. to distribute the padding to the right only.
           , paddingLeftEn = paddingEn * 3/5
           , paddingRightEn = paddingEn * 2/5
-          , lineHeight = calcLineHeight(lineLengthEn)
           ;
         // compose
-        return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn, lineHeight];
+        return [columns, lineLengthEn, columnGapEn, paddingLeftEn, paddingRightEn];
     }
     // With a proper config this should not be possible (1 column min-width = 0),
     // thus, if this happens we must look at the case and figure out what to do.
     throw new Error(`Can\'t compose column setup for availableWidthEn: ${availableWidthEn}!`);
+}
+
+function _runion_01_lineHeight ({minLineHeight, maxLineHeight,
+                          minLineLength, maxLineLength}, lineLengthEn) {
+    const lineLengthPos = lineLengthEn-minLineLength
+        , lineLengthRange = maxLineLength - minLineLength
+        , ratio = lineLengthPos/lineLengthRange
+        , raw = minLineHeight + ((maxLineHeight-minLineHeight) * ratio)
+        ;
+    return Math.min(maxLineHeight, Math.max(minLineHeight, raw));
 }
 
 // Characters per line runion
@@ -776,8 +790,11 @@ function runion_01 (elem) {
       , enInPx = emInPx / 2
       , compensateForError = 0
       , availableWidthEn = (widthPx - compensateForError) / enInPx
+      , columnConfig = COLUMN_CONFIG.en
       , [columns, lineLengthEn, columnGapEn, paddingLeftEn,
-                    paddingRightEn, lineHeight] = _runion_01_columns(availableWidthEn);
+                    paddingRightEn] = _runion_01_columns(columnConfig.columns, availableWidthEn)
+      , lineHeight = _runion_01_lineHeight(columnConfig, lineLengthEn)
+      ;
 
     elem.style.setProperty('--column-count', `${columns}`);
     elem.style.setProperty('--column-gap-en', `${columnGapEn}`);
@@ -1266,7 +1283,7 @@ function main() {
       , updateViewport = (evt)=>{
             let cancelJustification = true
                 // Don't cancel justification when color mode changes
-                // it's not supposed to change layput at all. However
+                // it's not supposed to change layout at all. However
                 // there may be subtle line-length differences due to
                 // grade, but insignificant.
               , keepJustificationState = new Set(['color-scheme'])
