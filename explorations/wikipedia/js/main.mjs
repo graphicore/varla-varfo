@@ -72,14 +72,16 @@ class _ContainerWidget {
             throw new Error(`KeyError getWidgetById not found: ${id}`);
         return widget;
     }
+    activate () {
+        for(let widget of this._widgets)
+            if(widget.activate)
+                widget.activate();
+    }
 }
 
-// justification maybe option:
-//          turn off xtra
-//          turn off word-spacing
-//
-// TODO: Nice to have: while justifying: pick the next line from all
-// unjustified lines by how central it is to the viewport!
+// TODO/MAYBE/nice to have: As a way to speed up perceived
+// justification: while justifying: pick the next paragraph from all
+// unjustified paragraphs by how close it is to the viewport.
 
 const CHECKBOX_TEMPLATE = `
     <label class="{klass} {extra-classes}">{label}:
@@ -101,7 +103,7 @@ class CheckboxWidget {
         let _templateVars = [...Object.entries(templateVars)];
 
         _templateVars.push(['*button style*', buttonStyle ? '<span></span>' : '']);
-        _templateVars.push(['checked', checked ? 'checked' : '']);
+        _templateVars.push(['*checked*', checked ? 'checked' : '']);
 
         for(let [k,v] of _templateVars)
             template = template.replaceAll('{' + k + '}', v);
@@ -290,6 +292,137 @@ class ArticleURLWidget {
     }
 }
 
+
+const MIN_MAX_SLIDER_TEMPLATE = `
+<div class="{klass}">
+    <span class="like_a_label">{label}:</span><br />
+    <span class="like_a_label">min</span>
+    <input class="{klass}-min_slider" data-role="set-min" type="range" step="{step}" min="{min}" max="{max}" value="{minValue}""/>
+    <input class="{klass}-min_number" data-role="set-min" type="number" min="{min}" max="{max}" value="{minValue}" />
+    (default:&nbsp;{minDefault})<br />
+
+    <span class="like_a_label">max</span>
+    <input class="{klass}-max_slider" data-role="set-max" type="range" step="{step}" min="{min}" max="{max}" value="{maxValue}""/>
+    <input class="{klass}-max_number" data-role="set-max" type="number" min="{min}" max="{max}" value="{maxValue}" />
+    (default:&nbsp;{maxDefault})<br />
+    <span class="like_a_label">actual value:</span>&nbsp;<span class="{klass}-actual_value">{actualValue}</span><br />
+    <button class="{klass}-reset">reset</button>
+</div>
+`;
+
+class MinMaxSliderWidget {
+    constructor(domTool, container, templateVars, getActualValue, localStorageKey, onChange) {
+        this._domTool = domTool;
+        this.container = container;
+        this._templateVars = templateVars;
+        this._getActualValue = getActualValue;
+        var template = MIN_MAX_SLIDER_TEMPLATE;
+
+        if(ID in templateVars)
+            this[ID] = templateVars[ID];
+
+        for(let [k,v] of Object.entries(templateVars))
+            template = template.replaceAll('{' + k + '}', v);
+        {
+            let frag = this._domTool.createFragmentFromHTML(template);
+            this.container.appendChild(frag);
+        }
+
+        this._localStorageKey = localStorageKey;
+        this._onChange = onChange;
+        {
+            let onInput = (evt, dispatchAnyways)=> {
+                    let target = evt && evt.target
+                      , role = target && target.getAttribute('data-role')
+                      , oldMin, oldMax
+                      ;
+
+                    for(let elem of this._minInputs) {
+                        if(target && elem === target) continue;
+                        oldMin = parseFloat(elem.value);
+                        break;
+                    }
+                    for(let elem of this._maxInputs) {
+                        if(target && elem === target) continue;
+                        oldMax = parseFloat(elem.value);
+                        break;
+                    }
+                    let min = oldMin
+                      , max = oldMax
+                      ;
+
+                    if(role === 'set-min') {
+                        min = Math.min(templateVars.max, Math.max(templateVars.min, parseFloat(target.value)));
+                        max = Math.max(max, min);
+                    }
+                    else if(role === 'set-max') {
+                        max = Math.min(templateVars.max, Math.max(templateVars.min, parseFloat(target.value)));
+                        min = Math.min(max, min);
+                    }
+
+                    for(let elem of this._minInputs)
+                        elem.value = min;
+                    for(let elem of this._maxInputs)
+                        elem.value = max;
+
+                    //if(this._localStorageKey)
+                    //    this._domTool.window.localStorage.setItem(this._localStorageKey, target.value);
+
+                    if(dispatchAnyways || oldMin !== min || oldMax !==max)
+                        this._onChange(min, max);
+                }
+              ;
+
+            let allInputs = this.container.querySelectorAll(`.${templateVars.klass} input`);
+            this._minInputs = [];
+            this._maxInputs = [];
+            for(let input of allInputs) {
+                let role = input.getAttribute('data-role');
+                if(role === 'set-min')
+                    this._minInputs.push(input);
+                else if(role === 'set-max')
+                    this._maxInputs.push(input);
+                else continue;
+                // The text/number inputs should not fire while typing,
+                // hence onChange, while the sliders may fire on each
+                // movement, hence onInput.
+                input.addEventListener(input.type === 'range' ? 'input' : 'change', onInput);
+            }
+
+            let reset = this.container.querySelector(`.${templateVars.klass}-reset`);
+            reset.addEventListener('click', ()=>{
+                for(let elem of this._minInputs)
+                    elem.value = templateVars.minDefault;
+                for(let elem of this._maxInputs)
+                    elem.value = templateVars.maxDefault;
+                onInput(null, true);
+            });
+
+            //
+            //var storedValue = null;
+            //if(this._localStorageKey)
+            //    storedValue = this._domTool.window.localStorage.getItem(this._localStorageKey);
+            //if(storedValue !== null)
+            //    elem.value = storedValue;
+            //
+           //elem.addEventListener('input', onInput);
+           //elem.addEventListener('change', onChange);
+           //reset.addEventListener('click', ()=>{
+           //    elem.value = templateVars.value;
+           //    _dispatchChangeEvent(elem);
+           //});
+           //onChange({target: elem});
+        }
+    }
+    displayActualValue (value) {
+        for(let elem of this.container.querySelectorAll(`.${this._templateVars.klass}-actual_value`))
+            elem.textContent = value;
+    }
+    activate () {
+        this.displayActualValue(this._getActualValue());
+    }
+}
+
 const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
     , AMPLIFY_GRADE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-amplify'
     , JUSTIFICATION_ACTIVE_STORAGE_KEY = 'varla-varfo-justification-active'
@@ -308,7 +441,7 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(baseElement, justificationController) {
+    constructor(baseElement, justificationController, getCurrentLineHeightInPercent, recalculateLineHeight) {
         super(baseElement);
         this._justificationController = justificationController;
         var klass = 'portal_augmentation';
@@ -323,6 +456,33 @@ class PortalAugmentationWidget extends _ContainerWidget {
                             'insert: widgets', this._widgetsContainer);
 
         let widgetsConfig = [
+            // Line-height algorithm manipuation
+            // TODO: it would be propper cool to have a single min-max slider
+            // between 100 % and 200 %
+            [    MinMaxSliderWidget, {
+                      klass: `${klass}-line_height`
+                    , label: 'Line-Height (in % of font-size)'
+                    , [ID]: 'line-height'
+                    , min: 100
+                    , max: 200
+                    , step: 1
+                      // hard coded COLUMN_CONFIG.en is bad practice!
+                    , minValue: parseInt(COLUMN_CONFIG.en.minLineHeight * 100, 10)
+                    , maxValue: parseInt(COLUMN_CONFIG.en.maxLineHeight * 100, 10)
+                    , actualValue: getCurrentLineHeightInPercent()
+                    , minDefault: parseInt(COLUMN_CONFIG.en.minLineHeight * 100, 10)
+                    , maxDefault: parseInt(COLUMN_CONFIG.en.maxLineHeight * 100, 10)
+                },
+                getCurrentLineHeightInPercent, // getActualValue needed onActivate
+                null, /*local storage key*/
+                // on change
+                (min, max)=>{
+                    recalculateLineHeight(min / 100, max / 100);
+                    this.getWidgetById('line-height')
+                        .displayActualValue(getCurrentLineHeightInPercent());
+                }
+            ],
+            '<hr />',
             // [checkbox] play/pause justification
             [   CheckboxWidget, {
                       klass: `${klass}-run_justification_checkbox`
@@ -773,6 +933,28 @@ function _runion_01_lineHeight ({minLineHeight, maxLineHeight,
     return Math.min(maxLineHeight, Math.max(minLineHeight, raw));
 }
 
+
+// FIXME: Bad practices implementation :-(
+//       * knows too much about how the ui for setting line height works
+//       * duplicates logic from runion_01
+//       * hard codes COLUMN_CONFIG.en
+//       * takes advantage of several css custom properties (maybe that's ok?)
+//   >>> * should be a method of a new runion controller
+function _runion_01_recalculateLineHeight(elem, min, max) {
+
+    let lineLengthEn = parseFloat(elem.style.getPropertyValue('--column-width-en'))
+      , columnConfig = {
+            minLineHeight: min
+          , maxLineHeight: max
+          , minLineLength: COLUMN_CONFIG.en.minLineLength
+          , maxLineLength: COLUMN_CONFIG.en.maxLineLength
+        }
+      ;
+    let lineHeight = _runion_01_lineHeight(columnConfig, lineLengthEn);
+    // should be a method!
+    elem.style.setProperty('--line-height', `${lineHeight}`);
+}
+
 // Characters per line runion
 function runion_01 (elem) {
     var [widthPx, emInPx] = getELementLineWidthAndEmInPx(elem)
@@ -801,6 +983,8 @@ function runion_01 (elem) {
     elem.style.setProperty('--column-width-en', `${lineLengthEn}`);
     elem.style.setProperty('--padding-left-en', `${paddingLeftEn}`);
     elem.style.setProperty('--padding-right-en', `${paddingRightEn}`);
+
+    // TODO: this is subject of the line-height fine-tuning UI
     elem.style.setProperty('--line-height', `${lineHeight}`);
 
     // Debugging stuff:
@@ -1214,6 +1398,7 @@ function main() {
     let justificationController = null
       , userSettingsWidget = null
       , userSettingsWidgetContainer = document.querySelector('.insert_user_settings')
+        // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
       , runionTargetSelector = '.runify-01, .mw-parser-output'
       , justificationSkip = [
             /* skipSelector selects elements to skip*/
@@ -1222,6 +1407,7 @@ function main() {
             'skip-justify'
        ]
       , toggleUserSettingsWidget = null
+      , runion01Elem = null
       ;
 
 
@@ -1237,17 +1423,25 @@ function main() {
             userSettingsWidget.destroy();
             userSettingsWidget = null;
         }
-        // FIXME: we should be able to use this with more than one element.
+        // FIXME: we must be able to use this with more than one element.
         //        as runion_01 is applied to all matching elements as well
+        runion01Elem = document.querySelector(runionTargetSelector);
+
         // FIXME:
-        //      run this only always after runion_01 is finished!
-        let runion01Elem = document.querySelector(runionTargetSelector);
+        //      run justificationController only always after runion_01 is finished!
         justificationController = new JustificationController(runion01Elem, justificationSkip);
+
+        let recalculateLineHeight = (min, max) => _runion_01_recalculateLineHeight(runion01Elem, min, max)
+          , getCurrentLineHeightInPercent = ()=> {
+              return (parseFloat(runion01Elem.style.getPropertyValue('--line-height')) * 100).toFixed(2);
+          }
+          ;
+
         userSettingsWidget = new WidgetsContainerWidget(
                         userSettingsWidgetContainer,
                         [
                             [ArticleURLWidget, {[ID]: 'article-url'}, updateAfterChangedContent, articleURLWidgetState],
-                            [PortalAugmentationWidget, justificationController],
+                            [PortalAugmentationWidget, justificationController, getCurrentLineHeightInPercent, recalculateLineHeight],
                             UserPreferencesWidget
                         ]);
         let toggle = (/*evt*/)=>{
@@ -1280,6 +1474,9 @@ function main() {
             updateViewportScheduled = setTimeout(updateViewport,
                                     time !== undefined ? time : 100);
         }
+        // TODO: this function should be part of the runion implementation,
+        // rather than calling "runion_01(runion01Elem)". It's likely that
+        // we'll have different runions on one page.
       , updateViewport = (evt)=>{
             let cancelJustification = true
                 // Don't cancel justification when color mode changes
@@ -1309,9 +1506,11 @@ function main() {
             let  justificationWasRunning = justificationController.running;
             if(cancelJustification)
                 justificationController.cancel();
-            // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
-            for(let elem of document.querySelectorAll(runionTargetSelector))
-                runion_01(elem);
+            // CAUTION: this only sets a few CSS-variables, it will always
+            // come to same conclusion, **if the view port parameters
+            // did not change.** The heuristic whether to cancelJustification
+            // and then re-run it seems a bit brittle anyways.
+            runion_01(runion01Elem);
             fixCSSKeyframes(document);
             // only run if it is not paused by the user.
             if(cancelJustification && justificationWasRunning)
