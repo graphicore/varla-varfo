@@ -458,9 +458,12 @@ function* findLines(deepTextElem, skip=false , debug=false) {
                     }
                 }
 
-                if (Math.floor(lastRect.bottom - firstRect.bottom) < 1
+                // NOTE: < 1 was bad as we had cases (on Mac Chromium) where
+                // both results where exactly 1, so adding here a bit more
+                // error tolerance
+                if (Math.floor(lastRect.bottom - firstRect.bottom) < 3
                         // e.g. our <sup> tags are not touching on bottom
-                        || Math.floor(lastRect.top - firstRect.top) < 1
+                        || Math.floor(lastRect.top - firstRect.top) < 3
 
                         // This prevents a fail in Firefox, if the line
                         // begins with <sup> elements and is then followed
@@ -491,9 +494,9 @@ function* findLines(deepTextElem, skip=false , debug=false) {
                     };
                     console.log('not withinVerticalBounds\n',
                         Math.floor(lastRect.bottom - firstRect.bottom),
-                        ' => Math.floor(lastRect.bottom - firstRect.bottom) < 1\n',
+                        ' => Math.floor(lastRect.bottom - firstRect.bottom) < 3\n',
                         Math.floor(lastRect.top - firstRect.top),
-                        ' => Math.floor(lastRect.top - firstRect.top) < 1\n',
+                        ' => Math.floor(lastRect.top - firstRect.top) < 3\n',
                         ...printRect(lastRect), '=>lastRect\n',
                         ...printRect(firstRect), '=> firstRect\n'
                     );
