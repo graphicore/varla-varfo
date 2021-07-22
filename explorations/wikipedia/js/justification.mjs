@@ -280,6 +280,8 @@ function _isOutOfFlowContext(elem) {
     return elem.offsetParent === null;
 }
 
+
+export const _DEBUG = Symbol('_DEBUG');
 /**
  * Find lines that the browser has composed by using Range objects
  * and their getBoundingClientRect.
@@ -289,7 +291,7 @@ function _isOutOfFlowContext(elem) {
  *       pipeline with the following transformations, if we keep doing
  *       those from back to front.
  */
-function* findLines(deepTextElem, skip=[null, null] , debug=false) {
+function* findLines(deepTextElem, skip=false , debug=false) {
     var textNodesGen
       , container
       , skipUntil = null
@@ -298,6 +300,14 @@ function* findLines(deepTextElem, skip=[null, null] , debug=false) {
       , last = null
       , initialEndNodeIndex = null
       ;
+    if(skip === _DEBUG) {
+        skip = false;
+        debug = _DEBUG;
+    }
+    if(skip === false)
+        // Also applies when skip was _DEBUG.
+        skip=[null, null];
+
     if(Array.isArray(deepTextElem)) {
         [container, deepTextElem, skipUntil] = deepTextElem;
         if(skipUntil instanceof Line) {
@@ -469,7 +479,7 @@ function* findLines(deepTextElem, skip=[null, null] , debug=false) {
                         ) {
                     withinVerticalBounds = true;
                 }
-                else if (debug) {
+                else if (debug === _DEBUG) {
                     let printRect = (rect)=>{
                         let result = ['rect\n    '];
                         for(let k in rect) {
@@ -1104,15 +1114,8 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
                 // initial run
                 if(expectedLineContent && startLineContent !== expectedLineContent) {
                     // run again with enabled debugging to print reporting to console
-                     let _getDebugArgs = (debug)=>{
-                         let _debug = [debug];
-                         if(findLinesArguments.length === 1)
-                             _debug.unshift([null, null]);
-                         return _debug;
-                     };
-                     for(let _ of findLines(...findLinesArguments, ..._getDebugArgs(true)))
-                        break;
-                     console.log('startLine:', startLine);
+                    findLines(...findLinesArguments, _DEBUG).next();
+                    console.log('startLine:', startLine);
 
                     // assert it has the same content as the initial firstLine
                     // FIXME: this finds legitimate issues!
@@ -1415,9 +1418,11 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
                 skipUntilAfter // skips nodes, until this node, including this node
             ]]
           ;
+
         // Here we hit the "missing textNode mystery" in Chrome/Chromium:
         // it's there but not there...
-        for(let line of findLines(...findLinesArguments)) {
+        let debug = false; // false or _DEBUG
+        for(let line of findLines(...findLinesArguments, debug)) {
             lines.push(line);
             if(lines.length === 2)
                 break;
