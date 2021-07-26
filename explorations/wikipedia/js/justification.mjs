@@ -227,12 +227,11 @@ function _getContainingRect(lineRangeOrNode) {
       , logs = []
       ;
     for(let rect of parentRects) {
-
         // If lineRect is contained in rect we got a hit.
 
         // FIXME: top and bottom tests failed with very small line-space
         // which is normal, now that the runion reduces line-space down
-        // to 1, and now we get some ovwerflow.
+        // to 1, and now we get some overflow.
         // If left/right is a fit, we're at least in the correct column,
         // which is the main reason for this.
         // Would be nice to have this very accurate though, so we can
@@ -419,6 +418,15 @@ function* findLines(deepTextElem, skip=false , debug=false) {
               , changed = false
               ;
 
+            // This fix is only required for MacOS Safari.
+            if(firstRect.width === 0) {
+                for(let i=1,l=rects.length;i<l;i++) {
+                    if(rects[i].width !== 0) {
+                        firstRect = rects[i];
+                        break;
+                    }
+                }
+            }
             // get the column, each line has only one column, so, we
             // need tp get it only once.
             if(!currentLine.columnRect)
@@ -1084,7 +1092,7 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
 
     // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
-    // until we run of negative [--font-stretch, ...] adjustment potential.
+    // until we run out of negative [--font-stretch, ...] adjustment potential.
     let adjust = (nodes, step, colorIntensity) => {
         for(let node of nodes) {
             if(colorIntensity !== undefined) {
