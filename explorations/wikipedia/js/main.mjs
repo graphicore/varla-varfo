@@ -813,7 +813,7 @@ function getElementFontSizePt(elem) {
 
 function setDefaultFontSize(document) {
     var root = document.querySelector(':root')
-      , fontSizePT = getElementFontSizePt(root)
+      , fontSizePT = getElementFontSizePt(root) //  * 0.875 <- match wikipedia but the hack is bad at this point, do in CSS!
       ;
     root.style.setProperty('--default-font-size', `${fontSizePT}`);
 }
@@ -1525,6 +1525,11 @@ function main() {
       ;
 
     updateAfterChangedContent();
+    // FIXME: resize is currently only interesting when the width of
+    // the page changes, height can change more often (open the debugger,
+    // OSsses may change height to make room for the main toolbar when in
+    // fullscreen and the mouse touches the upper/lower screen edge,
+    // iOS increases the address bar when scrolled into zoom etc ...
     window.addEventListener('resize', scheduleUpdateViewport);
     window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
 
