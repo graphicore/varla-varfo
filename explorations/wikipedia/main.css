@@ -1647,6 +1647,16 @@ i, cite, em, var, dfn {
  */
 .justification-context-block .new-style-current-last-line-elem::after {
     content: '';
+}
+
+/* Making this an exclusive Firefox block, as it interferes with Safari
+ * (which has the actually worse bug) and is not relevant for Chrome.
+ * The way it interferes is that Safari applies the text-indent to all
+ * of these lines with pseudo elements that have "display: block" and
+ * hence, all but the actually indented lines become too short in
+ * findLines/.justification-context-block.
+ */
+@-moz-document url-prefix() {
     /* This "display: block" is not required for the "missing textNode mystery".
      * Instead, it fixes an issue with Firefox, where a line does not break
      * when it is the current last line and suddenly for some reason (maybe
@@ -1657,18 +1667,21 @@ i, cite, em, var, dfn {
      * StarLine will have the content of the word/syllable/piece that
      * got moved up to the last line.
      */
-    display: block;
-}
+    .justification-context-block .new-style-current-last-line-elem::after {
+        display: block;
+    }
 
-/* Prevent Firefox from creating arbitrary breaks while justifying.
- * This also breaks the hyphens of hyphenated lines, creating new lines
- * just for the hyphens, but in the phase of finding and narrowing lines
- * that is not essential.
- */
-.justification-context-block .line-in-progress-first-elem::before,
-.justification-context-block .r00-l-first::before {
-    content: '';
-    display: block;
+    /* Prevent Firefox from creating arbitrary breaks while justifying.
+     * This also breaks the hyphens of hyphenated lines, creating new lines
+     * just for the hyphens, but in the phase of finding and narrowing lines
+     * that is not essential.
+     */
+    .justification-context-block .line-in-progress-first-elem::before,
+    .justification-context-block .r00-l-first::before {
+        content: '';
+        display: block;
+    }
+
 }
 
 .justification-context-block .r00-first-line.line-in-progress-first-elem::before,
