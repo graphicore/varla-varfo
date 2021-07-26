@@ -1697,6 +1697,11 @@ i, cite, em, var, dfn {
  * looking for.
  * The heuristic that the adds the hyphen class may still have flaws!
  */
+
+/* Prevent Safari from displaying hyphens where there should be none.*/
+.r00-l-last::after{
+    content: '';
+}
 .runion-line.r00-l-hyphen::after {
     content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
                      doesn't do anything*/
