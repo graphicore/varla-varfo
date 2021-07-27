@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+<html class="page_content-item client-js" lang="{{ page.lang | default: site.lang | default: "en" }}">
   <head>
     {%- include emsquare-head.html -%}
   </head>
@@ -8,10 +8,13 @@
         <button title="Toggle User Settings Widget" class="toggle-user_settings">⚙</button>
     </div>
     <div class="insert_user_settings"></div>
-    <header>Emsquare</header>
-    <main class="runify-01 {{ page.class }}">
-      <article>
-        {{ content }}
+    <main class="{{ page.class }}">
+      <article class="runify-01">
+          <header>
+            <span class="main-caption">Emsquare Volume 1</span>
+            <h1>{{ page.headline }}</h1>
+          </header>
+          {{ content }}
       </article>
     </main>
     <footer>

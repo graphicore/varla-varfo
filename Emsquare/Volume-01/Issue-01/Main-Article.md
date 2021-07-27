@@ -1,15 +1,12 @@
 ---
 title: Space the initial frontier
+headline:  "Issue I: Space the initial frontier"
 modules:
     - "Emsquare/Volume-01/Issue-01/js/main.mjs"
 styles:
     - "explorations/wikipedia/main.css"
 
 ---
-
-Emsquare Volume I
-
-# Issue I: {{page.title}}
 
 The biggest key on the keyboard is the space key. Typography starts there and its parent space, the “imaginary” em square.
 
