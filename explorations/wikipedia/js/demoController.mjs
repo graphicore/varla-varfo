@@ -1392,7 +1392,7 @@ function applyWikiPage({document}, {subDomain, data}) {
     return true;
 }
 
-export function main() {
+export function main({columnConfig=COLUMN_CONFIG.en}) {
     massageWikipediaMarkup(document);
     setDefaultFontSize(document);
 
@@ -1407,7 +1407,6 @@ export function main() {
             /* skipClass: added to skipped elements */
             'skip-justify'
        ]
-      , columnConfig = COLUMN_CONFIG.en
       , toggleUserSettingsWidget = null
       , runion01Elem = null
       ;
