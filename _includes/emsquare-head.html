@@ -1,0 +1,9 @@
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emsquare Volume #? Issue #? {{ page.title }}</title>
+{%- for style in page.styles %}
+  <link rel="stylesheet" href="{{ style | relative_url }}">
+{%- endfor -%}
+{%- for module in page.modules %}
+  <script src="{{ module | relative_url }}" async type="module"></script>
+{%- endfor -%}

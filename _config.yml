@@ -32,6 +32,12 @@ defaults:
       layout: "default"
       order: 100
       listed: true
+  - scope:
+      path: "Emsquare"
+    values:
+      layout: "default-emsquare"
+      order: 100
+      listed: true
 
 include:
   - README.md

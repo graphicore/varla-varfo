@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+  <head>
+    {%- include emsquare-head.html -%}
+  </head>
+  <body>
+    <div class="container-toggle-user_settings">
+        <button title="Toggle User Settings Widget" class="toggle-user_settings">⚙</button>
+    </div>
+    <div class="insert_user_settings"></div>
+    <header>Emsquare</header>
+    <main class="runify-01 {{ page.class }}">
+      <article>
+        {{ content }}
+      </article>
+    </main>
+    <footer>
+          {%- capture footer -%}{%- include footer.md -%}{%- endcapture- %}
+          {{ footer | markdownify }}
+    </footer>
+  </body>
+</html>
