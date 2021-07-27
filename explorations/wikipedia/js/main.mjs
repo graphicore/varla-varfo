@@ -441,7 +441,8 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(baseElement, justificationController, getCurrentLineHeightInPercent, recalculateLineHeight) {
+    constructor(baseElement, justificationController, columnConfig,
+                    getCurrentLineHeightInPercent, recalculateLineHeight) {
         super(baseElement);
         this._justificationController = justificationController;
         var klass = 'portal_augmentation';
@@ -466,12 +467,11 @@ class PortalAugmentationWidget extends _ContainerWidget {
                     , min: 100
                     , max: 200
                     , step: 1
-                      // hard coded COLUMN_CONFIG.en is bad practice!
-                    , minValue: parseInt(COLUMN_CONFIG.en.minLineHeight * 100, 10)
-                    , maxValue: parseInt(COLUMN_CONFIG.en.maxLineHeight * 100, 10)
+                    , minValue: parseInt(columnConfig.minLineHeight * 100, 10)
+                    , maxValue: parseInt(columnConfig.maxLineHeight * 100, 10)
                     , actualValue: getCurrentLineHeightInPercent()
-                    , minDefault: parseInt(COLUMN_CONFIG.en.minLineHeight * 100, 10)
-                    , maxDefault: parseInt(COLUMN_CONFIG.en.maxLineHeight * 100, 10)
+                    , minDefault: parseInt(columnConfig.minLineHeight * 100, 10)
+                    , maxDefault: parseInt(columnConfig.maxLineHeight * 100, 10)
                 },
                 getCurrentLineHeightInPercent, // getActualValue needed onActivate
                 null, /*local storage key*/
@@ -937,26 +937,25 @@ function _runion_01_lineHeight ({minLineHeight, maxLineHeight,
 // FIXME: Bad practices implementation :-(
 //       * knows too much about how the ui for setting line height works
 //       * duplicates logic from runion_01
-//       * hard codes COLUMN_CONFIG.en
 //       * takes advantage of several css custom properties (maybe that's ok?)
 //   >>> * should be a method of a new runion controller
-function _runion_01_recalculateLineHeight(elem, min, max) {
+function _runion_01_recalculateLineHeight(columnConfig, elem, min, max) {
 
     let lineLengthEn = parseFloat(elem.style.getPropertyValue('--column-width-en'))
-      , columnConfig = {
+      , newColumnConfig = {
             minLineHeight: min
           , maxLineHeight: max
-          , minLineLength: COLUMN_CONFIG.en.minLineLength
-          , maxLineLength: COLUMN_CONFIG.en.maxLineLength
+          , minLineLength: columnConfig.minLineLength
+          , maxLineLength: columnConfig.maxLineLength
         }
       ;
-    let lineHeight = _runion_01_lineHeight(columnConfig, lineLengthEn);
+    let lineHeight = _runion_01_lineHeight(newColumnConfig, lineLengthEn);
     // should be a method!
     elem.style.setProperty('--line-height', `${lineHeight}`);
 }
 
 // Characters per line runion
-function runion_01 (elem) {
+function runion_01 (columnConfig, elem) {
     var [widthPx, emInPx] = getELementLineWidthAndEmInPx(elem)
         // NOTE: rounding errors made e.g. 4-column layouts appear as
         // 3-columns. The CSS-columns property can't be forced to a definite
@@ -972,7 +971,6 @@ function runion_01 (elem) {
       , enInPx = emInPx / 2
       , compensateForError = 0
       , availableWidthEn = (widthPx - compensateForError) / enInPx
-      , columnConfig = COLUMN_CONFIG.en
       , [columns, lineLengthEn, columnGapEn, paddingLeftEn,
                     paddingRightEn] = _runion_01_columns(columnConfig.columns, availableWidthEn)
       , lineHeight = _runion_01_lineHeight(columnConfig, lineLengthEn)
@@ -1406,6 +1404,7 @@ function main() {
             /* skipClass: added to skipped elements */
             'skip-justify'
        ]
+      , columnConfig = COLUMN_CONFIG.en
       , toggleUserSettingsWidget = null
       , runion01Elem = null
       ;
@@ -1431,7 +1430,7 @@ function main() {
         //      run justificationController only always after runion_01 is finished!
         justificationController = new JustificationController(runion01Elem, justificationSkip);
 
-        let recalculateLineHeight = (min, max) => _runion_01_recalculateLineHeight(runion01Elem, min, max)
+        let recalculateLineHeight = (min, max) => _runion_01_recalculateLineHeight(columnConfig, runion01Elem, min, max)
           , getCurrentLineHeightInPercent = ()=> {
               return (parseFloat(runion01Elem.style.getPropertyValue('--line-height')) * 100).toFixed(2);
           }
@@ -1440,8 +1439,15 @@ function main() {
         userSettingsWidget = new WidgetsContainerWidget(
                         userSettingsWidgetContainer,
                         [
-                            [ArticleURLWidget, {[ID]: 'article-url'}, updateAfterChangedContent, articleURLWidgetState],
-                            [PortalAugmentationWidget, justificationController, getCurrentLineHeightInPercent, recalculateLineHeight],
+                            [ArticleURLWidget,
+                                    {[ID]: 'article-url'},
+                                    updateAfterChangedContent,
+                                    articleURLWidgetState],
+                            [PortalAugmentationWidget,
+                                    justificationController,
+                                    columnConfig,
+                                    getCurrentLineHeightInPercent,
+                                    recalculateLineHeight],
                             UserPreferencesWidget
                         ]);
         let toggle = (/*evt*/)=>{
@@ -1510,7 +1516,7 @@ function main() {
             // come to same conclusion, **if the view port parameters
             // did not change.** The heuristic whether to cancelJustification
             // and then re-run it seems a bit brittle anyways.
-            runion_01(runion01Elem);
+            runion_01(columnConfig, runion01Elem);
             fixCSSKeyframes(document);
             // only run if it is not paused by the user.
             if(cancelJustification && justificationWasRunning)
