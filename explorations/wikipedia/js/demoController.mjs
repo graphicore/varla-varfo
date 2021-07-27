@@ -1389,7 +1389,7 @@ function applyWikiPage({document}, {subDomain, data}) {
     return true;
 }
 
-function main() {
+export function main() {
     massageWikipediaMarkup(document);
     setDefaultFontSize(document);
 
@@ -1548,4 +1548,4 @@ function main() {
         return userSettingsWidget.getWidgetById('article-url').fetchWikiPage(parsed);
      } , false);
 }
-window.onload = main;
+
