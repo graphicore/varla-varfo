@@ -1,7 +1,7 @@
 ---
 title: Space the initial frontier
 modules:
-    - "explorations/wikipedia/js/main.mjs"
+    - "Emsquare/Volume-01/Issue-01/js/main.mjs"
 styles:
     - "explorations/wikipedia/main.css"
 
@@ -66,6 +66,6 @@ Fig. 9. Counter changes via size, style and opsz.
 
 And while typefaces overwhelmingly end with well defined spaces, between words, letters and exceptional pairs, and many typeface families include a blizzard of styles, each with unique spacing, the way the font format, composition software, like design applications and web browsers, Latin typography faces challenges to the type user. And where there is a challenge in Latin, there’s likely to be more elsewhere in the world of scripts.
 
-##Takeaways:
+## Takeaways:
 
 Next: Size wise

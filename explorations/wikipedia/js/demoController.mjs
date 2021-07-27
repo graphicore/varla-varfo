@@ -834,7 +834,8 @@ function getELementLineWidthAndEmInPx(elem) {
       // positions in the actual COLUMN_CONFIG data.
 const _MIN_LINE_LENGTH_EN = 33
     , _MAX_LINE_LENGTH_EN = 65
-    , COLUMN_CONFIG = {
+    ;
+export const COLUMN_CONFIG = {
         en: {
             // at minimal line length === 1
             // at maximal line length === 1.2
@@ -870,6 +871,8 @@ const _MIN_LINE_LENGTH_EN = 33
         }
     }
     ;
+
+
 
 function _runion_01_columns(columnConfig, availableWidthEn) {
     // TODO: Could be cool to configure the unknowns via the testing rig.
