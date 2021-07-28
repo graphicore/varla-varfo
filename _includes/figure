@@ -1,0 +1,23 @@
+{%- comment %}
+USAGE:
+
+{% include figure
+        src="http://placekitten.com/200/300"
+        caption="**Look**, a [kitten](https://en.wikipedia.org/wiki/kitten)!"
+        alt="Look, a kitten!"
+%}
+
+NOTE: `alt` is optional and `caption` is its default.
+
+{% endcomment -%}
+<figure>
+<img src="{{ include.src }}" alt="
+    {%- if include.alt -%}
+        {%- comment %} alt is optional, in case caption can't be attribute content {% endcomment -%}
+        {{ include.alt }}
+    {%- else -%}
+        {{ include.caption }}
+    {%- endif %}" />
+{% comment %} caption is treated as markdown {% endcomment -%}
+<figcaption>{{ include.caption | markdownify }}</figcaption>
+</figure>
