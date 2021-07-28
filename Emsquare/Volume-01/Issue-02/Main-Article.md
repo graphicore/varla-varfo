@@ -10,7 +10,6 @@ styles:
 
 Size wise, typeface families have a long history of short spans of size masters in metal type, a brief history in early digital systems of multiple masters for various resolutions, and a flourishing of families from a broad range of masters in PostScript and then OpenType.
 
-
 In early metal types, a set of matrices that covered a short span of sizes from 6 to 11 points was common for a text typeface family. In later hand-set metal types, a family could be so useful and popular as to receive a wide range of sizes, such as from 10 to 96 points.
 
 For most of the 20th century, one kind of typesetting machines specific to rapid setting of text were used exclusively for the smaller sizes, 6 to 14 point, while typesetting machines of a different kind (from other manufacturers) offered a similar typeface in a range of larger sizes, such as from 18 to 96 points.
@@ -19,33 +18,46 @@ But the phototypesetting and then PostScript desktop publishing revolutions redu
 
 This created a typographic era where typefaces with specific characteristics were able to flourish across all boundaries of size, dot/pixel resolutions and scripts. And they continue to flourish today, regardless of use, current resolution, or the current state of internationalization. It is possible that the famous faces of this era would not be popular if they were launched during this period, as they became famous when they had size specific designs.
 
+{% include figure
+        src="./images/Darden Studio-Freight.png"
+        caption="Freight, by Darden Studio"
+%}
 
-Freight, by Darden Studio
 During this period where PostScript, TrueType and then OpenType standards did not widely support optical sizes, a small number of foundries developed sets of sibling fonts that offered typefaces each intended for a range of sizes, such as “Text” or “Display.” With real variable fonts, optical size designs are smoothly interpolated, removing the previous boundaries between designs.
 
 As a fluid range of sizes, with precision in fractions of points from the smallest size to the largest, type designers can now make whatever changes are required for the design over the size range being offered. With this they have a new and important opportunity to assure users that every style of a font family will work, and work just as well as the Regular style, at every size.
 
 A quick overview of how a range of type sizes looks can be shown with a typical “ramp” of type sizes. By comparing a set of legacy static fonts in a family in a ramp to a variable version of the family with an optical size axis, we’ll show how optical size makes it easier to use a family, and how precise per-point size specific design can improve reading performance and overall experience. Then, we’ll go into the details of how optical sizes in FB fonts are designed to help, and how we recommend they should be designed by all foundries and type designers.
 
-Fig.1
-Ramp with one Regular weight (400), used for all sizes from 8 pt to 96 pt, appears smooth, but at the top and bottom, it appears darker and lighter respectively.
+{% include figure
+        src="./images/Ramp Roboto-all regular.png"
+        caption="Fig.1: Ramp with one Regular weight (400), used for all sizes from 8 pt to 96 pt, appears smooth, but at the top and bottom, it appears darker and lighter respectively."
+%}
 
-Fig.2
-This ramp improves on the prior one with a set of weights switching to “preserve” appearance of ‘regular’ weight, which is typically done when multiple weights are available. The largest size is switched to Light (300), the smallest to Medium (500), and the rest left at Regular (400).
+{% include figure
+        src="./images/Ramp Roboto-weight switching.png"
+        alt=" "
+        caption="Fig.2:<br /> This ramp improves on the prior one with a set of weights switching to “preserve” appearance of ‘regular’ weight, which is typically done when multiple weights are available. The largest size is switched to Light (300), the smallest to Medium (500), and the rest left at Regular (400)."
+%}
 
-Fig.3
-This ramp improves further still with a set of optical sizes that are all of Regular weight. This shows that an optical size axis can simplify the specification of type, comfort the user in their ability to just use the weight they want, and to know what the “bold” and “italic” of every style is – without hesitation. The “bold” of every 400 weight is simply always 700.
+{% include figure
+        src="./images/Ramp Roboto Flex-all regular opsz.png"
+        caption="Fig.3: This ramp improves further still with a set of optical sizes that are all of Regular weight. This shows that an optical size axis can simplify the specification of type, comfort the user in their ability to just use the weight they want, and to know what the “bold” and “italic” of every style is – without hesitation. The “bold” of every 400 weight is simply always 700."
+%}
 
 Instead of supplying the user with multiple font files to approximate one weight at different sizes, and also to be sorted out into other pairings for many other emphasis styles, opsz is typically bundled with at least a weight axis in one file. This takes up less space and downloads faster.
 
 
-Fig. 4
-This ramp changes tack, to show how the entire group of text styles in Fig. 3 can be changed at once, so all styles change from 400 to 700, while the smooth and even typographic color is retained. This interplay between size and weight is important for type designers to get right to assure users that optical size variations improve the efficiency and accuracy of their typography.
+{% include figure
+        src="./images/Ramp Roboto Flex-all bold opsz.png"
+        caption="Fig.4: This ramp changes tack, to show how the entire group of text styles in Fig. 3 can be changed at once, so all styles change from 400 to 700, while the smooth and even typographic color is retained. This interplay between size and weight is important for type designers to get right to assure users that optical size variations improve the efficiency and accuracy of their typography."
+%}
 
 
-
-Fig.5
-The top set of text uses Roboto 14pt design scaled to 48, 14 and 8 pt. The bottom set uses Roboto Flex with the 48pt design at 48 pt, the 14pt at 14 pt, and the 8pt at 8 pt.The design of the single master being 14 pt, used at size in the middle rows, it’s important to note that just 6 points of difference at 8pt, on the 3rd rows, can make the feeling of comfortable reading enjoyed at 14 point fade so fast. And similarly, up at 48 point, Regular has become an over-consumer of space on the page, for the amount of information carried by the type.
+{% include figure
+        src="./images/Roboto-14pt-vs-Roboto Flex-opsz.png"
+        caption="Fig.5: The top set of text uses Roboto 14pt design scaled to 48, 14 and 8 pt. The bottom set uses Roboto Flex with the 48pt design at 48 pt, the 14pt at 14 pt, and the 8pt at 8 pt.The design of the single master being 14 pt, used at size in the middle rows, it’s important to note that just 6 points of difference at 8pt, on the 3rd rows, can make the feeling of comfortable reading enjoyed at 14 point fade so fast. And similarly, up at 48 point, Regular has become an over-consumer of space on the page, for the amount of information carried by the type."
+%}
 
 While the optical size master of metal type could be made in any order, sizes skipped for later or ignored completely, variations technology requires that opsz starts somewhere. That serves as the “default”  optical size and it’s strongly recommended to be designed so all the glyphs of the default function as well as possible at the optical size of the default.
 
@@ -60,9 +72,10 @@ The second guideline, general to most type design, is the need for slight variat
 If we could sculpt the head via a different scale than the body, it is an example of just what we do with lowercase “i” on Latin types. Smaller sizes need a larger dot, carefully sized to be thicker than the stroke below, without becoming so large as to confuse the letter for an “l” at small  sizes, While capable at larger bold sizes of nearly completely filling in the usual transparency between the two parts of the letter.
 
 
-
-Fig.6
-Over a range of sizes being rendered to pixels by modern computers, the type design is designing the small sizes to gather extra pixel into the details, both opaque and transparent, while on the other end, in large sizes, shed unnecessary pixels, both opaque and transparent.
+{% include figure
+        src="./images/size range illustration.jpg"
+        caption="Fig.6: Over a range of sizes being rendered to pixels by modern computers, the type design is designing the small sizes to gather extra pixel into the details, both opaque and transparent, while on the other end, in large sizes, shed unnecessary pixels, both opaque and transparent."
+%}
 
 Starting from that simple example we can see that if I scale the lowercase linearly the dark will disappear before the stroke does. So I make the dot a little bit heavier to make it disappear less. That calls for the need to make the stroke a little bit heavier so that they remain balanced but not as much as the dot gained in opacity. Surrounding these two shapes is a sea of transparent space usually filled with other letters, so the spaces on either side of the i, need to gain a little bit of transparency to balance the fact that the opacities have just gotten bolder in order to maintain a similar proportion to the larger sizes.
 
@@ -77,6 +90,11 @@ In cases where the lowercase height adjustment is extreme, the length of lowerca
 Uppercase Latin relies on the same transformations as the lowercase, with the exception of the heights, which may,or may not vary, depending on available space, and what modifications have been made to the lowercase ascenders.
 
 In August, I’ll write part II that describes how uppercase, figures and punctuation work across optical sizes, and in October I’ll survey how optical sizes apply to various world scripts.
+
+{% include figure
+        src="./images/size weight extremes illustration.png"
+        caption="Fig.7: Roboto Flex opsz 144 wght 1000 and opsz 8 wght 100. The thinnest smallest size (pink), and the boldest largest size (black)"
+%}
 
 ## Takeaways:
 
