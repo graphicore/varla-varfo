@@ -4,7 +4,7 @@ modules:
     - "Emsquare/Volume-01/js/main.mjs"
 styles:
     - "explorations/wikipedia/main.css"
-
+    - "Emsquare/Volume-01/main.css"
 ---
 
 The biggest key on the keyboard is the space key. Typography starts there and its parent space, the “imaginary” em square.
@@ -64,4 +64,6 @@ And while typefaces overwhelmingly end with well defined spaces, between words, 
 
 ## Takeaways:
 
-Next: Size wise
+???
+
+Next: [*Issue II: Size wise*](../Issue-02/Main-Article.html)
