@@ -12,11 +12,11 @@
       <article class="runify-01">
           <header>
             <span class="main-caption">Emsquare Volume 1</span>
-            <h1>{% if page.headline %}
+            <h1>{%- if page.headline -%}
                     {{ page.headline }}
-                {% else %}
+                {%- else -%}
                     {{ page.title }}
-                {% endif %}
+                {%- endif -%}
             </h1>
           </header>
           {{ content }}
