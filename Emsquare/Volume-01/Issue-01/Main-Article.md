@@ -2,7 +2,7 @@
 title: Space the initial frontier
 headline:  "Issue I: Space the initial frontier"
 modules:
-    - "Emsquare/Volume-01/Issue-01/js/main.mjs"
+    - "Emsquare/Volume-01/js/main.mjs"
 styles:
     - "explorations/wikipedia/main.css"
 

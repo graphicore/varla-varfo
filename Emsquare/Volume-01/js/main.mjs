@@ -1,4 +1,4 @@
-import {main, COLUMN_CONFIG} from './../../../../explorations/wikipedia/js/demoController.mjs';
+import {main, COLUMN_CONFIG} from './../../../explorations/wikipedia/js/demoController.mjs';
 const config = {
     columnConfig: (function (columnConfig){
         let result = {};
