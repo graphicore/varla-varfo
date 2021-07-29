@@ -29,34 +29,39 @@ As a fluid range of sizes, with precision in fractions of points from the smalle
 
 A quick overview of how a range of type sizes looks can be shown with a typical “ramp” of type sizes. By comparing a set of legacy static fonts in a family in a ramp to a variable version of the family with an optical size axis, we’ll show how optical size makes it easier to use a family, and how precise per-point size specific design can improve reading performance and overall experience. Then, we’ll go into the details of how optical sizes in FB fonts are designed to help, and how we recommend they should be designed by all foundries and type designers.
 
-{% include figure
+{% include emsquare-figure
         src="./images/Ramp Roboto-all regular.png"
-        caption="Fig.1: Ramp with one Regular weight (400), used for all sizes from 8 pt to 96 pt, appears smooth, but at the top and bottom, it appears darker and lighter respectively."
+        fig=1
+        caption="Ramp with one Regular weight (400), used for all sizes from 8 pt to 96 pt, appears smooth, but at the top and bottom, it appears darker and lighter respectively."
 %}
 
-{% include figure
+{% include emsquare-figure
         src="./images/Ramp Roboto-weight switching.png"
-        alt=" "
-        caption="Fig.2:<br /> This ramp improves on the prior one with a set of weights switching to “preserve” appearance of ‘regular’ weight, which is typically done when multiple weights are available. The largest size is switched to Light (300), the smallest to Medium (500), and the rest left at Regular (400)."
+        alt=""
+        fig=2
+        caption="This ramp improves on the prior one with a set of weights switching to “preserve” appearance of ‘regular’ weight, which is typically done when multiple weights are available. The largest size is switched to Light (300), the smallest to Medium (500), and the rest left at Regular (400)."
 %}
 
-{% include figure
+{% include emsquare-figure
         src="./images/Ramp Roboto Flex-all regular opsz.png"
-        caption="Fig.3: This ramp improves further still with a set of optical sizes that are all of Regular weight. This shows that an optical size axis can simplify the specification of type, comfort the user in their ability to just use the weight they want, and to know what the “bold” and “italic” of every style is – without hesitation. The “bold” of every 400 weight is simply always 700."
+        fig=3
+        caption="This ramp improves further still with a set of optical sizes that are all of Regular weight. This shows that an optical size axis can simplify the specification of type, comfort the user in their ability to just use the weight they want, and to know what the “bold” and “italic” of every style is – without hesitation. The “bold” of every 400 weight is simply always 700."
 %}
 
 Instead of supplying the user with multiple font files to approximate one weight at different sizes, and also to be sorted out into other pairings for many other emphasis styles, opsz is typically bundled with at least a weight axis in one file. This takes up less space and downloads faster.
 
 
-{% include figure
+{% include emsquare-figure
         src="./images/Ramp Roboto Flex-all bold opsz.png"
-        caption="Fig.4: This ramp changes tack, to show how the entire group of text styles in Fig. 3 can be changed at once, so all styles change from 400 to 700, while the smooth and even typographic color is retained. This interplay between size and weight is important for type designers to get right to assure users that optical size variations improve the efficiency and accuracy of their typography."
+        fig=4
+        caption="This ramp changes tack, to show how the entire group of text styles in Fig. 3 can be changed at once, so all styles change from 400 to 700, while the smooth and even typographic color is retained. This interplay between size and weight is important for type designers to get right to assure users that optical size variations improve the efficiency and accuracy of their typography."
 %}
 
 
-{% include figure
+{% include emsquare-figure
         src="./images/Roboto-14pt-vs-Roboto Flex-opsz.png"
-        caption="Fig.5: The top set of text uses Roboto 14pt design scaled to 48, 14 and 8 pt. The bottom set uses Roboto Flex with the 48pt design at 48 pt, the 14pt at 14 pt, and the 8pt at 8 pt.The design of the single master being 14 pt, used at size in the middle rows, it’s important to note that just 6 points of difference at 8pt, on the 3rd rows, can make the feeling of comfortable reading enjoyed at 14 point fade so fast. And similarly, up at 48 point, Regular has become an over-consumer of space on the page, for the amount of information carried by the type."
+        fig=5
+        caption="The top set of text uses Roboto 14pt design scaled to 48, 14 and 8 pt. The bottom set uses Roboto Flex with the 48pt design at 48 pt, the 14pt at 14 pt, and the 8pt at 8 pt.The design of the single master being 14 pt, used at size in the middle rows, it’s important to note that just 6 points of difference at 8pt, on the 3rd rows, can make the feeling of comfortable reading enjoyed at 14 point fade so fast. And similarly, up at 48 point, Regular has become an over-consumer of space on the page, for the amount of information carried by the type."
 %}
 
 While the optical size master of metal type could be made in any order, sizes skipped for later or ignored completely, variations technology requires that opsz starts somewhere. That serves as the “default”  optical size and it’s strongly recommended to be designed so all the glyphs of the default function as well as possible at the optical size of the default.
@@ -72,9 +77,10 @@ The second guideline, general to most type design, is the need for slight variat
 If we could sculpt the head via a different scale than the body, it is an example of just what we do with lowercase “i” on Latin types. Smaller sizes need a larger dot, carefully sized to be thicker than the stroke below, without becoming so large as to confuse the letter for an “l” at small  sizes, While capable at larger bold sizes of nearly completely filling in the usual transparency between the two parts of the letter.
 
 
-{% include figure
+{% include emsquare-figure
         src="./images/size range illustration.jpg"
-        caption="Fig.6: Over a range of sizes being rendered to pixels by modern computers, the type design is designing the small sizes to gather extra pixel into the details, both opaque and transparent, while on the other end, in large sizes, shed unnecessary pixels, both opaque and transparent."
+        fig=6
+        caption="Over a range of sizes being rendered to pixels by modern computers, the type design is designing the small sizes to gather extra pixel into the details, both opaque and transparent, while on the other end, in large sizes, shed unnecessary pixels, both opaque and transparent."
 %}
 
 Starting from that simple example we can see that if I scale the lowercase linearly the dark will disappear before the stroke does. So I make the dot a little bit heavier to make it disappear less. That calls for the need to make the stroke a little bit heavier so that they remain balanced but not as much as the dot gained in opacity. Surrounding these two shapes is a sea of transparent space usually filled with other letters, so the spaces on either side of the i, need to gain a little bit of transparency to balance the fact that the opacities have just gotten bolder in order to maintain a similar proportion to the larger sizes.
@@ -91,9 +97,10 @@ Uppercase Latin relies on the same transformations as the lowercase, with the ex
 
 In August, I’ll write part II that describes how uppercase, figures and punctuation work across optical sizes, and in October I’ll survey how optical sizes apply to various world scripts.
 
-{% include figure
+{% include emsquare-figure
         src="./images/size weight extremes illustration.png"
-        caption="Fig.7: Roboto Flex opsz 144 wght 1000 and opsz 8 wght 100. The thinnest smallest size (pink), and the boldest largest size (black)"
+        fig=7
+        caption="Roboto Flex opsz 144 wght 1000 and opsz 8 wght 100. The thinnest smallest size (pink), and the boldest largest size (black)"
 %}
 
 ## Takeaways:
