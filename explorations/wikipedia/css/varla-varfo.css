@@ -129,7 +129,14 @@ h2, h3, h4, h5, h6 {
 
 }
 
-
+/* TODO: before this is moved to wikipedia.css, its imlications should be
+ * documented (and not forgotten). Hence I'm leaving it here.
+ *
+ * NOTE: The main implication is that justificationController detects
+ * changed parameters that influence justification and sets different
+ * css custom parameters to the ".runion-justification-host". No sure
+ * if that behavior will last as it, however.
+ * */
 .thumb {
     --font-family: RobotoFlex;
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
