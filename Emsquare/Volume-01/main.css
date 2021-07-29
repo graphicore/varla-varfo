@@ -1,7 +1,33 @@
-figure img {
-    max-width: 100%;
+article{
+    background: white;
 }
 
 figure {
+    margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
+    margin-block-end:   calc(1pt * var(--x-font-size) * var(--x-line-height));
+    margin-inline-start: 0;
+    margin-inline-end: 0;
     text-indent: 0;
+
+    background: #efefef;
+    border: .125em solid #efefef;
+    box-sizing: border-box;
+
+    --font-family: RobotoFlex;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    /*
+     *  9 pt if default is 12 pt, same as in wikipedia page UI:
+     * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
+     */
+    --font-size: calc(3/4 * var(--default-font-size));
+}
+
+figure img {
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+figcaption .enumeration {
+    --font-weight: 700;
 }
