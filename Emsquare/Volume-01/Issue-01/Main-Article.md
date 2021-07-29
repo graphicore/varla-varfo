@@ -3,7 +3,8 @@ title: "Issue I: Space the initial frontier"
 modules:
     - "Emsquare/Volume-01/js/main.mjs"
 styles:
-    - "explorations/wikipedia/main.css"
+    - "explorations/wikipedia/css/varla-varfo.css"
+    - "explorations/wikipedia/css/widgets.css"
     - "Emsquare/Volume-01/main.css"
 ---
 
