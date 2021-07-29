@@ -1,0 +1,551 @@
+/* Essential layout rules copied from original wikipedia css.
+ *
+ * This has had many modifications since copying to make it work and
+ * is not complete. It is rather here to separate original and specific
+ * wikipedia CSS from more generic varla-varfo framework CSS.
+ *
+ * This is not stand alone at all, see the --custom-properties which are
+ * mostly from varla-varfo.
+ */
+body {
+    margin: 0;
+    background-color: #f6f6f6;
+}
+
+
+div.thumb {
+    width: auto;
+    background-color: transparent;
+}
+
+/*
+div.tright, div.floatright, table.floatright {
+    clear: right;
+    float: right;
+}
+div.tleft, div.floatleft, table.floatleft {
+    float: left;
+    clear: left;
+}
+
+div.tright {
+    margin: 0.5em 0 1.3em 0;
+}
+div.tleft {
+    margin: 0.5em 0 1.3em 0;
+}
+*/
+div.thumbinner {
+    /* FIXME: With this border and padding, the element is not neutral
+     * to the base line grid, however, we don't control the size of
+     * the content either in that respect, so being conscious here would
+     * not *yet* resolve the problem.
+
+
+    padding: 0.1875em;
+    */
+    /* text-align: center; */
+    border: 0.0625em solid #c8ccd1;
+    overflow: hidden;
+    display: block;
+}
+
+div.thumbinner > * {
+    background-color: #f1f2f3;
+    padding: 0.1875em;
+}
+
+div.thumbinner a.image{
+    display: block
+}
+
+.thumbinner {
+    min-width: 100px;
+}
+
+.thumbinner img.thumbimage {
+    display: block;
+    margin: auto;
+}
+
+.thumbcaption {
+    border: 0;
+    padding: 3px;
+    text-align: left;
+}
+
+
+
+html body.mediawiki .mbox-small {
+    clear: right;
+    /*float: right;*/
+    margin: 4px 0 4px 1em;
+    box-sizing: border-box;
+    width: auto/*238px;*/
+    font-size: 88%;
+    line-height: 1.25em;
+}
+
+
+/* navigation */
+#mw-navigation h2 {
+    position: absolute;
+    top: -9999px;
+}
+#mw-head {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+}
+#mw-panel {
+    padding-left: 0.5em;
+    font-size: inherit;
+    position: absolute;
+    top: 0;
+    width: 10em;
+    left: 0;
+}
+
+#p-logo {
+    width: 10em;
+    height: 160px;
+    margin-bottom: 1em;
+}
+
+/* keep body out of the way of navigation */
+.mw-body {
+    padding: 1.25em 1.5em 1.5em 1.5em;
+}
+
+.mw-body {
+    margin-top: -1px;
+    border: 1px solid var(--layout-border-color);
+    border-right-width: 1px;
+    border-right-width: 0;
+    background-color: var(--background);
+}
+.mw-body, #mw-data-after-content {
+    margin-left: 10em;
+}
+.mw-body, .parsoid-body {
+    direction: ltr;
+    padding: 1em;
+}
+
+.emptyPortlet {
+    display: none;
+}
+
+.mw-portlet h3 {
+    display: none;
+}
+
+#right-navigation {
+    float: right;
+    margin-top: 2.5em;
+}
+
+.vector-menu-tabs, .vector-menu-tabs a, #mw-head .vector-menu-dropdown h3 {
+    background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-separator.png?09d4b);
+    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,var(--layout-border-color) 100%);
+    background-repeat: no-repeat;
+    background-size: 1px 100%;
+}
+.vector-menu-tabs {
+    background-position: left bottom;
+    float: left;
+    height: 2.5em;
+    padding-left: 1px;
+}
+
+vector-menu-tabs h3 {
+    display: none;
+}
+
+#p-personal {
+    right: 1em;
+    position: absolute;
+    top: 6px;
+    z-index: 100;
+}
+
+#mw-head-base {
+    margin-top: -5em;
+    height: 5em;
+}
+
+#mw-page-base {
+    background-color: #fbfbfb;
+    background-image: -webkit-gradient(linear,right top,right bottom,color-stop(50%,#ffffff),color-stop(100%,#f6f6f6));
+    background-image: -webkit-linear-gradient(top,#ffffff 50%,#f6f6f6 100%);
+    background-image: -moz-linear-gradient(top,#ffffff 50%,#f6f6f6 100%);
+    background-image: linear-gradient(to bottom,#ffffff 50%,#f6f6f6 100%);
+    background-position: bottom left;
+    height: 5em;
+}
+
+#p-logo a {
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: block;
+    width: 10em;
+    height: 160px;
+    text-decoration: none;
+}
+.mw-wiki-logo {
+    background-image: url(../static/images/enwiki-2x.png);
+    background-size: 135px auto;
+}
+
+.vector-menu-portal .body ul, .vector-menu-portal .vector-menu-content ul {
+    list-style: none none;
+    margin: 0;
+    padding-top: 0.3em;
+}
+
+.vector-menu-portal {
+    margin: 0 0.6em 0 1.3em;
+    padding: 0.25em 0;
+    direction: ltr;
+}
+
+.vector-menu-tabs ul {
+    float: left;
+    height: 100%;
+    list-style: none none;
+    margin: 0;
+    padding: 0;
+}
+
+#p-personal .vector-menu-content-list {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    justify-content: flex-end;
+    align-items: baseline;
+}
+#p-personal ul {
+    padding-left: 10em;
+}
+.mw-portlet ul {
+    list-style: none none;
+    margin: 0;
+}
+ul, ol {
+    margin: 0 0 0 1em;
+    padding: 0;
+    padding-left: 0px;
+}
+
+#toc ul{
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+    color: var(--link-color);
+    background: none;
+}
+
+#p-personal li {
+    float: left;
+}
+#pt-anonuserpage {
+    color: #54595d;
+}
+#pt-anonuserpage, #pt-userpage a {
+    background-image: url(./w/skins/Vector/resources/skins.vector.styles/images/user-avatar.svg?b7f58);
+    background-position: left 0.33333333em;
+    background-repeat: no-repeat;
+    background-size: 1.16666667em 1.16666667em;
+    padding-top: 0.5em !important;
+    padding-left: 16px !important;
+}
+
+.mw-portlet li {
+    margin-left: 0.75em;
+    padding-top: 0.5em;
+    line-height: 1.16666667;
+}
+
+
+.vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
+    margin: 0;
+    padding: 0.25em 0;
+    word-wrap: break-word;
+}
+
+#left-navigation {
+    float: left;
+    margin-left: 10em;
+    margin-top: 2.5em;
+    margin-bottom: -2.5em;
+}
+
+.mw-body, #mw-head-base, #left-navigation, #mw-data-after-content, .mw-footer {
+    margin-left: 11em;
+}
+
+.vector-menu-tabs, .vector-menu-tabs a, #mw-head .vector-menu-dropdown h3 {
+    background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-separator.png?09d4b);
+    background-image: linear-gradient(to bottom,rgba(167,215,249,0) 0,var(--layout-border-color) 100%);
+    background-repeat: no-repeat;
+    background-size: 1px 100%;
+}
+.vector-menu-tabs {
+    background-position: left bottom;
+    float: left;
+    height: 2.5em;
+    padding-left: 1px;
+}
+
+.vector-menu-tabs .selected {
+    background: #ffffff;
+}
+
+.vector-menu-tabs li {
+    background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/tab-normal-fade.png?1cc52);
+    background-image: linear-gradient(to top,var(--layout-border-color) 0,#e8f2f8 1px,#ffffff 100%);
+    background-position: left bottom;
+    background-repeat: repeat-x;
+    float: left;
+    display: block;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    line-height: 1.125em;
+    white-space: nowrap;
+}
+
+.vector-menu-tabs .selected a, .vector-menu-tabs .selected a:visited {
+    color: #202122;
+    text-decoration: none;
+}
+.vector-menu-tabs li a {
+    background-position: right bottom;
+    color: var(--link-color);
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    display: block;
+    float: left;
+    height: 3.07692308em;
+    position: relative;
+    padding-top: 1.25em;
+    padding-left: 8px;
+    padding-right: 8px;
+    /** font-size: 0.8125em; was 13px so 1em was 16px == 12 pt!
+     * but for now I stick to absolute font-sizes:
+     * 13px * 3/4 = 9.75pt
+     */
+    --font-size: 9.75;
+    cursor: pointer;
+}
+
+#p-search {
+    float: left;
+    margin-right: 1em;
+    margin-left: 0.5em;
+}
+
+#p-search h3 {
+    display: block;
+    position: absolute !important;
+    clip: rect(1px,1px,1px,1px);
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#p-search form {
+    margin: 0.5em 0 0;
+}
+
+#simpleSearch {
+    position: relative;
+    height: 100%;
+}
+#simpleSearch {
+    min-width: 5em;
+    width: 13.2em;
+    width: 20vw;
+    max-width: 20em;
+}
+
+#searchInput {
+    background-color: rgba(255,255,255,0.5);
+    color: #000000;
+    width: 100%;
+    height: 2.15384615em;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    border: 1px solid #a2a9b1;
+    border-radius: 2px;
+    padding: 5px 2.15384615em 5px 0.4em;
+    -webkit-box-shadow: inset 0 0 0 1px transparent;
+    box-shadow: inset 0 0 0 1px transparent;
+    font-family: inherit;
+    /** font-size: 0.8125em; was 13px so 1em was 16px == 12 pt!
+     * but for now I stick to absolute font-sizes:
+     * 13px * 3/4 = 9.75pt
+     */
+    --font-size: 9.75;
+    direction: ltr;
+    -webkit-transition: border-color 250ms,box-shadow 250ms;
+    -moz-transition: border-color 250ms,box-shadow 250ms;
+    transition: border-color 250ms,box-shadow 250ms;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+#searchButton, #mw-searchButton {
+    background-color: transparent;
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    right: 1px;
+    min-width: 28px;
+    width: 2.15384615em;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    /** font-size: 0.8125em; was 13px so 1em was 16px == 12 pt!
+     * but for now I stick to absolute font-sizes:
+     * 13px * 3/4 = 9.75pt
+     */
+    --font-size: 9.75;
+    direction: ltr;
+    text-indent: -99999px;
+    white-space: nowrap;
+    overflow: hidden;
+    z-index: 1;
+}
+
+
+
+
+
+.mw-indicators {
+    float: right;
+    z-index: 1;
+}
+.mw-body-content {
+    position: relative;
+    z-index: 0;
+}
+.mw-body-content {
+    font-size: 0.875em;
+    font-size: calc(1em * 0.875);
+    line-height: 1.6;
+}
+.mw-body .mw-indicators {
+    font-size: 0.875em;
+    line-height: 1.6;
+    position: relative;
+}
+.mw-body .mw-indicators {
+    padding-top: 0.4em;
+}
+
+
+.vector-menu-portal h3 {
+    display: block;
+
+    background-image: url(/w/skins/Vector/resources/skins.vector.styles/images/portal-separator.png?4ab04);
+    background-image: linear-gradient(to right,rgba(200,204,209,0) 0,#c8ccd1 33%,#c8ccd1 66%,rgba(200,204,209,0) 100%);
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: 100% 1px;
+
+    color: #54595d;
+    margin: 0.5em 0 0 0;
+    border: 0;
+    padding: 0.25em 0;
+    cursor: default;
+}
+
+.mw-editsection, .mw-editsection-like {
+    margin-left: 1em;
+    vertical-align: baseline;
+}
+
+/* hidden for now, complex stuff, SEO/Screenreader content */
+.navbox, .printfooter, .mw-hidden-catlinks, .mw-normal-catlinks {
+    display: none;
+}
+
+.mw-footer {
+    padding: 1.25em;
+}
+.mw-footer ul {
+    list-style: none none;
+    margin: 0;
+    padding: 0;
+}
+#footer-places li {
+    float: left;
+    margin-right: 1em;
+    line-height: 2;
+}
+#footer-icons {
+    float: right;
+}
+#footer-icons li {
+    float: left;
+    margin-left: 0.5em;
+    line-height: 2;
+    text-align: right;
+}
+
+div.hatnote {
+    padding-left: 1.6em;
+}
+
+#contentSub, #contentSub2 {
+    margin: 0 0 1.4em 1em;
+    width: auto;
+}
+
+#contentSub2:empty {
+    display: none;
+}
+
+element {
+
+}
+
+.mw-jump-link:not(:focus) {
+    display: block;
+    position: absolute !important;
+    clip: rect(1px,1px,1px,1px);
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+
+}
+
+.mw-body h1, .mw-body-content h1, .mw-body-content h2 {
+    margin-bottom: 0.25em;
+    padding: 0;
+}
+
+.mw-body .firstHeading {
+    overflow: visible;
+}
+
+h1, h2 {
+    border-bottom: 1px solid #a2a9b1;
+}
+
+#p-logo + .mw-portlet h3 {
+    display: none;
+}

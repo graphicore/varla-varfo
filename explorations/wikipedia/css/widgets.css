@@ -1,0 +1,194 @@
+/* widgets */
+
+.container-toggle-user_settings:not(#page_portal-testbed *){
+    z-index: 999;
+    /* FIXME: on Firefox the filter property on :root makes
+     * "position: fixed" effectively into "position: absolute"
+     */
+    position: sticky;
+    left: 0;
+    top: 0;
+}
+
+
+button.toggle-user_settings:not(#page_portal-testbed *) {
+    position: absolute;
+}
+button.toggle-user_settings {
+    border: 1px solid lightgray;
+    background: #ffffff82;
+    border-radius: .25em;
+}
+
+.widgets_container {
+
+    --font-family: RobotoFlex;
+    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+
+    max-width: 27rem;
+    border: 1px solid black;
+    background: #fffffff4;
+    padding: .5em 1em;
+    margin: 1em;
+    border-radius: 0.4em;
+    box-shadow: -2px 2px 10px black;
+}
+
+.page_content-item .widgets_container{
+    z-index: 998;
+    position: absolute;
+}
+
+.widgets_container > * {
+    margin: .5em 0;
+    display: block;
+}
+.widgets_container label {
+    margin-bottom: .3em;
+    display: inline-block;
+}
+
+.widgets_container button.close{
+    margin-left: auto;
+    --font-weight: 600;
+}
+
+.widgets_container legend {
+    --font-weight: 550;
+}
+
+.widgets_container h3 {
+    margin: .5em 0;
+    --font-weight: 550;
+
+}
+
+.widgets_container legend,
+.widgets_container h3 {
+    --font-size: calc(1 * var(--default-font-size));
+}
+
+
+label.user_preferences-fine_user_zoom::after {
+    content: attr(data-value) 'pt';
+}
+
+.widgets_container label.portal_augmentation-justification_option{
+    display: block;
+    margin-left: 1.5em;
+}
+
+label.user_preferences-user_distance::after {
+    content: attr(data-value) 'cm';
+}
+
+.widgets_container input[type="range"] {
+    vertical-align: middle;
+    width: 9em;
+}
+
+.widgets_container input.article_url-text_input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-block-end: .5em;
+}
+
+#page_portal-testbed,
+:fullscreen::backdrop {
+    background: darkgrey;
+    --background: darkgrey;
+}
+
+.page_portal-testbed body{
+    background: none;
+}
+
+.page_portal-testbed .widgets_container{
+    margin: 1em;
+}
+#testbed-subject {
+    width: 1024px;
+    height: 768px;
+    display: block;
+    margin: auto;
+}
+
+.portal_properties-set_orientation{
+  visibility: hidden;
+  position: absolute;
+  cursor: pointer;
+}
+
+.portal_properties-set_orientation ~ span:after {
+  content: " Landscape";
+}
+
+.portal_properties-set_orientation ~ span:before {
+  display: inline-block;
+  content: " ";
+  background: lightgrey;
+  border: 1px solid black;
+  border-radius: .1em;
+  vertical-align:middle;
+  width: 1em;
+  height: .5em;
+}
+
+.portal_properties-set_orientation:checked ~ span:after {
+  content: " Portrait";
+}
+.portal_properties-set_orientation:checked ~ span:before {
+  width: .5em;
+  height: 1em;
+}
+
+
+.portal_augmentation-run_justification_checkbox > input,
+.portal_augmentation-switch_grade_checkbox > input{
+    visibility: hidden;
+    position: absolute;
+    cursor: pointer;
+}
+
+.portal_augmentation-run_justification_checkbox > input ~ span:after,
+.portal_augmentation-switch_grade_checkbox > input ~ span:after {
+    display: inline-block;
+    background: #f5f4f3;
+    border: 0.0625em solid #edebe9;
+    border: 0.0625em outset ThreeDLightShadow;
+    padding: 0.4em;
+    border-radius: .2em;
+}
+
+.portal_augmentation-run_justification_checkbox > input ~ span:hover:after,
+.portal_augmentation-switch_grade_checkbox > input ~ span:hover:after {
+    background: #f9f8f7;
+}
+
+.portal_augmentation-switch_grade_checkbox > input ~ span:before {
+  content: "is off ";
+}
+
+.portal_augmentation-switch_grade_checkbox > input:checked ~ span:before {
+  content: "is on ";
+}
+
+.portal_augmentation-switch_grade_checkbox > input ~ span:after {
+  content: "turn on";
+}
+
+.portal_augmentation-switch_grade_checkbox > input:checked ~ span:after {
+  content: "turn off";
+}
+
+label.portal_augmentation-amplify_grade::after {
+    content: "×" attr(data-value);
+}
+
+.portal_augmentation-run_justification_checkbox > input ~ span:after{
+    content: "▶ run";
+}
+.portal_augmentation-run_justification_checkbox > input:checked ~ span:after{
+    content: "▮▮ pause";
+}
