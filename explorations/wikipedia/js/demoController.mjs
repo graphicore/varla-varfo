@@ -1487,6 +1487,17 @@ export function main({columnConfig=COLUMN_CONFIG.en}) {
             updateViewportScheduled = setTimeout(updateViewport,
                                     time !== undefined ? time : 100);
         }
+      , currentWindowWidth = window.innerWidth
+      , resizeHandler = (evt)=>{
+            // don't update when height changes, because it has no
+            // implications on layout so far, and it doesn't work with
+            // e.g. all browsers on the iPhone, where scrolling increases
+            // the adress bar and triggers a resize event.
+            if(currentWindowWidth !== window.innerWidth) {
+                currentWindowWidth = window.innerWidth;
+                scheduleUpdateViewport();
+            }
+        }
         // TODO: this function should be part of the runion implementation,
         // rather than calling "runion_01(runion01Elem)". It's likely that
         // we'll have different runions on one page.
@@ -1543,7 +1554,7 @@ export function main({columnConfig=COLUMN_CONFIG.en}) {
     // OSsses may change height to make room for the main toolbar when in
     // fullscreen and the mouse touches the upper/lower screen edge,
     // iOS increases the address bar when scrolled into zoom etc ...
-    window.addEventListener('resize', scheduleUpdateViewport);
+    window.addEventListener('resize', resizeHandler);
     window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
 
     window.document.addEventListener('click', evt=>{
