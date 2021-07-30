@@ -550,7 +550,7 @@ function* findLines(deepTextElem, skip=false , debug=false) {
 function getClosestBlockParent(node) {
   // if node is a block it will be returned
   let elem;
-  if(node.type === Node.ELEMENT_NODE)
+  if(node.nodeType === Node.ELEMENT_NODE)
     elem = node;
   else
     elem = node.parentElement;
@@ -1365,26 +1365,86 @@ function _justifyLineByWidening(stops, lineElements, container, options=null) {
     justifyControlLoop(readUnusedWhiteSpace, generators);
 }
 
-/**
- * Returns true if line breaks because it's followed by a a soft break
- * i.e. <br />.
- */
-function _isSoftlyBrokenLine(lineElements) {
-    let node = lineElements[lineElements.length-1];
-    while(true) {
-        node = node.nextElementSibling;
-        if(!node)
-            return false;
-        if(_isOutOfFlowContext(node))
-            continue;
-        if(node.tagName.toLowerCase() === 'br')
-            return true;
-        if(!node.childNodes.length)
-                // There are sometimes empty spans at the end of lines, e.g.
-                // in our wikipedia example, e.g. in the "Citations" section.
-           continue;
+function _isLineBreaking(element) {
+    if(_isOutOfFlowContext(element))
         return false;
+    if(element.tagName.toLowerCase() === 'br')
+        return true;
+    // FIXME: should maybe check for display: block etc. but that doesn't
+    // happen in the current context.
+    //
+    // If we place a <span class="br"></span> on a line and add the
+    // following CSS rule:
+    //
+    // .br {
+    //      display: block;
+    // }
+    // The line finding algorithm will do the right thing earlier
+    // in _justifyBlockElement. (FIXME: ... and it should handle <br />
+    // etc. there as well.)
+    //
+    // On the other hand with a CSS rule like this:
+    //
+    // .br:after {
+    //      content: '';
+    //      display: block;
+    // }
+    //
+    // We can fool the algorithm successfully, but for now this is
+    // a non-issue.
+    return false;
+}
+
+function _isBreakBetweenLines(firstLine, secondLine) {
+    if(firstLine.range.endContainer === secondLine.range.startContainer)
+        return false;
+    // This is very good already, however, there are cases where the nodes
+    // are not the same, and then the question is if there's in between
+    // some breaking element, i.e. a <br /> for now.
+    let range = new Range();
+    range.setStart(firstLine.range.endContainer, firstLine.range.endOffset);
+    range.setEnd(secondLine.range.startContainer, secondLine.range.startOffset);
+    let ancestorElement = range.commonAncestorContainer
+      , secondSameLevel = _getDirectChild(ancestorElement, secondLine.range.startContainer)
+      ;
+
+    // ascending
+    // We established above that node is not the same as home.
+    var node = firstLine.range.endContainer
+      , home = secondLine.range.startContainer
+      ;
+    while(true) {
+        // We right and up and are eventually going to find secondSameLevel
+        node = node.nextSibling || node.parentElement;
+        if(node.nodeType !== Node.ELEMENT_NODE) {
+            if(node === home)
+                return false; // found it
+            continue; // node can be line breaking by itself.
+        }
+        if(_isLineBreaking(node))
+            return true;
+        if(node === secondSameLevel)
+            break; // descend now
+
     }
+    // descending
+    let nodes = [node];
+    while(true) {
+        node = nodes.shift();
+        if(!node)
+            // this can't happen
+            throw new Error('Ran out of nodes.');
+        if(node.nodeType !== Node.ELEMENT_NODE) {
+            if(node === home)
+                return false; // found it
+            continue; // node can be line breaking by itself.
+        }
+        if(_isLineBreaking(node))
+            return true;
+        if(node.childNodes.length)
+            nodes.unshift(...node.childNodes);
+    }
+    return true;
 }
 
 /*
@@ -1460,6 +1520,23 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
             lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range,
                         firstLine.range, isInitialLine, addHyphen, isTerminalLine);
         }
+        //// We have two lines from here on.
+        else if(_isBreakBetweenLines(...lines)) {
+            // FIXME: it would be better to handle the <br /> case in
+            // _justifyBlockElement, just like a _isBlock so we wouldn't
+            // have to test in here all lines with _isBreakBetweenLines.
+            // however, that approach seems to duplicate the <br /> element
+            // somewhere in here, so that would need fixing.
+            //
+            // E.g. a <br /> caused the line break.
+            // No need for trying the narrowing.
+            firstLine = lines[0];
+            let isTerminalLine = false
+                , addHyphen = false
+                ;
+            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range,
+                        firstLine.range, isInitialLine, addHyphen, isTerminalLine);
+        }
         else {
             [firstLine, secondLine] = lines;
             let isNarrowAdjusted;
@@ -1497,8 +1574,6 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
     carryOverElement.classList.add('runion-justified-block');
 
     for(let line of linesToWiden) {
-        if(_isSoftlyBrokenLine(line))
-            continue;
         // console.log('_justifyLineByWidening:', line);
         yield ['_justifyLineByWidening', _justifyLineByWidening(wideningStops, line, carryOverElement)];
     }
