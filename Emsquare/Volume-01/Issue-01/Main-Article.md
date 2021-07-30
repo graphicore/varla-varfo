@@ -105,6 +105,4 @@ And while typefaces overwhelmingly end with well defined spaces, between words, 
 
 ## Takeaways:
 
-???
-
-Next: [*Issue II: Size wise*](../Issue-02/Main-Article.html)
+* ???

@@ -106,8 +106,4 @@ In August, I’ll write part II that describes how uppercase, figures and punctu
 
 ## Takeaways:
 
-???
-
-Previous [*Issue I: Space the initial frontier*](../Issue-01/Main-Article.html)
-
-Next: [*Issue III: Weight? wait, don’t tell me, make me look for myself*](../Issue-03/Main-Article.html)
+* ???
