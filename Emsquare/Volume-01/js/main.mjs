@@ -9,4 +9,10 @@ const config = {
     })(COLUMN_CONFIG.en)
 };
 console.log('config', config);
-window.onload = ()=>main(config);
+
+window.onload = ()=>{
+    main(config);
+    let requestFullScreen = evt=>evt.target.requestFullscreen();
+    for(let elem of document.querySelectorAll('figure img'))
+        elem.addEventListener('click', requestFullScreen);
+};
