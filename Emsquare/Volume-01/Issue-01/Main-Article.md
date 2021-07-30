@@ -1,5 +1,5 @@
 ---
-title: "Issue I: Space the initial frontier"
+title: "Space the initial frontier"
 modules:
     - "Emsquare/Volume-01/js/main.mjs"
 styles:

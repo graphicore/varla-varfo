@@ -1411,6 +1411,11 @@ export function main({columnConfig=COLUMN_CONFIG.en}) {
       , runion01Elem = null
       ;
 
+    if(!userSettingsWidgetContainer) {
+        console.log('Demo is disabled: no userSettingsWidgetContainer.');
+        return;
+    }
+
 
     let initContent = () => {
         let articleURLWidgetState = null;

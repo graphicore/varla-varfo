@@ -1,29 +1,42 @@
+{%- assign _path_parts = page.path | split: "/" -%}
+{%- assign _volume_path_part = _path_parts[-3] -%}
+{%- capture volume -%}{%- include get-number subject=_volume_path_part -%}{%- endcapture -%}
+{%- assign _issue_path_part = _path_parts[-2] -%}
+{%- capture issue -%}{%- include get-number subject=_issue_path_part -%}{%- endcapture -%}
+{%- capture relnav -%}{%- include emsquare-relative-nav.md -%}{%- endcapture -%}
 <!DOCTYPE html>
 <html class="page_content-item client-js" lang="{{ page.lang | default: site.lang | default: "en" }}">
   <head>
-    {%- include emsquare-head.html -%}
+    {%- include emsquare-head.html volume=volume issue=issue -%}
   </head>
   <body>
     <div class="container-toggle-user_settings">
         <button title="Toggle User Settings Widget" class="toggle-user_settings">⚙</button>
     </div>
     <div class="insert_user_settings"></div>
+    <header>
+        <span class="main-caption">Emsquare — Volume {{volume}}</span>
+    </header>
     <main class="{{ page.class }}">
+        <nav class="relative-navigation">
+            {{ relnav | markdownify }}
+        </nav>
       <article class="runify-01">
-          <header>
-            <span class="main-caption">Emsquare Volume 1</span>
-            <h1>{%- if page.headline -%}
-                    {{ page.headline }}
-                {%- else -%}
-                    {{ page.title }}
-                {%- endif -%}
-            </h1>
-          </header>
-          {{ content }}
+        <h1>Issue {{issue}}:
+            {% if page.headline -%}
+                {{ page.headline }}
+            {%- else -%}
+                {{ page.title }}
+            {%- endif -%}
+        </h1>
+        {{ content }}
       </article>
+        <nav class="relative-navigation">
+            {{ relnav | markdownify }}
+        </nav>
     </main>
     <footer>
-          {%- capture footer -%}{%- include emsquare-footer.md -%}{%- endcapture- %}
+          {%- capture footer -%}{%- include emsquare-footer.md -%}{%- endcapture -%}
           {{ footer | markdownify }}
     </footer>
   </body>

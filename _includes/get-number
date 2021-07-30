@@ -1,0 +1,13 @@
+{%- comment -%}
+    Get the raw volume/issue number without prepended zeros.
+    Uses a for loop with a big enough range, because we don't have a while(true).
+{%- endcomment -%}
+{%- assign volume_digits = include.subject | split: "-" | slice: -1 | first | split: "" -%}
+{%- for _ in (0..100) -%}
+    {%- if volume_digits.first != "0" -%}
+        {%- break -%}
+    {%- else -%}
+        {%- assign volume_digits = volume_digits | shift -%}
+    {%- endif -%}
+{%- endfor -%}
+{{-  volume_digits | join: "" -}}

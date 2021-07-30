@@ -1,5 +1,5 @@
 ---
-title: "Issue II: Size wise"
+title: "Size wise"
 modules:
     - "Emsquare/Volume-01/js/main.mjs"
 styles:
