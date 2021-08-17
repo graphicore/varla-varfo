@@ -1,0 +1,13 @@
+{%- capture caption -%}
+    {{ include.caption }}
+{%- endcapture -%}
+
+<figure>
+{% for figure in include.figures %}
+    <strong class="enumeration">Figure {{ figure[1] }}</strong>
+    <img src="{{ figure[0] }}" alt="{{ figure[2] }}" />
+{% endfor %}
+
+    {% comment %} caption is treated as markdown {% endcomment -%}
+    <figcaption>{{ caption | markdownify }}</figcaption>
+</figure>

@@ -51,8 +51,10 @@ figure img {
     display: block;
     margin: 0 auto;
     cursor: pointer;
+    background: white; /* Got some images with transparency. */
 }
 
-figcaption .enumeration {
+figure .enumeration {
+    display: block;
     --font-weight: 700;
 }

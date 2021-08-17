@@ -959,6 +959,11 @@ function _runion_01_recalculateLineHeight(columnConfig, elem, min, max) {
 
 // Characters per line runion
 function runion_01 (columnConfig, elem) {
+    // unsetting padding here, otherwise, we sometimes get wrong/in between
+    // transitioning numbers from getELementLineWidthAndEmInPx when the
+    // resizing was one big jump (at least from FireFox).
+    elem.style.setProperty('--padding-left-en', 0);
+    elem.style.setProperty('--padding-right-en', 0);
     var [widthPx, emInPx] = getELementLineWidthAndEmInPx(elem)
         // NOTE: rounding errors made e.g. 4-column layouts appear as
         // 3-columns. The CSS-columns property can't be forced to a definite
@@ -1403,7 +1408,7 @@ export function main({columnConfig=COLUMN_CONFIG.en}) {
       , runionTargetSelector = '.runify-01, .mw-parser-output'
       , justificationSkip = [
             /* skipSelector selects elements to skip*/
-            '.hatnote, #toc, h1, h2, h3, ul, ol, blockquote, table, .do-not-jsutify',
+            '.hatnote, #toc, h1, h2, h3, ul, ol, blockquote, table, .do-not-jsutify,figure>*:not(figcaption)',
             /* skipClass: added to skipped elements */
             'skip-justify'
        ]
@@ -1522,10 +1527,6 @@ export function main({columnConfig=COLUMN_CONFIG.en}) {
                 }
             }
 
-            if(updateViewportScheduled !== null) {
-                clearTimeout(updateViewportScheduled);
-                updateViewportScheduled = null;
-            }
             // do not cancel on color-scheme change
             let  justificationWasRunning = justificationController.running;
             if(cancelJustification)
@@ -1555,7 +1556,7 @@ export function main({columnConfig=COLUMN_CONFIG.en}) {
     // fullscreen and the mouse touches the upper/lower screen edge,
     // iOS increases the address bar when scrolled into zoom etc ...
     window.addEventListener('resize', resizeHandler);
-    window.addEventListener(USER_SETTINGS_EVENT, updateViewport);
+    window.addEventListener(USER_SETTINGS_EVENT, scheduleUpdateViewport);
 
     window.document.addEventListener('click', evt=>{
         let parsed = wikiLinkClickHandler(window, window.console, evt);
