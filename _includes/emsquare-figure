@@ -18,12 +18,6 @@ NOTE: This is mostly a copy of the "figure" _include but with the added
     {{ include.caption }}
 {%- endcapture -%}
 
-{%- capture fig -%}
-    {%- if include.fig -%}
-    <strong class="enumeration">Figure {{include.fig}}</strong>
-    {%- endif %}
-{%- endcapture -%}
-
 {%- capture alt -%}
     {%- if include.alt -%}
         {{ include.alt }}
@@ -32,7 +26,6 @@ NOTE: This is mostly a copy of the "figure" _include but with the added
     {%- endif %}
 {%- endcapture -%}
 <figure>
-    {{ fig }}
     <img src="{{ include.src }}" alt="{{alt}}" />
     {% comment %} caption is treated as markdown {% endcomment -%}
     <figcaption>{{ caption | markdownify }}</figcaption>
