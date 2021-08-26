@@ -85,7 +85,7 @@ class _ContainerWidget {
 
 const CHECKBOX_TEMPLATE = `
     <label class="{klass} {extra-classes}">{label}:
-        <input type="checkbox" checked="{*checked*}"/>
+        <input type="checkbox" {*checked*}/>
         {*button style*}
     </label>
 `;
@@ -103,7 +103,7 @@ class CheckboxWidget {
         let _templateVars = [...Object.entries(templateVars)];
 
         _templateVars.push(['*button style*', buttonStyle ? '<span></span>' : '']);
-        _templateVars.push(['*checked*', checked ? 'checked' : '']);
+        _templateVars.push(['*checked*', checked ? 'checked="checked"' : '']);
 
         for(let [k,v] of _templateVars)
             template = template.replaceAll('{' + k + '}', v);
@@ -337,8 +337,10 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(baseElement, justificationController, columnConfig,
-                    getCurrentLineHeightInPercent, recalculateLineHeight) {
+    constructor(baseElement, justificationController
+                , defaults // currently olnly used for CheckboxWidget
+                , columnConfig
+                , getCurrentLineHeightInPercent, recalculateLineHeight) {
         super(baseElement);
         this._justificationController = justificationController;
         var klass = 'portal_augmentation';
@@ -351,6 +353,10 @@ class PortalAugmentationWidget extends _ContainerWidget {
         this._widgetsContainer = this._domTool.createElement('div');
         this._domTool.insertAtMarkerComment(this.container,
                             'insert: widgets', this._widgetsContainer);
+
+        function _getDefault(key, notDefDefaultValue) {
+            return key in defaults ? defaults[key] : notDefDefaultValue;
+        }
 
         let widgetsConfig = [
             // Line-height algorithm manipuation
@@ -405,7 +411,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                       klass: `${klass}-toggle_line_color_coding`
                     , label: 'Line&nbsp;Color-Coding'
                 },
-                true, /* checked: bool */
+                _getDefault('lineColorCoding', true), /* default checked: bool */
                 false, /* buttonStyle: bool */
                 LINE_COLOR_CODING_STORAGE_KEY,
                 (isOn)=> {
@@ -419,7 +425,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                     ,'extra-classes': `${klass}-justification_option`
                     , label: 'Use XTRA'
                 },
-                true, /* checked: bool */
+                _getDefault('useXTRA', true), /* checked: bool */
                 false, /* buttonStyle: bool */
                 JUSTIFICATION_OPTION_XTRA_STORAGE_KEY,
                 (isOn)=> {
@@ -431,7 +437,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                     , 'extra-classes': `${klass}-justification_option`
                     , label: 'Use Letter-Spacing'
                 },
-                true, /* checked: bool */
+                _getDefault('useLetterSpacing', true), /* checked: bool */
                 false, /* buttonStyle: bool */
                 JUSTIFICATION_OPTION_LETTERSPACING_STORAGE_KEY,
                 (isOn)=> {
@@ -443,7 +449,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                     , 'extra-classes': `${klass}-justification_option`
                     , label: 'Use Word-Spacing'
                 },
-                true, /* checked: bool */
+                _getDefault('useWordSpacing', true), /* checked: bool */
                 false, /* buttonStyle: bool */
                 JUSTIFICATION_OPTION_WORDSPACING_STORAGE_KEY,
                 (isOn)=> {
@@ -453,7 +459,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
             '<br / >',
             [   SimpleButtonWidget, {
                       klass: `${klass}-reset-justification`
-                    , text: 'reset'
+                    , text: 'reset justification'
                 },
                 () => {
                     if(this._justificationController.running)
@@ -471,7 +477,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                       klass: `${klass}-switch_grade_checkbox`
                     , label: 'Grade (in Dark Color Scheme)'
                 },
-                true, /* checked: bool */
+                _getDefault('useGrade', true), /* checked: bool */
                 true, /* buttonStyle: bool */
                 GRADE_DARK_MODE_LOCAL_STORAGE_KEY,
                 (isOn)=> {
@@ -1096,7 +1102,12 @@ function fixCSSKeyframes(document) {
 }
 
 
-export function main({columnConfig=COLUMN_CONFIG.en, massageMarkupFunc=null,WikipediaArticleURLWidget=null}) {
+export function main({
+                      columnConfig=COLUMN_CONFIG.en
+                    , massageMarkupFunc=null
+                    , WikipediaArticleURLWidget=null
+                    , defaults={}
+                    }) {
     if(massageMarkupFunc)
         massageMarkupFunc(document);
     setDefaultFontSize(document);
@@ -1159,6 +1170,7 @@ export function main({columnConfig=COLUMN_CONFIG.en, massageMarkupFunc=null,Wiki
                                 : null,
                             [PortalAugmentationWidget,
                                     justificationController,
+                                    defaults,
                                     columnConfig,
                                     getCurrentLineHeightInPercent,
                                     recalculateLineHeight],
@@ -1259,7 +1271,7 @@ export function main({columnConfig=COLUMN_CONFIG.en, massageMarkupFunc=null,Wiki
     // iOS increases the address bar when scrolled into zoom etc ...
     window.addEventListener('resize', resizeHandler);
     window.addEventListener(USER_SETTINGS_EVENT, scheduleUpdateViewport);
-    
+
     if(WikipediaArticleURLWidget) {
         window.document.addEventListener('click',
             (evt)=> userSettingsWidget
