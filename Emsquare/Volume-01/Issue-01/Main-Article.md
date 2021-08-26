@@ -8,7 +8,7 @@ styles:
     - "Emsquare/Volume-01/main.css"
 ---
 
-The biggest key on the keyboard is the space key. Typography starts there and its parent space, the “imaginary” em square.
+The biggest key on the keyboard is the space key. Typography starts with its parent space, the “imaginary” em square, into rectangles of the same height as the em square representing the default widths of each glyph in a font, including the space. These rectangles are only "defaults", as the space between lines,  between glyphs, and the word space, can be changed by the user, and then by the final display of font in print or screen.
 
 ## Square one.
 
@@ -22,7 +22,7 @@ The em square.
         caption="The em square."
 %}
 
-In type, this square represents to the type designer two things that are important links to the reader. Vertically, the space represents the intersection between lines of text when the font is composed without additional vertical space.
+In type, this square represents to the type designer two things that are important links to the reader. Vertically, the space represents the intersection between lines of text when the font is composed without additional space between lines.
 
 {% include emsquare-figure
         src="./images/Figure 2.png"
@@ -30,9 +30,9 @@ In type, this square represents to the type designer two things that are importa
         caption="The vertical dimensions of a font’s main glyph groups."
 %}
 
-Second, by chosing where the baseline is in the em square, which will line up with every other font, the type designer defines the extents that can be allotted above and below it, for the design.
+Second, chosing where the baseline is in the em square, is how the font line up with every other font of any size or style. This gives the type designer  the extents that can be allotted above and below the baseline, for the typeface family.
 
-And so the type designer plans the vertical metrics of all the characters of a typeface, based on how the designer wants collections of characters, words usually, to be glimpsed, seen, viewed, skimmed, read, or read for a long time.
+And so the type designer plans the vertical metrics and horizonatal of all the characters of a typeface, based on how the designer wants collections of glyphs to be glimpsed, seen, viewed, skimmed, read, or read for a long time.
 
 {% include emsquare-figure
         src="./images/Figure 3.png"
@@ -60,7 +60,7 @@ Add direction of reading, at the behest of whichever direction, or directions, a
         caption="Beginnings and ends of transparencies."
 %}
 
-The em square (called an em quad in metal type), can be seen typographically as a space with beginnings and ends, and nothing in the midst of that, at the size of the type with no additional spacing around it. The other spaces affecting the appearance of our square, if between the lines is line spacing, and/or between the letters is letter spacing.
+The em square (called an em quad in metal type), can be seen typographically as a space with beginnings and ends, and nothing in the midst of that, at the size of the type with no additional spacing around it. The other spaces affecting the appearance of our square between the lines, is line spacing, and/or between the letters is letter spacing. Besides reading following from the beginning to end of each glyph, when programs responding to type specifications are told to add line spacing or letterspacing, they do so to the end, i.e. the bottom and right sides of glyphs. 
 
 {% assign figures6 = "" | split: "" %}
 {% assign figure6a = "./images/Figure 6.png,6,Em square w/w-out additional line spacing." | split: "," %}
