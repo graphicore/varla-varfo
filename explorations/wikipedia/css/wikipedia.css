@@ -7,6 +7,12 @@
  * This is not stand alone at all, see the --custom-properties which are
  * mostly from varla-varfo.
  */
+
+:root {
+    /* match wikipedia */
+    --default-font-size: calc(0.875 * var(--default-browser-font-size));
+}
+
 body {
     margin: 0;
     background-color: #f6f6f6;
