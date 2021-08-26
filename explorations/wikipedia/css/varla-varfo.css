@@ -50,7 +50,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h2, h3, h4, h5, h6 {
-    margin-block-start: calc(1pt * var(--x-line-height) * var(--default-font-size));
+    margin-block-start: calc(1pt * var(--x-line-height) * var(--document-font-size));
 }
 
 /* use :root for custom properties
@@ -113,11 +113,13 @@ h2, h3, h4, h5, h6 {
 --default-browser-font-size: "invalid";
  /* this can be used as an indirection as well, modifying the browser default.
   * e.g. to match wikipedia:
-  *     --default-font-size: calc(0.875 * var(--default-browser-font-size));
+  *     --document-font-size: calc(0.875 * var(--default-browser-font-size));
   */
---default-font-size: var(--default-browser-font-size);
 
---font-size: var(--default-font-size); /* --opsz */
+/* This is essentially the rem: Font size of the root element.*/
+--document-font-size: var(--default-browser-font-size);
+
+--font-size: var(--document-font-size); /* --opsz */
 
 --font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
 
@@ -152,7 +154,7 @@ h2, h3, h4, h5, h6 {
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
      * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
      */
-    --font-size: calc(3/4 * var(--default-font-size));
+    --font-size: calc(3/4 * var(--document-font-size));
 }
 
 
@@ -535,7 +537,7 @@ img {
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
-    --font-size:  calc(3/4 * var(--default-font-size));
+    --font-size:  calc(3/4 * var(--document-font-size));
     --line-height: 1.125;
     word-wrap: break-word;
 }
@@ -546,8 +548,8 @@ h1, h2, h3, h4 {
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 h1 { /* headline */
-    /*--font-size: calc(9/5 * var(--default-font-size));*/
-    --font-size: calc(3 * var(--default-font-size));
+    /*--font-size: calc(9/5 * var(--document-font-size));*/
+    --font-size: calc(3 * var(--document-font-size));
     --font-weight: 700;
 }
 
@@ -557,23 +559,23 @@ h1 { /* headline */
      */
     --font-family: AmstelVar;
     --grad-animation-name: AmstelVar-grad-by-font-size;
-    --font-size: calc(3/2 * var(--default-font-size));
+    --font-size: calc(3/2 * var(--document-font-size));
     --font-weight: 400;
 }
 
 h2 { /* subsection headline */
-    /*--font-size: calc(3/2 * var(--default-font-size));*/
-    --font-size: calc(7/3 * var(--default-font-size));
+    /*--font-size: calc(3/2 * var(--document-font-size));*/
+    --font-size: calc(7/3 * var(--document-font-size));
     --font-weight: 600;
 }
 h3 { /* sub-subsection headline */
-    /*--font-size: calc(3/2 * var(--default-font-size));*/
-    --font-size: calc(7/3 * var(--default-font-size));
+    /*--font-size: calc(3/2 * var(--document-font-size));*/
+    --font-size: calc(7/3 * var(--document-font-size));
     --font-weight: 500;
 }
 h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
-    /*--font-size: calc(3/2 * var(--default-font-size));*/
-    --font-size: calc(7/3 * var(--default-font-size));
+    /*--font-size: calc(3/2 * var(--document-font-size));*/
+    --font-size: calc(7/3 * var(--document-font-size));
     --font-weight: 400;
 }
 
@@ -581,17 +583,17 @@ h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
-    --font-size: calc(2 * var(--default-font-size));
+    --font-size: calc(2 * var(--document-font-size));
     --font-weight: 100;
 }
 
 .vector-menu-portal h3 {
-    --font-size: calc(3/4 * var(--default-font-size));
+    --font-size: calc(3/4 * var(--document-font-size));
     --font-weight: 500;
 }
 
 .mw-editsection, .mw-editsection-like {
-    --font-size: calc(13/16 * var(--default-font-size));
+    --font-size: calc(13/16 * var(--document-font-size));
     --font-weight: 400;
     --line-height: 1;
 }
@@ -691,7 +693,7 @@ sub, sub * {
 
 
 #p-personal li {
-    --font-size:  calc(3/4 * var(--default-font-size));
+    --font-size:  calc(3/4 * var(--document-font-size));
 }
 
 b, strong {

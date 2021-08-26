@@ -65,7 +65,7 @@ button.toggle-user_settings {
 
 .widgets_container legend,
 .widgets_container h3 {
-    --font-size: calc(1 * var(--default-font-size));
+    --font-size: calc(1 * var(--document-font-size));
 }
 
 
