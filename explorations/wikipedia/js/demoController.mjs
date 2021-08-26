@@ -735,9 +735,9 @@ function getElementFontSizePt(elem) {
 
 function setDefaultFontSize(document) {
     var root = document.querySelector(':root')
-      , fontSizePT = getElementFontSizePt(root) //  * 0.875 <- match wikipedia but the hack is bad at this point, do in CSS!
+      , fontSizePT = getElementFontSizePt(root)
       ;
-    root.style.setProperty('--default-font-size', `${fontSizePT}`);
+    root.style.setProperty('--default-browser-font-size', `${fontSizePT}`);
 }
 
 function getELementLineWidthAndEmInPx(elem) {

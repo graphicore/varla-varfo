@@ -110,7 +110,13 @@ h2, h3, h4, h5, h6 {
  * https://github.com/w3c/csswg-drafts/issues/6149
  */
  /* Must be invalid initially or it will influence the javascript-determined value.*/
---default-font-size: "invalid";
+--default-browser-font-size: "invalid";
+ /* this can be used as an indirection as well, modifying the browser default.
+  * e.g. to match wikipedia:
+  *     --default-font-size: calc(0.875 * var(--default-browser-font-size));
+  */
+--default-font-size: var(--default-browser-font-size);
+
 --font-size: var(--default-font-size); /* --opsz */
 
 --font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
