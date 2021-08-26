@@ -71,7 +71,7 @@ h2, h3, h4, h5, h6 {
 /*
  * Uh, another thing is that not all of the standard properties below
  * do inherit. so we need to specify them explicitly for some elements!
- * e.g. columns, column-width, column-count (but column-width ismore or less
+ * e.g. columns, column-width, column-count (but column-width is more or less
  * useless when column count is 1 anyways.)
  * width
  */
@@ -90,18 +90,15 @@ h2, h3, h4, h5, h6 {
 --font-slant: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
-/* FIXME: get default --font-stretch (XTRA) value by font-size
+/* FIXME: get default --font-stretch (XTRA) value by font-size and font-family
  *
  * used to be 520 but making it narrow to work out justification */
 /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
  * was 440 and I thought it was tight.
- *  */
---font-stretch: 562;/* by (xtra, wdth) */
-/* so far only experimental used in OLD_justifyLine
  *
- * TODO: REMOVE!
+ *
  */
---font-stretch-change: 0;
+--font-stretch: 562;/* by (xtra, wdth) */
 
 --font-width: 100; /* this goes into wdth */
 
@@ -111,12 +108,12 @@ h2, h3, h4, h5, h6 {
  */
  /* Must be invalid initially or it will influence the javascript-determined value.*/
 --default-browser-font-size: "invalid";
- /* this can be used as an indirection as well, modifying the browser default.
+ /* This is essentially the rem: Font size of the root element.
+  *
+  * Can be used as an indirection as well, modifying the browser default.
   * e.g. to match wikipedia:
   *     --document-font-size: calc(0.875 * var(--default-browser-font-size));
   */
-
-/* This is essentially the rem: Font size of the root element.*/
 --document-font-size: var(--default-browser-font-size);
 
 --font-size: var(--document-font-size); /* --opsz */
@@ -139,32 +136,9 @@ h2, h3, h4, h5, h6 {
 
 }
 
-/* TODO: before this is moved to wikipedia.css, its imlications should be
- * documented (and not forgotten). Hence I'm leaving it here.
- *
- * NOTE: The main implication is that justificationController detects
- * changed parameters that influence justification and sets different
- * css custom parameters to the ".runion-justification-host". No sure
- * if that behavior will last as it, however.
- * */
-.thumb {
-    --font-family: RobotoFlex;
-    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
-    /*
-     *  9 pt if default is 12 pt, same as in wikipedia page UI:
-     * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
-     */
-    --font-size: calc(3/4 * var(--document-font-size));
-}
+/** columns **/
 
-
-/**
-columns /* caution: e.g. firefox has bad support for break-after * /
- orphans
-widows
-**/
-
-*{
+* {
 /*column-width: calc(1pt * var(--x-font-size) * var(--column-width));
 /*column-count: var(--column-count);*/
 /*width: calc(1em * var(--column-width));*/
@@ -185,8 +159,6 @@ line-height: var(--x-line-height);
 --x-font-grade: calc(var(--font-grade, 0) * var(--amplify-grade, 1) * var(--toggle-grade, 1));
 
 
---x-font-stretch: calc(var(--font-stretch) + var(--font-stretch-change, 0));
-
 --x-font-weight: calc(var(--font-weight) + var(--font-weight-change, 0));
 
 font-weight: var(--x-font-weight);
@@ -195,7 +167,7 @@ font-variation-settings:
             "slnt" var(--font-slant),
             "wght" var(--x-font-weight),
             "GRAD" var(--x-font-grade),
-            "XTRA" var(--x-font-stretch),
+            "XTRA" var(--font-stretch),
             "opsz" var(--x-font-size),
             "wdth" var(--font-width)
             ;
@@ -862,15 +834,6 @@ i, cite, em, var, dfn {
     column-span: all;
 }
 
-.runion-01 div.tright,
-.runion-01 div.tleft {
-    float:none;
-    margin-left:0;
-    margin-right: 0;
-    /* FIXME: this stuff distracts from the column layout, needs resolution.
-    display: none;*/
-}
-
 
 /* Control line-wrapping.
  *
@@ -891,12 +854,11 @@ i, cite, em, var, dfn {
 
 .color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
-     * tend to clip descenders.
-     * FXME: must be removed when no line color coding is desired,
-     * especially Chromium has little rendering errors in column layout
-     * here.
+     * tend to clip descenders. Must be removed when no line color coding
+     * is desired, especially Chromium has little rendering errors in
+     * column layout here.
      */
-    background: var(--line-color-code, bisque);
+    background: var(--line-color-code, PaleGreen);
     transition: background .5s;
     mix-blend-mode: darken;
 }

@@ -37,6 +37,11 @@ figure {
     border: .125em solid #efefef;
     box-sizing: border-box;
 
+    /* IMPORTANT
+     * justificationController detects the changed parameters (family, size...)
+     * that influence justification and sets different css custom parameters
+     * to the ".runion-justification-host" element.
+     */
     --font-family: RobotoFlex;
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     /*

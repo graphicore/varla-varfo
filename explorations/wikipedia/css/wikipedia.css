@@ -41,6 +41,14 @@ div.tleft {
     margin: 0.5em 0 1.3em 0;
 }
 */
+
+.runion-01 div.tright,
+.runion-01 div.tleft {
+    float:none;
+    margin-left:0;
+    margin-right: 0;
+}
+
 div.thumbinner {
     /* FIXME: With this border and padding, the element is not neutral
      * to the base line grid, however, we don't control the size of
