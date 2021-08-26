@@ -14,8 +14,6 @@ The biggest key on the keyboard is the space key. Typography starts with its par
 
 This is a rectangle of equal sides and angles, making it a square.
 
-The em square.
-
 {% include emsquare-figure
         src="./images/Figure 1.png"
         fig=1
