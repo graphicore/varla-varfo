@@ -7,8 +7,10 @@ const config = {
         result.columns = columnConfig.columns.slice(0, 1);// only apply one column
         return result;
     })(COLUMN_CONFIG.en)
+  , defaults: {
+        lineColorCoding: false
+    }
 };
-console.log('config', config);
 
 window.onload = ()=>{
     main(config);
