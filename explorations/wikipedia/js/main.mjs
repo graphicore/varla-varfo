@@ -317,7 +317,7 @@ class WikipediaArticleURLWidget {
 
 const config = {
     WikipediaArticleURLWidget: WikipediaArticleURLWidget
-  , massageMarkup: massageWikipediaMarkup
+  , massageMarkupFunc: massageWikipediaMarkup
 };
 
 window.onload = ()=>{
