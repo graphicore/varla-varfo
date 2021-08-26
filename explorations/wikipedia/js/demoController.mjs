@@ -1,12 +1,12 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
+import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget, {ID}  from './WidgetsContainerWidget.mjs';
 import {JustificationController} from './justification.mjs';
 
 class _ContainerWidget {
-    constructor(baseElement) {
+    constructor(domTool, baseElement) {
         this._baseElement = baseElement;
-        this._domTool = new DOMTool(this._baseElement.ownerDocument);
+        this._domTool = domTool;
         this._collectedChanges = null;
         this._widgetsById = null;
         this._widgets = null;
@@ -77,6 +77,12 @@ class _ContainerWidget {
             if(widget.activate)
                 widget.activate();
     }
+    reset () {
+        for(let widget of this._widgets) {
+            if(widget.reset)
+                widget.reset();
+        }
+    }
 }
 
 // TODO/MAYBE/nice to have: As a way to speed up perceived
@@ -95,6 +101,7 @@ class CheckboxWidget {
                 localStorageKey, onChange) {
         this._domTool = domTool;
         this.container = container;
+        this._defaultChecked = checked;
         var template = CHECKBOX_TEMPLATE;
 
         if(ID in templateVars)
@@ -103,7 +110,7 @@ class CheckboxWidget {
         let _templateVars = [...Object.entries(templateVars)];
 
         _templateVars.push(['*button style*', buttonStyle ? '<span></span>' : '']);
-        _templateVars.push(['*checked*', checked ? 'checked="checked"' : '']);
+        _templateVars.push(['*checked*', this._defaultChecked ? 'checked="checked"' : '']);
 
         for(let [k,v] of _templateVars)
             template = template.replaceAll('{' + k + '}', v);
@@ -134,6 +141,9 @@ class CheckboxWidget {
     setChecked(checked) {
         this._elem.checked = checked;
         _dispatchChangeEvent(this._elem);
+    }
+    reset() {
+        this.setChecked(this._defaultChecked);
     }
 }
 
@@ -227,48 +237,8 @@ class MinMaxSliderWidget {
         this._localStorageKey = localStorageKey;
         this._onChange = onChange;
         {
-            let onInput = (evt, dispatchAnyways)=> {
-                    let target = evt && evt.target
-                      , role = target && target.getAttribute('data-role')
-                      , oldMin, oldMax
-                      ;
 
-                    for(let elem of this._minInputs) {
-                        if(target && elem === target) continue;
-                        oldMin = parseFloat(elem.value);
-                        break;
-                    }
-                    for(let elem of this._maxInputs) {
-                        if(target && elem === target) continue;
-                        oldMax = parseFloat(elem.value);
-                        break;
-                    }
-                    let min = oldMin
-                      , max = oldMax
-                      ;
-
-                    if(role === 'set-min') {
-                        min = Math.min(templateVars.max, Math.max(templateVars.min, parseFloat(target.value)));
-                        max = Math.max(max, min);
-                    }
-                    else if(role === 'set-max') {
-                        max = Math.min(templateVars.max, Math.max(templateVars.min, parseFloat(target.value)));
-                        min = Math.min(max, min);
-                    }
-
-                    for(let elem of this._minInputs)
-                        elem.value = min;
-                    for(let elem of this._maxInputs)
-                        elem.value = max;
-
-                    //if(this._localStorageKey)
-                    //    this._domTool.window.localStorage.setItem(this._localStorageKey, target.value);
-
-                    if(dispatchAnyways || oldMin !== min || oldMax !==max)
-                        this._onChange(min, max);
-                }
-              ;
-
+            let inputHandler = (evt)=>this._inputHandler(evt, false);
             let allInputs = this.container.querySelectorAll(`.${templateVars.klass} input`);
             this._minInputs = [];
             this._maxInputs = [];
@@ -282,17 +252,10 @@ class MinMaxSliderWidget {
                 // The text/number inputs should not fire while typing,
                 // hence onChange, while the sliders may fire on each
                 // movement, hence onInput.
-                input.addEventListener(input.type === 'range' ? 'input' : 'change', onInput);
+                input.addEventListener(input.type === 'range' ? 'input' : 'change', inputHandler);
             }
-
-            let reset = this.container.querySelector(`.${templateVars.klass}-reset`);
-            reset.addEventListener('click', ()=>{
-                for(let elem of this._minInputs)
-                    elem.value = templateVars.minDefault;
-                for(let elem of this._maxInputs)
-                    elem.value = templateVars.maxDefault;
-                onInput(null, true);
-            });
+            this.container.querySelector(`.${templateVars.klass}-reset`)
+                            .addEventListener('click', ()=>this.reset());
 
             //
             //var storedValue = null;
@@ -317,6 +280,53 @@ class MinMaxSliderWidget {
     activate () {
         this.displayActualValue(this._getActualValue());
     }
+    _inputHandler (evt, dispatchAnyways) {
+        let target = evt && evt.target
+          , role = target && target.getAttribute('data-role')
+          , oldMin, oldMax
+          ;
+
+        for(let elem of this._minInputs) {
+            if(target && elem === target) continue;
+            oldMin = parseFloat(elem.value);
+            break;
+        }
+        for(let elem of this._maxInputs) {
+            if(target && elem === target) continue;
+            oldMax = parseFloat(elem.value);
+            break;
+        }
+        let min = oldMin
+          , max = oldMax
+          ;
+
+        if(role === 'set-min') {
+            min = Math.min(this._templateVars.max, Math.max(this._templateVars.min, parseFloat(target.value)));
+            max = Math.max(max, min);
+        }
+        else if(role === 'set-max') {
+            max = Math.min(this._templateVars.max, Math.max(this._templateVars.min, parseFloat(target.value)));
+            min = Math.min(max, min);
+        }
+
+        for(let elem of this._minInputs)
+            elem.value = min;
+        for(let elem of this._maxInputs)
+            elem.value = max;
+
+        //if(this._localStorageKey)
+        //    this._domTool.window.localStorage.setItem(this._localStorageKey, target.value);
+
+        if(dispatchAnyways || oldMin !== min || oldMax !==max)
+            this._onChange(min, max);
+    }
+    reset() {
+        for(let elem of this._minInputs)
+            elem.value = this._templateVars.minDefault;
+        for(let elem of this._maxInputs)
+            elem.value = this._templateVars.maxDefault;
+        this._inputHandler(null, true);
+    }
 }
 
 const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
@@ -337,11 +347,11 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(baseElement, justificationController
+    constructor(domTool, baseElement, justificationController
                 , defaults // currently olnly used for CheckboxWidget
                 , columnConfig
                 , getCurrentLineHeightInPercent, recalculateLineHeight) {
-        super(baseElement);
+        super(domTool, baseElement);
         this._justificationController = justificationController;
         var klass = 'portal_augmentation';
         var dom = this._domTool.createElementfromHTML(
@@ -526,6 +536,7 @@ class SliderWidget {
         this._domTool = domTool;
         this.container = container;
         var template = SLIDER_TEMPLATE;
+        this._defaultValue = templateVars.value;
 
         for(let [k,v] of Object.entries(templateVars))
             template = template.replaceAll('{' + k + '}', v);
@@ -549,20 +560,24 @@ class SliderWidget {
                 }
               ;
 
-            let elem = this.container.querySelector(`.${templateVars.klass} input[type="range"]`)
-              , reset = this.container.querySelector(`.${templateVars.klass}-reset`);
-            var storedValue = this._domTool.window.localStorage.getItem(localStorageKey);
-            if(storedValue !== null)
-                elem.value = storedValue;
+            this._inputElem = this.container.querySelector(`.${templateVars.klass} input[type="range"]`);
+            {
+                let storedValue = this._domTool.window.localStorage.getItem(localStorageKey);
+                if(storedValue !== null)
+                    this._inputElem.value = storedValue;
+            }
+            this._inputElem.addEventListener('input', onInput);
+            this._inputElem.addEventListener('change', onChange);
 
-            elem.addEventListener('input', onInput);
-            elem.addEventListener('change', onChange);
-            reset.addEventListener('click', ()=>{
-                elem.value = templateVars.value;
-                _dispatchChangeEvent(elem);
-            });
-            onChange({target: elem});
+            this.container.querySelector(`.${templateVars.klass}-reset`)
+                          .addEventListener('click', ()=>this.reset());
+
+            onChange({target: this._inputElem});
         }
+    }
+    reset() {
+        this._inputElem.value = this._defaultValue;
+        _dispatchChangeEvent(this._inputElem);
     }
 }
 
@@ -636,6 +651,11 @@ class ColorSchemeWidget {
         this._domTool.window.localStorage.setItem(this._localStorageKey, localStorageValue);
         this._onChange(localStorageValue);
     }
+    reset() {
+        let defaultCheckedItem = this._root.querySelector(`input[value="default"]`);
+        defaultCheckedItem.checked = true;
+        this._setColorScheme();
+    }
 }
 
 const FINE_USER_ZOOM_LOCAL_STORAGE_KEY = 'varla-varfo-fine-user-zoom';
@@ -650,8 +670,8 @@ const USER_PREFERENCES_TEMPLATE = `
 
 
 class UserPreferencesWidget extends _ContainerWidget{
-    constructor(baseElement) {
-        super(baseElement);
+    constructor(domTool, baseElement) {
+        super(domTool, baseElement);
 
         var klass = 'user_preferences';
         var dom = this._domTool.createElementfromHTML(
@@ -1174,7 +1194,15 @@ export function main({
                                     columnConfig,
                                     getCurrentLineHeightInPercent,
                                     recalculateLineHeight],
-                            UserPreferencesWidget
+                            UserPreferencesWidget,
+                            [   SimpleButtonWidget, {
+                                      klass: `widgets_container-reset_all`
+                                    , text: 'reset all'
+                                },
+                                () => {
+                                    userSettingsWidget.reset();
+                                }
+                            ],
                         ].filter(item=>!!item));
         let toggle = (/*evt*/)=>{
             let top = `${window.scrollY}px`;
@@ -1207,7 +1235,7 @@ export function main({
                                     time !== undefined ? time : 100);
         }
       , currentWindowWidth = window.innerWidth
-      , resizeHandler = (evt)=>{
+      , resizeHandler = (/*evt*/)=>{
             // don't update when height changes, because it has no
             // implications on layout so far, and it doesn't work with
             // e.g. all browsers on the iPhone, where scrolling increases

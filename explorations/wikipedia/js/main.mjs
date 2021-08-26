@@ -220,9 +220,9 @@ const ARTICLE_URL_TEMPLATE = `
 `;
 
 class WikipediaArticleURLWidget {
-    constructor(baseElement, templateVars, updateAfterChangedContent, state) {
+    constructor(domTool, baseElement, templateVars, updateAfterChangedContent, state) {
         this._baseElement = baseElement;
-        this._domTool = new DOMTool(this._baseElement.ownerDocument);
+        this._domTool = domTool;
 
         this._updateAfterChangedContent = updateAfterChangedContent;
 

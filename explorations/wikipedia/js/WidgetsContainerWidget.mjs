@@ -35,12 +35,14 @@ export default class WidgetsContainerWidget {
         let children = this._baseElement.ownerDocument.createDocumentFragment();
         for(let Widget of widgets) {
             let child = this._domTool.createElement('div',
-                            {'class': 'widgets_container-child_widget'});
+                            {'class': 'widgets_container-child_widget'})
+              , ctorArgs = [this._domTool, child]
+              ;
             children.appendChild(child);
 
             let widget = Array.isArray(Widget)
-                            ? new Widget[0](child, ...Widget.slice(1))
-                            : new Widget(child)
+                            ? new Widget[0](...ctorArgs, ...Widget.slice(1))
+                            : new Widget(...ctorArgs)
                             ;
             this._widgets.push(widget);
         }
@@ -89,6 +91,11 @@ export default class WidgetsContainerWidget {
             if(widget.destroy)
                 widget.destroy();
         this._domTool.removeNode(this.container);
+    }
+    reset() {
+        for(let widget of this._widgets)
+            if(widget.reset)
+                widget.reset();
     }
     getWidgetById(id) {
         if(!this._widgetsById){

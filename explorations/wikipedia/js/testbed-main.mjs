@@ -1,5 +1,4 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import DOMTool from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
 
 
@@ -174,10 +173,10 @@ const PORTAL_PROPERTIES_TEMPLATE = `
 /* We may not use this now */
 class PortalPropertiesWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(baseElement, portalElement) {
+    constructor(domTool, baseElement, portalElement) {
         this._baseElement = baseElement;
         this._portalElement = portalElement;
-        this._domTool = new DOMTool(this._baseElement.ownerDocument);
+        this._domTool = domTool;
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': 'portal_properties'},
             PORTAL_PROPERTIES_TEMPLATE
