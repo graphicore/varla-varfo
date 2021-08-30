@@ -11,9 +11,6 @@
 :root{
     /* can't use this per @font-face rule */
     font-synthesis: none;
-
-    --link-color: #0645ad;
-    --layout-border-color: #a7d7f9;
 }
 body {
     margin: 0;
@@ -259,6 +256,9 @@ b, strong {
      * but with enough keyframes, it could be good enough!
      */
 
+    --light-link-color: #0645ad;
+    --light-layout-border-color: #a7d7f9;
+
     --light-background: #fff;
     --light-color: #000;
 
@@ -267,6 +267,8 @@ b, strong {
 
     --dark-link-color: #6f5608;
     --dark-layout-border-color: #a06b27;
+
+
 
     /* default */
     --background: var(--light-background);
@@ -450,7 +452,6 @@ b, strong {
             );
     animation-duration: 1s;
     animation-delay: calc(-1s * var(--grad-animation-progression));
-    --grad-active-animation: no-animation;
     animation-name: var(--grad-active-animation);
     /* --font-grade:
      * Must be only applied in dark mode!
@@ -495,17 +496,29 @@ b, strong {
         --background: var(--light-background);
         --color: var(--light-color);
         --mode-invert: var(--light-mode-invert);
+        --link-color: var( --light-link-color);
+        --layout-border-color: var(--light-layout-border-color);
+    }
+    * {
+        --grad-active-animation: no-animation;
     }
     .user_preferences-color_scheme-default:after{
         content: " (light)";
     }
 }
 
-:root.explicit-light-mode{
+:root.explicit-light-mode {
     --background: var(--light-background);
     --color: var(--light-color);
     --mode-invert: var(--light-mode-invert);
+    --link-color: var( --light-link-color);
+    --layout-border-color: var(--light-layout-border-color);
 }
+
+.explicit-light-mode * {
+    --grad-active-animation: no-animation;
+}
+
 
 :root{
     background: var(--background);
