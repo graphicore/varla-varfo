@@ -155,9 +155,7 @@ font-size: calc(1pt * var(--font-size));
 letter-spacing: calc(1pt * var(--letter-space));
 line-height: var(--line-height);
 
-
-
---font-size: calc(var(--font-size-rem, 1) * var(--document-font-size)); /* --opsz */
+--font-size: calc(var(--font-size-rem, 1) * var(--document-font-size));
 /* if --font-opsz-rem is not set, the rule in font-variation-settings
  * defaults to --font-size, so don't set a generic --font-opsz-rem, and
  * only use it if is supposed to be different from --font-size-rem;
