@@ -147,10 +147,22 @@ font-style: var(--font-style);
 font-size: calc(1pt * var(--x-font-size));
 letter-spacing: calc(1pt * var(--letter-space));
 line-height: var(--x-line-height);
-/* word-spacing: calc(1em * var(--word-space)); */
+
+
 /* This case is better set on each element, seems to be calculated in the
  * wrong place otherwise. I.e. not using the --font-size from sub{--font-size: 8;}
  * but from :root{--font-size: 12;}
+ *
+ * FIXME: Now, another option would be to apply these scaling values to
+ * --document-font-size directly, as everything else is supposed to be
+ * relative to that. But it's interesting that the values would create
+ * a different scaling effect, as here we only have additions and
+ * with the values added to --document-font-size we'd have multiplacations
+ * of them. To be fair, a proper linear scaling would be achived by the
+ * latter, opsc would be handled better (it was the sames as --x-font-size
+ * and by then it was ok this way), and the css would be simpler
+ * overall. In short, I believe these values should be applied to
+ * --document-font-size directly rather than here.
  */
 --x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
 
@@ -163,13 +175,19 @@ line-height: var(--x-line-height);
 
 font-weight: var(--x-font-weight);
 
+/* About "VVFS": (Varla-Varfo Font Size) is only debugging information,
+ * the actual calculated value can be observed in the javascript debuggers
+ * "computed styles" menu, so we know the finally applied font size in PT.
+ * Since "VVFS" is not an axis name, it has no effect on the font display.
+ */
 font-variation-settings:
             "slnt" var(--font-slant),
             "wght" var(--x-font-weight),
             "GRAD" var(--x-font-grade),
             "XTRA" var(--font-stretch),
-            "opsz" var(--x-font-size),
-            "wdth" var(--font-width)
+            "opsz" var(--font-opsz, var(--x-font-size)),
+            "wdth" var(--font-width),
+            "VVFS" var(--x-font-size)
             ;
 /* This is not required for the variable fonts, as font-variation-settings
  * will win, however, it helps with the type-ramp bookmarklet to
@@ -519,10 +537,33 @@ h1, h2, h3, h4 {
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
+
 h1 { /* headline */
     /*--font-size: calc(9/5 * var(--document-font-size));*/
-    --font-size: calc(3 * var(--document-font-size));
-    --font-weight: 700;
+
+    /*
+     * Requested is to calculate opsz, size etc relative to the
+     * body/document text size, as in REM units, but we don't use rem
+     * as they have limitations getting the actual numerical font-size
+     * in pt from them, so rem are unusable in e.g. font-variation-settings
+     * or other calculations.
+     */
+    --font-size-rem: 5;
+    --font-opsz-rem: 7;
+
+    /* These rules could become general and if we need to specify
+     * absolute pt font-sizes, we'd have to redefine these locally.
+     *
+     * I'm a bit unsatisfied with the change of UI regarding this, though,
+     * as it makes --font-size a not direct interface in most cases.
+     */
+    --font-size: calc(var(--font-size-rem) * var(--document-font-size));
+    --font-opsz: calc(var(--font-opsz-rem) * var(--document-font-size));
+
+    --font-weight: 650;
+    --font-width: 85;
+    --line-height: 1.02;
+    hyphens: none;
 }
 
 #siteSub {
