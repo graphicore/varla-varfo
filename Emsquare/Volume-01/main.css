@@ -15,7 +15,7 @@ nav.relative-navigation li {
 
 header, nav, footer, .content-page{
     --font-family: RobotoFlex;
-    --font-stretch: 468;
+    --font-xtra: 468;
 }
 footer{
     --font-size-rem: 3/4;
@@ -43,7 +43,7 @@ figure {
      * to the ".runion-justification-host" element.
      */
     --font-family: RobotoFlex;
-    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     /*
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
      * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li

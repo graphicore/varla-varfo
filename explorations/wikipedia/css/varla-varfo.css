@@ -88,7 +88,7 @@ h2, h3, h4, h5, h6 {
 --font-slant: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
-/* FIXME: get default --font-stretch (XTRA) value by font-size and font-family
+/* FIXME: get default --font-xtra (XTRA) value by font-size and font-family
  *
  * used to be 520 but making it narrow to work out justification */
 /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
@@ -96,7 +96,7 @@ h2, h3, h4, h5, h6 {
  *
  *
  */
---font-stretch: 562;/* by (xtra, wdth) */
+--font-xtra: 562;/* by (xtra, wdth) */
 
 --font-width: 100; /* this goes into wdth */
 
@@ -169,7 +169,6 @@ line-height: var(--line-height);
 
 --x-font-grade: calc(var(--font-grade, 0) * var(--amplify-grade, 1) * var(--toggle-grade, 1));
 
-
 --x-font-weight: calc(var(--font-weight) + var(--font-weight-change, 0));
 
 font-weight: var(--x-font-weight);
@@ -183,7 +182,7 @@ font-variation-settings:
             "slnt" var(--font-slant),
             "wght" var(--x-font-weight),
             "GRAD" var(--x-font-grade),
-            "XTRA" var(--font-stretch),
+            "XTRA" var(--font-xtra),
             "opsz" var(--font-opsz, var(--font-size)),
             "wdth" var(--font-width),
             "VVFS" var(--font-size)
@@ -523,7 +522,7 @@ img {
 #mw-panel {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
     --font-size-rem: 3/4;
@@ -534,7 +533,7 @@ img {
 h1, h2, h3, h4 {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 
 h1 { /* headline */
@@ -580,7 +579,7 @@ h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
 .templatequote {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     --font-size-rem: 2;
     --font-weight: 100;
 }
@@ -827,7 +826,7 @@ i, cite, em, var, dfn {
             calc( var(--justification-tracking-default) + var(--justification-step) * var(--justification-step-tracking)),
             var(--justification-tracking-max)
         );
-    --font-stretch: clamp(
+    --font-xtra: clamp(
             var(--justification-xtra-min),
             calc( var(--justification-xtra-default) + var(--justification-step) * var(--justification-step-xtra)),
             var(--justification-xtra-max)

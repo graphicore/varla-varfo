@@ -1090,9 +1090,9 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     spans = _packLine(false, 'span', nodes, firstLine.range, secondLine.range,
                                                 isInitialLine, false, false);
 
-    // Now reduce [--font-stretch, ...] until the line breaks later, i.e.
+    // Now reduce [--font-xtra, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
-    // until we run out of negative [--font-stretch, ...] adjustment potential.
+    // until we run out of negative [--font-xtra, ...] adjustment potential.
     let adjust = (nodes, step, colorIntensity) => {
         for(let node of nodes) {
             if(colorIntensity !== undefined) {
