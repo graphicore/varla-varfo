@@ -149,12 +149,12 @@ h2, h3, h4, h5, h6 {
 /** columns **/
 
 * {
-/*column-width: calc(1pt * var(--x-font-size) * var(--column-width));
+/*column-width: calc(1pt * var(--font-size) * var(--column-width));
 /*column-count: var(--column-count);*/
 /*width: calc(1em * var(--column-width));*/
 font-family: var(--font-family);
 font-style: var(--font-style);
-font-size: calc(1pt * var(--x-font-size));
+font-size: calc(1pt * var(--font-size));
 letter-spacing: calc(1pt * var(--letter-space));
 line-height: var(--x-line-height);
 
@@ -162,12 +162,10 @@ line-height: var(--x-line-height);
 
 --font-size: calc(var(--font-size-rem, 1) * var(--document-font-size)); /* --opsz */
 /* if --font-opsz-rem is not set, the rule in font-variation-settings
- * defaults to --x-font-size, so don't set a generic --font-opsz-rem, and
+ * defaults to --font-size, so don't set a generic --font-opsz-rem, and
  * only use it if is supposed to be different from --font-size-rem;
  */
 --font-opsz: calc(var(--font-opsz-rem) * var(--document-font-size));
-
---x-font-size: var(--font-size);
 
 --x-line-height: var(--line-height);
 
@@ -188,9 +186,9 @@ font-variation-settings:
             "wght" var(--x-font-weight),
             "GRAD" var(--x-font-grade),
             "XTRA" var(--font-stretch),
-            "opsz" var(--font-opsz, var(--x-font-size)),
+            "opsz" var(--font-opsz, var(--font-size)),
             "wdth" var(--font-width),
-            "VVFS" var(--x-font-size)
+            "VVFS" var(--font-size)
             ;
 /* This is not required for the variable fonts, as font-variation-settings
  * will win, however, it helps with the type-ramp bookmarklet to
@@ -209,14 +207,14 @@ table,
 ul, ol.not(:first-child),
 .templatequote{
     /* likely not what we're going to use, but it aligns with the line height. */
-    margin-block-start: calc(1pt * var(--x-font-size) * var(--x-line-height));
+    margin-block-start: calc(1pt * var(--font-size) * var(--x-line-height));
 }
 .runion-01 .hatnote,
 table,
 .thumb,
 ul, ol,
 .templatequote {
-    margin-block-end: calc(1pt * var(--x-font-size) * var(--x-line-height));
+    margin-block-end: calc(1pt * var(--font-size) * var(--x-line-height));
 }
 
 p, ul ul{
@@ -317,7 +315,7 @@ b, strong {
  * support is not soon to expect. A solution seems to be to set
  * --grad-400 and --grad-700 by hand/directly in CSS, whenever --font-size,
  * --font-family, or --font-weight is set, but it wouldn't take into
- * account the final absolute --x-font-size, which makes it rather unusable.
+ * account the final absolute --font-size, which makes it rather unusable.
  * So probably JavaScript has to walk through all elements and set those
  * --grad-X00 variables where one of the three input variables changes
  * compared to  the parent.
@@ -446,7 +444,7 @@ b, strong {
     --grad-max-font-size: 18;
     --grad-actual-font-size: clamp(
             var(--grad-min-font-size),
-            var(--x-font-size),
+            var(--font-size),
             var(--grad-max-font-size)
             );
     --grad-animation-progression: calc(
@@ -670,7 +668,7 @@ sup, sub{
 
 sup *, sub *{
     font-size: inherit;
-    --x-font-size: inherit;
+    --font-size: inherit;
 }
 
 sup, sup * {
