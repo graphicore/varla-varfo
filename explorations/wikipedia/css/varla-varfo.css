@@ -48,7 +48,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h2, h3, h4, h5, h6 {
-    margin-block-start: calc(1pt * var(--x-line-height) * var(--document-font-size));
+    margin-block-start: calc(1pt * var(--line-height) * var(--document-font-size));
 }
 
 /* use :root for custom properties
@@ -156,7 +156,7 @@ font-family: var(--font-family);
 font-style: var(--font-style);
 font-size: calc(1pt * var(--font-size));
 letter-spacing: calc(1pt * var(--letter-space));
-line-height: var(--x-line-height);
+line-height: var(--line-height);
 
 
 
@@ -166,8 +166,6 @@ line-height: var(--x-line-height);
  * only use it if is supposed to be different from --font-size-rem;
  */
 --font-opsz: calc(var(--font-opsz-rem) * var(--document-font-size));
-
---x-line-height: var(--line-height);
 
 --x-font-grade: calc(var(--font-grade, 0) * var(--amplify-grade, 1) * var(--toggle-grade, 1));
 
@@ -207,14 +205,14 @@ table,
 ul, ol.not(:first-child),
 .templatequote{
     /* likely not what we're going to use, but it aligns with the line height. */
-    margin-block-start: calc(1pt * var(--font-size) * var(--x-line-height));
+    margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
 }
 .runion-01 .hatnote,
 table,
 .thumb,
 ul, ol,
 .templatequote {
-    margin-block-end: calc(1pt * var(--font-size) * var(--x-line-height));
+    margin-block-end: calc(1pt * var(--font-size) * var(--line-height));
 }
 
 p, ul ul{

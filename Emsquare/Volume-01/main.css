@@ -27,8 +27,8 @@ article{
 }
 
 figure {
-    margin-block-start: calc(1pt * var(--font-size) * var(--x-line-height));
-    margin-block-end:   calc(1pt * var(--font-size) * var(--x-line-height));
+    margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
+    margin-block-end:   calc(1pt * var(--font-size) * var(--line-height));
     margin-inline-start: 0;
     margin-inline-end: 0;
     text-indent: 0;
