@@ -10,7 +10,10 @@
 
 :root {
     /* match wikipedia */
-    --document-font-size: calc(0.875 * var(--default-browser-font-size));
+    --document-font-size: calc((0.875 * var(--default-browser-font-size))
+        + var(--fine-user-zoom, 0)
+        + var(--font-size-change-by-distance, 0))
+        ;
 }
 
 body {

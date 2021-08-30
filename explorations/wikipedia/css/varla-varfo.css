@@ -11,13 +11,11 @@
 :root{
     /* can't use this per @font-face rule */
     font-synthesis: none;
-    --fine-user-zoom: 0;
 
     --link-color: #0645ad;
     --layout-border-color: #a7d7f9;
 }
 body {
-    font-size: calc(100% + 1pt * var(--fine-user-zoom, 0));
     margin: 0;
     background: inherit;
 }
@@ -102,6 +100,14 @@ h2, h3, h4, h5, h6 {
 
 --font-width: 100; /* this goes into wdth */
 
+
+
+--fine-user-zoom: 0;
+
+/* 25 cm change size by 1 pt */
+--font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
+
+
 /* in pt! We need JS to get the document default font-size in pt,
  * because we can't yet calculate it
  * https://github.com/w3c/csswg-drafts/issues/6149
@@ -110,15 +116,19 @@ h2, h3, h4, h5, h6 {
 --default-browser-font-size: "invalid";
  /* This is essentially the rem: Font size of the root element.
   *
+  * plain:
+  *     --document-font-size: var(--default-browser-font-size);
   * Can be used as an indirection as well, modifying the browser default.
   * e.g. to match wikipedia:
   *     --document-font-size: calc(0.875 * var(--default-browser-font-size));
   */
---document-font-size: var(--default-browser-font-size);
 
---font-size: var(--document-font-size); /* --opsz */
+--document-font-size: calc((1 * var(--default-browser-font-size))
+        + var(--fine-user-zoom, 0)
+        + var(--font-size-change-by-distance, 0))
+        ;
 
---font-size-change-by-distance: calc(var(--user-distance-cm, 0) / 25);
+
 
 /* FIXME: depending on line-length these should change
  * with runion-01 we have always shorter lines, hence these are not of use
@@ -149,22 +159,15 @@ letter-spacing: calc(1pt * var(--letter-space));
 line-height: var(--x-line-height);
 
 
-/* This case is better set on each element, seems to be calculated in the
- * wrong place otherwise. I.e. not using the --font-size from sub{--font-size: 8;}
- * but from :root{--font-size: 12;}
- *
- * FIXME: Now, another option would be to apply these scaling values to
- * --document-font-size directly, as everything else is supposed to be
- * relative to that. But it's interesting that the values would create
- * a different scaling effect, as here we only have additions and
- * with the values added to --document-font-size we'd have multiplacations
- * of them. To be fair, a proper linear scaling would be achived by the
- * latter, opsc would be handled better (it was the sames as --x-font-size
- * and by then it was ok this way), and the css would be simpler
- * overall. In short, I believe these values should be applied to
- * --document-font-size directly rather than here.
+
+--font-size: calc(var(--font-size-rem, 1) * var(--document-font-size)); /* --opsz */
+/* if --font-opsz-rem is not set, the rule in font-variation-settings
+ * defaults to --x-font-size, so don't set a generic --font-opsz-rem, and
+ * only use it if is supposed to be different from --font-size-rem;
  */
---x-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
+--font-opsz: calc(var(--font-opsz-rem) * var(--document-font-size));
+
+--x-font-size: var(--font-size);
 
 --x-line-height: var(--line-height);
 
@@ -527,7 +530,7 @@ img {
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
-    --font-size:  calc(3/4 * var(--document-font-size));
+    --font-size-rem: 3/4;
     --line-height: 1.125;
     word-wrap: break-word;
 }
@@ -539,8 +542,6 @@ h1, h2, h3, h4 {
 }
 
 h1 { /* headline */
-    /*--font-size: calc(9/5 * var(--document-font-size));*/
-
     /*
      * Requested is to calculate opsz, size etc relative to the
      * body/document text size, as in REM units, but we don't use rem
@@ -550,15 +551,6 @@ h1 { /* headline */
      */
     --font-size-rem: 5;
     --font-opsz-rem: 7;
-
-    /* These rules could become general and if we need to specify
-     * absolute pt font-sizes, we'd have to redefine these locally.
-     *
-     * I'm a bit unsatisfied with the change of UI regarding this, though,
-     * as it makes --font-size a not direct interface in most cases.
-     */
-    --font-size: calc(var(--font-size-rem) * var(--document-font-size));
-    --font-opsz: calc(var(--font-opsz-rem) * var(--document-font-size));
 
     --font-weight: 650;
     --font-width: 85;
@@ -572,23 +564,20 @@ h1 { /* headline */
      */
     --font-family: AmstelVar;
     --grad-animation-name: AmstelVar-grad-by-font-size;
-    --font-size: calc(3/2 * var(--document-font-size));
+    --font-size-rem: 3/2;
     --font-weight: 400;
 }
 
 h2 { /* subsection headline */
-    /*--font-size: calc(3/2 * var(--document-font-size));*/
-    --font-size: calc(7/3 * var(--document-font-size));
+    --font-size-rem: 7/3;
     --font-weight: 600;
 }
 h3 { /* sub-subsection headline */
-    /*--font-size: calc(3/2 * var(--document-font-size));*/
-    --font-size: calc(7/3 * var(--document-font-size));
+    --font-size-rem: 7/3;
     --font-weight: 500;
 }
 h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
-    /*--font-size: calc(3/2 * var(--document-font-size));*/
-    --font-size: calc(7/3 * var(--document-font-size));
+    --font-size-rem: 7/3;
     --font-weight: 400;
 }
 
@@ -596,17 +585,17 @@ h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-stretch: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
-    --font-size: calc(2 * var(--document-font-size));
+    --font-size-rem: 2;
     --font-weight: 100;
 }
 
 .vector-menu-portal h3 {
-    --font-size: calc(3/4 * var(--document-font-size));
+    --font-size-rem: 3/4;
     --font-weight: 500;
 }
 
 .mw-editsection, .mw-editsection-like {
-    --font-size: calc(13/16 * var(--document-font-size));
+    --font-size-rem: 13/16;
     --font-weight: 400;
     --line-height: 1;
 }
@@ -635,10 +624,7 @@ h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
 }
 
 sup, sub{
-    /*This is a copy of the original --x-font-size, will always have
-     * to follow the original. */
-    --xo-font-size: calc(var(--font-size) + var(--fine-user-zoom, 0) + var(--font-size-change-by-distance, 0));
-    /* the redefines --x-font-size, with our scaling factor that way,
+    /* this redefines --font-size, with our scaling factor that way,
      * it goes directly into OPSZ etc., without us changing the definitions
      */
     --no-animation: no-animation;
@@ -664,8 +650,8 @@ sup, sub{
     animation-duration: 1s, 1s;
     animation-delay: calc(-1s * var(--sup-animation-progression)),
                      calc(-1s * var(--grad-animation-progression));
-    ;
-    --x-font-size: calc(var(--xo-font-size) * var(--sup-scale));
+
+    --font-size: calc(var(--sup-scale) * var(--font-size-rem, 1) * var(--document-font-size));
 
 
     /* If there’s a width axis, increase it to 110%,
@@ -706,7 +692,7 @@ sub, sub * {
 
 
 #p-personal li {
-    --font-size:  calc(3/4 * var(--document-font-size));
+    --font-size-rem: 3/4;
 }
 
 b, strong {

@@ -1,6 +1,6 @@
 header {
     padding: 2em 0 0 0;
-    --font-size: calc(2 * var(--document-font-size)); calc(4/3 * var(--document-font-size));
+    --font-size-rem: 2;
     --font-weight: 600;
 }
 
@@ -18,7 +18,7 @@ header, nav, footer, .content-page{
     --font-stretch: 468;
 }
 footer{
-    --font-size: calc(3/4 * var(--document-font-size));
+    --font-size-rem: 3/4;
 }
 
 
@@ -48,7 +48,7 @@ figure {
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
      * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
      */
-    --font-size: calc(3/4 * var(--document-font-size));
+    --font-size-rem: 3/4;
 }
 
 figure img {

@@ -23,7 +23,7 @@
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
      * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
      */
-    --font-size: calc(3/4 * var(--document-font-size));
+    --font-size-rem: 3/4;
 }
 
 button.toggle-user_settings:not(#page_portal-testbed *) {
@@ -80,7 +80,7 @@ button.toggle-user_settings {
 
 .widgets_container legend,
 .widgets_container h3 {
-    --font-size: calc(1 * var(--document-font-size));
+    --font-size-rem: 1;
 }
 
 
