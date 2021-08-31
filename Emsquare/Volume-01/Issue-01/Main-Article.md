@@ -8,7 +8,7 @@ styles:
     - "Emsquare/Volume-01/main.css"
 ---
 
-The biggest key on the keyboard is the space key. Typography starts with its parent space, the “imaginary” em square, into rectangles of the same height as the em square representing the default widths of each glyph in a font, including the space. These rectangles are only "defaults", as the space between lines,  between glyphs, and the word space, can be changed by the user, and then by the final display of font in print or screen.
+The largest key on the keyboard is the space key. Typography starts with its parent space, the “imaginary” em square, into rectangles of the same height as the em square representing the default widths of each glyph in a font, including the space. These rectangles are only "defaults", as the space between lines,  between glyphs, and the word space, can be changed by the user, and then by the final display of font in print or screen.
 
 ## Square one.
 
@@ -75,7 +75,7 @@ Between the lines is called line spacing, and is valued either by the size of th
 
 ## Word Space
 
-The largest key on most keyboards and the most important character to spacing in a font is the space, or word space. In Latin use, its width is derived from a formula, or simply chosen visually by the type designer. It is often adjusted by applications, but its fundamental job is to make certain it’s the largest horizontal space in any given piece of text of a single size.
+The most important character to reading in a font is the space glyph, or word space. In Latin use, its width is derived from a formula, based on the width of one of the letters, or simply chosen visually by the type designer. It is often adjusted by applications, but its fundamental task is to make certain it’s the largest horizontal space in text. Readers can't be confused by the spaces between letters, between letters and punctuation or between punctuation and punctuation, and the word space. While this sounds obvious, it rarely is an issue with Latin type because so much work in the development of typefaces used by the public goes into elimintating any space that can compete, visually, with the word space. 
 
 {% include emsquare-figure
         src="./images/Figure 7 & 8 one third.png"
@@ -83,9 +83,9 @@ The largest key on most keyboards and the most important character to spacing in
         caption="Word space and its adjustment."
 %}
 
-And its second most critical task is to remain around the same as or smaller than the line space, i.e. the space between lines. Obviously the word space is less important and sometimes absent entirely from type that’s glimpsed, seen, or viewed, and is increasingly important as the text is to be skimmed, read, or read for a long time.
+The word space's second most critical appearance is to remain around or be smaller than the line space, i.e. the space between lines. Obviously the word space is less important and sometimes absent entirely from type that’s glimpsed, seen, or quickly viewed, and is increasingly important as the text is to be skimmed, read, or read for a long time. In the most complex case, justification of narrow columns, the word space's range of widths needs to be kept narrow relative linespacing, which for narrow columns can be quite small.
 
-The type designer’s task, then, is to create a default word space, and default letter spacing that work. And then the often long and arduous task of making Kerning pairs, creating list of exceptions to the default letter spacing that need to be prevented from touching, like /f/?, which we’ll get to later, or competing with the size of the word space, like /T/o, which we’ve gotten through now.
+The type designer’s task, then, is to create a default word space and letter spacing, that work over a rnage of sizes, column widths, with hyphenation and justification a distinct possibilty. Included in that, beyond the default letterspacing, is the type designer's task of making kerning pairs, in essence a list of exceptions to the default letter spacing that need to be prevented from being too far apart, like /T/o, thus competing with the size of the word space.
 
 
 
