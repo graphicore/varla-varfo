@@ -4,6 +4,11 @@ header {
     --font-weight: 600;
 }
 
+h2, h3, h4, h5, h6 {
+    /* --js-line-height is expected to be set in the outer element by runion_01 */
+    margin-block: calc(1pt * var(--js-line-height) * var(--document-font-size));
+}
+
 nav.relative-navigation ol {
     margin: 0;
     padding: 0;
@@ -15,6 +20,7 @@ nav.relative-navigation li {
 
 header, nav, footer, .content-page{
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468;
 }
 footer{
@@ -43,12 +49,13 @@ figure {
      * to the ".runion-justification-host" element.
      */
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     /*
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
      * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
      */
-    --font-size-rem: 3/4;
+    --font-size-rem: 0.82;
 }
 
 figure img {
@@ -59,7 +66,30 @@ figure img {
     background: white; /* Got some images with transparency. */
 }
 
+figure figcaption{
+    margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
+}
+
 figure .enumeration {
     display: block;
     --font-weight: 700;
+}
+
+header,
+blockquote {
+    /* "pull spec"/pull quotes */
+    --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
+    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+
+    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
+    --font-weight: 200;
+    --line-height: 1.0;
+    --font-width: 30;
+}
+
+blockquote {
+    margin-block-start: calc(1pt * var(--js-font-size) * var(--line-height));
+    margin-block-end: calc(1pt * var(--js-font-size) * var(--line-height));
+    margin-inline: 0;
 }

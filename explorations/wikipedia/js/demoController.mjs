@@ -876,7 +876,7 @@ function _runion_01_recalculateLineHeight(columnConfig, elem, min, max) {
       ;
     let lineHeight = _runion_01_lineHeight(newColumnConfig, lineLengthEn);
     // should be a method!
-    elem.style.setProperty('--line-height', `${lineHeight}`);
+    elem.style.setProperty('--js-line-height', `${lineHeight}`);
 }
 
 // Characters per line runion
@@ -913,7 +913,7 @@ function runion_01 (columnConfig, elem) {
     elem.style.setProperty('--padding-right-en', `${paddingRightEn}`);
 
     // TODO: this is subject of the line-height fine-tuning UI
-    elem.style.setProperty('--line-height', `${lineHeight}`);
+    elem.style.setProperty('--js-line-height', `${lineHeight}`);
 
     // Debugging stuff:
     // elem.style.setProperty('--available-width-en', `${availableWidthEn}`);
@@ -1175,7 +1175,7 @@ export function main({
 
         let recalculateLineHeight = (min, max) => _runion_01_recalculateLineHeight(columnConfig, runion01Elem, min, max)
           , getCurrentLineHeightInPercent = ()=> {
-              return (parseFloat(runion01Elem.style.getPropertyValue('--line-height')) * 100).toFixed(2);
+              return (parseFloat(runion01Elem.style.getPropertyValue('--js-line-height')) * 100).toFixed(2);
           }
           ;
 

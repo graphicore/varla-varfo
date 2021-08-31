@@ -18,6 +18,7 @@
      */
 .thumb {
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     /*
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
@@ -38,6 +39,7 @@ button.toggle-user_settings {
 .widgets_container {
 
     --font-family: RobotoFlex;
+    --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 
     max-width: 27rem;

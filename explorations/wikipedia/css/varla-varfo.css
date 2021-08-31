@@ -44,10 +44,6 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0;
 }
 
-h2, h3, h4, h5, h6 {
-    margin-block-start: calc(1pt * var(--line-height) * var(--document-font-size));
-}
-
 /* use :root for custom properties
  * "*" destroys inheritance!
  *
@@ -136,7 +132,7 @@ h2, h3, h4, h5, h6 {
  * HOWEVER, in a long-line situation, the tool should do something like
  * the above, and also the below is likely too static.
  */
---line-height: 1.3;
+--line-height: var(--js-line-height, 1.3);
 --letter-space: 0;
 --word-space: 0;/*in fractions of em*/
 
@@ -196,16 +192,14 @@ font-weight: var(--x-font-weight);
 
 table,
 .thumb,
-ul, ol.not(:first-child),
-.templatequote{
+ul, ol.not(:first-child) {
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
 }
 .runion-01 .hatnote,
 table,
 .thumb,
-ul, ol,
-.templatequote {
+ul, ol{
     margin-block-end: calc(1pt * var(--font-size) * var(--line-height));
 }
 
@@ -547,7 +541,7 @@ h1, h2, h3, h4 {
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 
-h1 { /* headline */
+h1 { /* main headline */
     /*
      * Requested is to calculate opsz, size etc relative to the
      * body/document text size, as in REM units, but we don't use rem
@@ -564,35 +558,39 @@ h1 { /* headline */
     hyphens: none;
 }
 
+/* subsection headline */
+h2
+{
+    --font-size-rem: 2.3333 ; /* ~ 28 pt @ 12 pt body*/
+    --font-weight: 750;
+    --line-height: 1.02;
+}
+/* sub-subsection headline */
+h3
+{
+    --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
+    --font-weight: 850;
+    --line-height: 1.02;
+}
+/* h4 is not used in the Typography article, but in other Wikipedia.
+ * Also not used in Emsquare
+ */
+h4 {
+
+    --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
+    --font-weight: 850;
+    --line-height: 1.02;
+}
+
 #siteSub {
     /* This functions as the "subhead", but it seems to be:
      * "From Wikipedia, the free encyclopedia" in every case!
      */
     --font-family: AmstelVar;
     --grad-animation-name: AmstelVar-grad-by-font-size;
+    --font-xtra: 562; /* look at font spec for defalt value*/
     --font-size-rem: 3/2;
     --font-weight: 400;
-}
-
-h2 { /* subsection headline */
-    --font-size-rem: 7/3;
-    --font-weight: 600;
-}
-h3 { /* sub-subsection headline */
-    --font-size-rem: 7/3;
-    --font-weight: 500;
-}
-h4 { /* h4 is not used in the Typography article, but in other Wikipedia. */
-    --font-size-rem: 7/3;
-    --font-weight: 400;
-}
-
-.templatequote {
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
-    --font-size-rem: 2;
-    --font-weight: 100;
 }
 
 .vector-menu-portal h3 {
