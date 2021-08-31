@@ -17,10 +17,10 @@
     <header>
         <span class="main-caption">Emsquare — Volume {{volume}} — Issue {{issue}}</span>
     </header>
+    <nav class="relative-navigation">
+        {{ relnav | markdownify }}
+    </nav>
     <main class="{{ page.class }}">
-        <nav class="relative-navigation">
-            {{ relnav | markdownify }}
-        </nav>
       <article class="runify-01">
         <h1>
             {% if page.headline -%}
@@ -31,10 +31,11 @@
         </h1>
         {{ content }}
       </article>
-        <nav class="relative-navigation">
-            {{ relnav | markdownify }}
-        </nav>
+
     </main>
+    <nav class="relative-navigation">
+        {{ relnav | markdownify }}
+    </nav>
     <footer>
           {%- capture footer -%}{%- include emsquare-footer.md -%}{%- endcapture -%}
           {{ footer | markdownify }}
