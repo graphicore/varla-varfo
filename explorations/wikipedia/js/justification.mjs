@@ -918,9 +918,12 @@ const FONT_SPEC_CONFIG_AMSTEL_VAR = {
         125: {
             // FIXME: PDF is not clear regarding tracking: also [-1, 0, 1]
             //          also suggest -1 instead of -0.1!
+            //          Google Sheets "Amstelvar Justification saved" sugests [-1, 0, 0.8]
             144: {XTRA: [550, 562, 570], tracking: [-0.1, 0, 0.8], wordspace: [96/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
             // FIXME: PDF is not clear regarding tracking: also [-0.3, 0, 0.2]
+            //          Google Sheets "Amstelvar Justification saved" sugests [-.3, 0, 0.3]
             // FIXME: PDF is not clear regarding XTRA: also [540, 562, 575]
+            //          Google Sheets "Amstelvar Justification saved" sugests [540, ?, 580]
            , 14: {XTRA: [540, 562, 580], tracking: [-0.3, 0, 0.3], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
            ,  8: {XTRA: [510, 562 ,571], tracking: [-0.1, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
         }
@@ -929,11 +932,13 @@ const FONT_SPEC_CONFIG_AMSTEL_VAR = {
             144: {XTRA: [545, 562, 570], tracking:[-0.3, 0, 0.7],  wordspace: [120/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
            , 14: {XTRA: [515, 562, 575], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
             // FIXME: PDF is not clear regarding tracking: also [-0.1, 0, 0.2]
+            //          Google Sheets "Amstelvar Justification saved" sugests [-0.1, 0, 0.25]
            ,  8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/, 12/8 - 1]}
         }
       , 50: {
             144: {XTRA: [550, 562, 568], tracking: [-0.3, 0, 0.5], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
             // FIXME: PDF is not clear regarding XTRA: also [562, 562, 575]
+            //          Google Sheets "Amstelvar Justification saved" sugests: [540, ?, 575]
            , 14: {XTRA: [540, 562, 575], tracking: [0, 0, 0.2], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
            ,  8: {XTRA: [540, 562, 568], tracking: [-0.1, 0, 0.15], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
         }
@@ -941,8 +946,10 @@ const FONT_SPEC_CONFIG_AMSTEL_VAR = {
   , 100: {
         100: {
             // FIXME: PDF is not clear regarding wordspace: also [126/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]
+            //          Google Sheets "Amstelvar Justification saved" sugests: [126/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]
             144: {XTRA: [552, 562, 568], tracking: [-0.2, 0, 0.7], wordspace: [126/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
             // FIXME: PDF is not clear regarding XTRA: also [515, 562, 575]
+            //          Google Sheets "Amstelvar Justification saved" sugests: [535, ?, 575]
            , 14: {XTRA: [535, 562, 575], tracking: [-0.2 , 0, 0.2], wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
            ,  8: {XTRA: [545, 562, 570], tracking: [-0.01 , 0, 0.27], wordspace: [8/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
         }
