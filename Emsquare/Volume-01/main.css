@@ -66,10 +66,6 @@ figure img {
     background: white; /* Got some images with transparency. */
 }
 
-figure figcaption{
-    margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
-}
-
 figure .enumeration {
     display: block;
     --font-weight: 700;
