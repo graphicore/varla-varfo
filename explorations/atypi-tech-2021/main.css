@@ -12,7 +12,7 @@ body {
 
 @font-face {
     font-family: 'RobotoFlex';
-    src: url('../fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
+    src: url('./fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
     font-weight: 100 900;
     -xx-font-style: normal;
     font-style: oblique 0deg -10deg;
@@ -20,14 +20,14 @@ body {
 
 @font-face {
     font-family: 'AmstelVar';
-    src: url('../fonts/Amstelvar/Amstelvar-Roman[wdth,wght,opsz].ttf') format('truetype');
+    src: url('./fonts/Amstelvar/Amstelvar-Roman[wdth,wght,opsz].ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'AmstelVar';
-    src: url('../fonts/Amstelvar/Amstelvar-Italic[wdth,wght,opsz].ttf') format('truetype');
+    src: url('./fonts/Amstelvar/Amstelvar-Italic[wdth,wght,opsz].ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
 }
