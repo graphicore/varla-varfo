@@ -2,7 +2,7 @@
 
 @font-face {
     font-family: 'RobotoFlex';
-    src: url('../fonts/Roboto-Flex/RobotoFlex[slnt,wdth,wght,opsz].ttf') format('truetype');
+    src: url('../../fonts/Roboto-Flex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 
