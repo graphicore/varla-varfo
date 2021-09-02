@@ -71,7 +71,12 @@ The em square (called an em quad in metal type), can be seen typographically as 
         caption="Em square w/w-out additional line spacing and<br />**Figure 6b**: Default letters w/w-out letter spacing."
 %}
 
-Between the lines is called line spacing, and is valued either by the size of the space or as a percentage of the size of the type. Between the letters are default letter spacing and kerning, with tracking being a function for changes to both, also usually expressed as a percentage of size. Both are typically added end of the typographic object, i.e. the linespacing is added to the bottom of a line and letter spacing added to the right of Latin glyphs.
+## Line Space
+Between the lines is called line spacing, in CSS, and is valued either by the size of the space or as a percentage of the size of the type. Between the letters are default letter spacing and kerning, with tracking being a function for changes to both, also usually expressed as a percentage of size. Letterspacing is obviously added at the end of each letter, and line spacing was traditionally, and today in most design applications, added to the bottom of each line. This was done to facilitate cooperative use of the em square and leading, between users and font developers in the use of languages with and without diacritic accents above the uppercase.
+
+since time immemorial, many type designers have striven to keep all decending glyphs, diacritics and attachment, at or near the bottom of the em, all uppercase heights at or near the top, and all diacritics above the upper and lowercase, within the em, plus 20% of the em. This defacto standard allows the user to align the type on the uppercase at the top of their text container, and either the baseline for all-cap use, or the bottom of the em for mixed case use, allowing any diacritics in the first line to "float" above the rest, with interline diacritics clear of the descenders above.
+
+Perhaps with a broader world view, CSS splits additional line spacing to place half above the em, and half below. this has the effect of starting the first line slightly lower than in traditional typography, but otherwise, on fonts made the traditional way, the behavior is the same from there to the bottom line, which of course, is slightly lower than in traditional type. 
 
 ## Word Space
 
