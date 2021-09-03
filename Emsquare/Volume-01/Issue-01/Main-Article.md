@@ -98,7 +98,7 @@ The most important character to reading in a font is the space glyph, or word sp
 
 The word space's second most critical appearance is to remain around or be smaller than the line space, i.e. the space between lines. Obviously the word space is less important and sometimes absent entirely from type that’s glimpsed, seen, or quickly viewed, and is increasingly important as the text is to be skimmed, read, or read for a long time. In the most complex case, justification of narrow columns, the word space's range of widths needs to be kept narrow relative linespacing, which for narrow columns can be quite small.
 
-The type designer’s task, then, is to create a default word space and letter spacing, that work over a rnage of sizes, column widths, with hyphenation and justification a distinct possibilty. Included in that, beyond the default letterspacing, is the type designer's task of making kerning pairs, in essence a list of exceptions to the default letter spacing that need to be prevented from being too far apart, like /T/o, thus competing with the size of the word space.
+The type designer’s task, then, is to create a default word space and letter spacing, that work over a range of sizes, column widths, with hyphenation and justification a distinct possibilty. Included in that, beyond the default letterspacing, is the type designer's task of making kerning pairs, in essence a list of exceptions to the default letter spacing that need to be prevented from being too far apart, like /T/o, thus competing with the size of the word space.
 
 
 
