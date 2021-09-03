@@ -1,5 +1,5 @@
 /* jshint browser: true, devel: true, esversion: 9, laxcomma: true, laxbreak: true, unused: true */
-import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
+import {getElementSizesInPx, getComputedPropertyValues} from '../../calibrate/js/domTool.mjs';
 
 /***
  * Justification
@@ -572,9 +572,7 @@ function getClosestBlockParent(node) {
 // i.e. breaking line flow. I'm not sure if this and the heuristic
 // getClosestBlockParent must be differentiated.
 function _isBlock(elem) {
-    let style = elem.ownerDocument.defaultView.getComputedStyle(elem)
-      , display = style.getPropertyValue('display')
-      ;
+    let [display] = getComputedPropertyValues(elem, 'display');
     // CAUTION: Yet we only do "display: block" and everything else
     // is considered "display: inline", but CSS has a much more complex
     // model nowadays.
@@ -1006,10 +1004,11 @@ const FONT_SPEC_CONFIG_ROBOTO_FLEX = {
 function _getFontSpec(referenceElement) {
     // TODO: fontSpecConfig etc. will be for more sizes and different
     // per font/family.
-    let elemStyle = referenceElement.ownerDocument.defaultView.getComputedStyle(referenceElement)
-      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
-      , fontSizePt = fontSizePx * 0.75
-      , fontFamily = elemStyle.getPropertyValue('--font-family').trim()
+    let [fontSizePx, fontFamily] = getComputedPropertyValues(
+                        referenceElement, 'font-size', '--font-family');
+    fontSizePx = parseFloat(fontSizePx);
+    fontFamily = fontFamily.trim();
+    let fontSizePt = fontSizePx * 0.75
         // This is AmstelVar
         //   opsz 14 PT, 400 weight, 100 width:
         //          (min, default, max)
@@ -1052,6 +1051,7 @@ function _getFontSpec(referenceElement) {
       , lowerFontSize = 8
       , t = _getInterpolationPosition(fontSizePt, upperFontSize, lowerFontSize)
       ;
+
     for(let k of Object.keys(fontSpecConfig[upperFontSize]))
         spec[k] = _interpolateArray(t, fontSpecConfig[upperFontSize][k],
                                       fontSpecConfig[lowerFontSize][k]);
@@ -1061,11 +1061,11 @@ function _getFontSpec(referenceElement) {
 
 
 function _getFontSpecKey(elem) {
-    let elemStyle = elem.ownerDocument.defaultView.getComputedStyle(elem)
-      , fontSizePx = parseFloat(elemStyle.getPropertyValue('font-size'))
-      , fontSizePt = fontSizePx * 0.75
-      , fontFamily = elemStyle.getPropertyValue('--font-family')
-      ;
+    let [fontSizePx, fontFamily] = getComputedPropertyValues(
+                        elem, 'font-size', '--font-family');
+    fontSizePx = parseFloat(fontSizePx);
+    fontFamily = fontFamily.trim();
+    let fontSizePt = fontSizePx * 0.75;
     return `${fontFamily}@${fontSizePt}pt`;
 }
 

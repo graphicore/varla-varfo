@@ -1,4 +1,5 @@
 /* jshint browser: true, esversion: 7, laxcomma: true, laxbreak: true */
+
 // I took this from googlefonts/fontbakery-dashboard and made it into a es module.
 // `document` is not required/expected to be global anymore, it's injected
 
@@ -261,12 +262,16 @@ export default class DOMTool {
         ;
       if(event.defaultPrevented) return;
 
+      search:
       while(true) {
           if(elem === stopElement.parentElement || !elem)
               return;
-          if(elem.hasAttribute(searchAttribute))
-              // found!
-              break;
+
+          for(let searchAttribute of searchAttributes){
+              if(elem.hasAttribute(searchAttribute))
+                // found!
+                break search;
+          }
           elem = elem.parentElement;
       }
       event.preventDefault();
@@ -280,19 +285,31 @@ export default class DOMTool {
       return results;
   }
 
+  static getComputedStyle(elem) {
+      return elem.ownerDocument.defaultView.getComputedStyle(elem);
+  }
+
+  static getComputedPropertyValues(elem, ...properties) {
+      var style = DOMTool.getComputedStyle(elem)
+        , result = []
+        ;
+      for(let p of properties) {
+          result.push(style.getPropertyValue(p));
+      }
+      return result;
+  }
+
   static getElementSizesInPx(elem, ...properties) {
     // At the moment asserting expecting all queried properties
     // to return "px" values.
-    var style = elem.ownerDocument.defaultView.getComputedStyle(elem)
-      , result = []
-      ;
-    for(let p of properties) {
-        let vStr = style[p];
+    var result = [];
+    for(let [i, vStr] of DOMTool.getComputedPropertyValues(elem, ...properties).entries()){
+        let p = properties[i];
         if(vStr.slice(-2) !== 'px')
             throw new Error(`Computed style of "${p}" did not yield a "px" value: ${vStr}`);
         let val = parseFloat(vStr.slice(0, -2));
         if(val !== val)
-            throw new Error(`Computed style of "${p}" did not parse to an integer: ${vStr}`);
+            throw new Error(`Computed style of "${p}" did not parse to a float: ${vStr}`);
         result.push(val);
     }
     return result;
@@ -315,4 +332,7 @@ DOMTool.prototype.insertAtMarkerComment = DOMTool.insertAtMarkerComment;
 DOMTool.prototype.clear = DOMTool.clear;
 DOMTool.prototype.validateChildEvent = DOMTool.validateChildEvent;
 DOMTool.prototype.getElementSizesInPx = DOMTool.getElementSizesInPx;
+
+export const getComputedStyle = DOMTool.getComputedStyle; // jshint ignore:line
+export const getComputedPropertyValues = DOMTool.getComputedPropertyValues;
 export const getElementSizesInPx = DOMTool.getElementSizesInPx;
