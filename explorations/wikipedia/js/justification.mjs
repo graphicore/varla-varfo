@@ -1632,9 +1632,13 @@ function* _justifyInlines(notBlockNodes, stops) {
         if(i > Infinity)
             throw new Error('HALT FOR DEV!!! ' + i + ' (_justifyInlines)');
     }
+    // NOTE: this could be in a finally clause, however currently for
+    // debugging it's better when the carryOverElement stays available,
+    // also, in case of an error, this requires debugoging anyways,
+    // there's no alternative plan yet.
+    carryOverElement.remove();
 
     let newFragment = firstNotBlock.ownerDocument.createDocumentFragment();
-    carryOverElement.remove();
     newFragment.append(...carryOverElement.childNodes);
     parent.insertBefore(newFragment, lastNotBlock.nextSibling);
     range.deleteContents();
