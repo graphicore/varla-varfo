@@ -563,13 +563,15 @@ h2
 {
     --font-size-rem: 2.3333 ; /* ~ 28 pt @ 12 pt body*/
     --font-weight: 750;
+    --font-width: 100;
     --line-height: 1.02;
 }
-/* sub-subsection headline */
+/* sub-subsection headline/"Captionhead" */
 h3
 {
     --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
     --font-weight: 850;
+    --font-width: 100;
     --line-height: 1.02;
 }
 /* h4 is not used in the Typography article, but in other Wikipedia.
@@ -579,6 +581,7 @@ h4 {
 
     --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
     --font-weight: 850;
+    --font-width: 100;
     --line-height: 1.02;
 }
 
