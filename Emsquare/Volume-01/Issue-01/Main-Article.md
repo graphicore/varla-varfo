@@ -17,17 +17,15 @@ The largest key on the keyboard is the space key. Typography starts with its par
 
 This is a rectangle of equal sides and angles, making it a square.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 1.png"
-        fig=1
         caption="The em square."
 %}
 
 In type, this square represents to the type designer two things that are important links to the reader. Vertically, the space represents the intersection between lines of text when the font is composed without additional space between lines.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 2.png"
-        fig=2
         caption="The vertical dimensions of a font’s main glyph groups."
 %}
 
@@ -35,18 +33,16 @@ Second, chosing where the baseline is in the em square, is how the font line up 
 
 And so the type designer plans the vertical metrics and horizonatal of all the characters of a typeface, based on how the designer wants collections of glyphs to be glimpsed, seen, viewed, skimmed, read, or read for a long time.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 3.png"
-        fig=3
         caption="Length of text / various ways to \"see\" it."
         alt="Length of text / various ways to 'see' it."
 %}
 
 Horizontally, the height is the same as the em in each glyph and except when the script and design are monospaced, each glyph has an appropriate width. In such fonts, the horizontal dimension represents the default spacing of as the glyphs space best with all the other characters in the font.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 4.png"
-        fig=4
         caption="Glyphs of different widths. Monospaced all one width."
 %}
 
@@ -55,9 +51,8 @@ Horizontally, the height is the same as the em in each glyph and except when the
 
 Add direction of reading, at the behest of whichever direction, or directions, a language allows, and the square has direction. For example, and to zero in on one language at a time, all the types of Latin are designed for all the languages that use Latin, to be read in lines from top to bottom, with each line being read from left to right. So the square has a beginning on the top and left sides, and has ends at the bottom and the right side.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 5.png"
-        fig=5
         caption="Beginnings and ends of transparencies."
 %}
 
@@ -113,9 +108,8 @@ As size ranges up, it is almost certainly the result of the length of text getti
 
 The most important character to reading in a font is the space glyph, or word space. In Latin use, its width is derived from a formula, based on the width of one of the letters, or simply chosen visually by the type designer. It is often adjusted by applications, but its fundamental task is to make certain it’s the largest horizontal space in text. Readers can't be confused by the spaces between letters, between letters and punctuation or between punctuation and punctuation, and the word space. While this sounds obvious, it rarely is an issue with Latin type because so much work in the development of typefaces used by the public goes into elimintating any space that can compete, visually, with the word space. 
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 7 & 8 one third.png"
-        fig=7
         caption="Word space and its adjustment."
 %}
 
@@ -139,17 +133,15 @@ The type designer’s task, then, is to create a default word space and letter s
 ## Counter space
 There’s only one other kind of space left in type and it’s inside the letters. This may be fully enclosed, like /o’s interior, trapped along the baseline and cap height, like /K, or swirling amidst the stem of the /S, but it’s what gives a typeface the start on all the other spaces we’ve covered.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure 9.png"
-        fig=9
         caption="Counters."
 %}
 
 The user has three kinds of control over this space. Type size, applied to a single style of type, makes them grow and shrink linearly to the change of size. Changing to the use of different styles within a regular font family alters the internal white spaces according to the style change from one to the next. Variation font technology, which can provide both of the above, can also provide optical sizes that adjust the internal white spaces over a range of sizes, as well as adding fluid ranges of weight and width axes.
 
-{% include emsquare-figure
+{% include figure
         src="./images/Figure10.png"
-        fig=10
         caption="Counter changes via size, style and opsz."
 %}
 
