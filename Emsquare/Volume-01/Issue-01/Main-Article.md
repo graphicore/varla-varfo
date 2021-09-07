@@ -157,6 +157,14 @@ And while typefaces overwhelmingly end with well defined spaces, between words, 
 
 ##  Variable Fonts and Space
 
+The Opentype 1.8 specification and its successors do not include  variations on the em square size, or on the location of the baseline.  Nevertheless, variable height and depth of glyphs, can change the relationship of glyphs to the height and depth of the em. 
+
+Changing the height of uppercase, lowercase and the extenders of Latin all have the same basic utility of changing the heights without effecting the widths or horizontal spacing of text, a handy option in placing type in buttons, in shortening the descenders to reduce line space in headlines. These vertical  variations can also be used to change the height of Latin, to better compose with glyphs or text from other languages contained in a fallback font.
+
+Letter spacing can be changed using a variable axis, and was brought up as a possibility several years ago. It should be useful eventually, but in Latin proportional typefaces, variable spacing is problematic as it brings along the need for variation of all the spacing exceptions, the kerning pairs. These exceptions as stored in the font format today, would increase the development, processing and file size of a font family, perhaps exponentially. 
+
+There may also be other issues with a spacing axis, aside from file size and complexity, related to what I call “latent kerning” and wonder about in the link provided.
+
 ## Takeaways:
 
 * ???
