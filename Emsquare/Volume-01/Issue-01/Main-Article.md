@@ -56,7 +56,7 @@ Add direction of reading, at the behest of whichever direction, or directions, a
         caption="Beginnings and ends of transparencies."
 %}
 
-The em square (called an em quad in metal type), can be seen typographically as a space with beginnings and ends, and nothing in the midst of that, at the size of the type with no additional spacing around it. The other spaces affecting the appearance of our square between the lines, is line spacing, and/or between the letters is letter spacing. Besides reading following from the beginning to end of each glyph, when programs responding to type specifications are told to add line spacing or letterspacing, they do so to the end, i.e. the bottom and right sides of glyphs. 
+The em square (called an em quad in metal type), can be seen typographically as a space with beginnings and ends, and nothing in the midst of that, at the size of the type with no additional spacing around it. The other spaces affecting the appearance of our square between the lines, is line spacing, and/or between the letters is letter spacing. Besides reading following from the beginning to end of each glyph, when programs responding to type specifications are told to add line spacing or letterspacing, they do so to the end, i.e. the bottom and right sides of glyphs.
 
 {% assign figures6 = "" | split: "" %}
 {% assign figure6a = "./images/Figure 6.png,6,Em square w/w-out additional line spacing." | split: "," %}
@@ -74,7 +74,7 @@ Since time immemorial, many type designers have striven to keep all decending gl
         caption="Traditional (left) vs. CSS (right) line space addition."
 %}
 
-Perhaps with a broader world view, CSS splits additional line spacing to place half above the em, and half below. this has the effect of starting the first line slightly lower than in traditional typography, but otherwise, on fonts made the traditional way, the behavior is the same from there to the bottom line, which of course, is slightly lower than in traditional type. 
+Perhaps with a broader world view, CSS splits additional line spacing to place half above the em, and half below. this has the effect of starting the first line slightly lower than in traditional typography, but otherwise, on fonts made the traditional way, the behavior is the same from there to the bottom line, which of course, is slightly lower than in traditional type.
 
 Line spacing at 120% of the size was a de facto standard for print, based on an “ideal” line length of somewhere between 60 and 75 characters, for long, sometimes called immersive reading. The size of type considered in that standard was between 9 and 11 points, with exceptions for smaller books, (going down to 8pt), and for younger readers, (going up to 12pt). For web typopgraphy, the practice of line spacing has increased significantly with the need to conserve paper removed.
 
@@ -97,7 +97,7 @@ Leaving the effects of styles beyond a regular weight and width until later colu
         caption="65 character column line spaced for web use above. column shrunk to widest word and additional linespacing removed."
 %}
 
-As size ranges up, it is almost certainly the result of the length of text getting shorter, leaving the range of immersive reading and entering the realm of a shorter attention span from the reader. So between the poles of 1 character per column and 65, and a size range from 9 to 144, line spacing for mixed case ranges from 100-120% of size, with collision avoidance of descenders and ascenders being a limiting factor. All caps line spacing usually ranges from 80-95%, with presence of uppercase descenders, like “Q” or J providing a possible limitation. 
+As size ranges up, it is almost certainly the result of the length of text getting shorter, leaving the range of immersive reading and entering the realm of a shorter attention span from the reader. So between the poles of 1 character per column and 65, and a size range from 9 to 144, line spacing for mixed case ranges from 100-120% of size, with collision avoidance of descenders and ascenders being a limiting factor. All caps line spacing usually ranges from 80-95%, with presence of uppercase descenders, like “Q” or J providing a possible limitation.
 
 {% include figure
         src="./images/Figure 6f.png"
@@ -106,7 +106,7 @@ As size ranges up, it is almost certainly the result of the length of text getti
 
 ## Word Space
 
-The most important character to reading in a font is the space glyph, or word space. In Latin use, its width is derived from a formula, based on the width of one of the letters, or simply chosen visually by the type designer. It is often adjusted by applications, but its fundamental task is to make certain it’s the largest horizontal space in text. Readers can't be confused by the spaces between letters, between letters and punctuation or between punctuation and punctuation, and the word space. While this sounds obvious, it rarely is an issue with Latin type because so much work in the development of typefaces used by the public goes into elimintating any space that can compete, visually, with the word space. 
+The most important character to reading in a font is the space glyph, or word space. In Latin use, its width is derived from a formula, based on the width of one of the letters, or simply chosen visually by the type designer. It is often adjusted by applications, but its fundamental task is to make certain it’s the largest horizontal space in text. Readers can't be confused by the spaces between letters, between letters and punctuation or between punctuation and punctuation, and the word space. While this sounds obvious, it rarely is an issue with Latin type because so much work in the development of typefaces used by the public goes into elimintating any space that can compete, visually, with the word space.
 
 {% include figure
         src="./images/Figure 7 & 8 one third.png"
@@ -149,11 +149,11 @@ And while typefaces overwhelmingly end with well defined spaces, between words, 
 
 ##  Variable Fonts and Space
 
-The Opentype 1.8 specification and its successors do not include  variations on the em square size, or on the location of the baseline.  Nevertheless, variable height and depth of glyphs, can change the relationship of glyphs to the height and depth of the em. 
+The Opentype 1.8 specification and its successors do not include  variations on the em square size, or on the location of the baseline.  Nevertheless, variable height and depth of glyphs, can change the relationship of glyphs to the height and depth of the em.
 
 Changing the height of uppercase, lowercase and the extenders of Latin all have the same basic utility of changing the heights without effecting the widths or horizontal spacing of text, a handy option in placing type in buttons, in shortening the descenders to reduce line space in headlines. These vertical  variations can also be used to change the height of Latin, to better compose with glyphs or text from other languages contained in a fallback font.
 
-Letter spacing can be changed using a variable axis, and was brought up as a possibility several years ago. It should be useful eventually, but in Latin proportional typefaces, variable spacing is problematic as it brings along the need for variation of all the spacing exceptions, the kerning pairs. These exceptions as stored in the font format today, would increase the development, processing and file size of a font family, perhaps exponentially. 
+Letter spacing can be changed using a variable axis, and was brought up as a possibility several years ago. It should be useful eventually, but in Latin proportional typefaces, variable spacing is problematic as it brings along the need for variation of all the spacing exceptions, the kerning pairs. These exceptions as stored in the font format today, would increase the development, processing and file size of a font family, perhaps exponentially.
 
 There may also be other issues with a spacing axis, aside from file size and complexity, related to what I call “latent kerning” and wonder about in the link provided.
 
