@@ -69,8 +69,8 @@ Between the lines is called line spacing, in CSS, and is valued either by the si
 
 Since time immemorial, many type designers have striven to keep all decending glyphs, diacritics and attachment, at or near the bottom of the em, all uppercase heights at or near the top, and all diacritics above the upper and lowercases, within the em, plus 20% of the em. This defacto standard allows the user to align the type on the uppercase at the top of their text container, and either the baseline for all-cap use, or the bottom of the em for mixed case use, allowing any diacritics in the first line to "float" above the rest, with interline diacritics clear of the descenders in the line above.
 
-{% include emsquare-multi-figure
-        figures=figures6c
+{% include figure
+        src="./images/Figure 6c.png"
         caption="Traditional (left) vs. CSS (right) line space addition."
 %}
 
@@ -78,29 +78,29 @@ Perhaps with a broader world view, CSS splits additional line spacing to place h
 
 Line spacing at 120% of the size was a de facto standard for print, based on an “ideal” line length of somewhere between 60 and 75 characters, for long, sometimes called immersive reading. The size of type considered in that standard was between 9 and 11 points, with exceptions for smaller books, (going down to 8pt), and for younger readers, (going up to 12pt). For web typopgraphy, the practice of line spacing has increased significantly with the need to conserve paper removed.
 
-{% include emsquare-multi-figure
-        figures=figures6d
+{% include figure
+        src="./images/Figure 6d.png"
         caption="Traditional 120% in a 65 character column, and 110% in a 40 character column."
-%)
+%}
 
 Showing type now that's sized for print, for the illustration of column width issues, and more will come on type sizes in web use, The line spacing of text in immersive reading of 65-character, 9-11 pt type with 120% line spacing “standard”, comes along with gradually decreasing line spacing % as the column shrinks in width. In addition to length of text and column width playing roles in line spacing, prerequisite to this kind of reading is a style selection of a normal or regular weight and width, from a typeface family likely to be familiar to the reader.
 
-{% include emsquare-multi-figure
-        figures=figures6e
+{% include figure
+        src="./images/Figure 6e.png"
         caption="Web use commonly shows 150% line spacing in both column widths."
 %}
 
 Leaving the effects of styles beyond a regular weight and width until later column width/character count, size and case, (as  Latin composition of all caps and mixed case usually occupy different vertical metrics). At the default of 65 characters you see here, if I smash a line’s Collin width down to the width of the widest word in the line, regardless of what size it is, I don’t need extra line spacing, 100% is fine. All caps in narrow columns can be linespaced at 90-80% in English use and almost to 75% in some cases of narrow columns at large sizes.
 
-{% include emsquare-multi-figure
-        figures=figures6f
+{% include figure
+        src="./images/Figure 6f.png"
         caption="65 character column line spaced for web use above. column shrunk to widest word and additional linespacing removed."
 %}
 
 As size ranges up, it is almost certainly the result of the length of text getting shorter, leaving the range of immersive reading and entering the realm of a shorter attention span from the reader. So between the poles of 1 character per column and 65, and a size range from 9 to 144, line spacing for mixed case ranges from 100-120% of size, with collision avoidance of descenders and ascenders being a limiting factor. All caps line spacing usually ranges from 80-95%, with presence of uppercase descenders, like “Q” or J providing a possible limitation. 
 
-{% include emsquare-multi-figure
-        figures=figures6f
+{% include figure
+        src="./images/Figure 6f.png"
         caption="Uppercase line spacing relies on a baseline to cap height metrics, and can be zero or less depending on size."
 %}
 
