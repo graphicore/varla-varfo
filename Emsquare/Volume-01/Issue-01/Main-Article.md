@@ -136,6 +136,7 @@ The type designer’s task, then, is to create a default word space and letter s
         caption="Default letter spacing and Kerning vs word space."
 %}
 
+## Counter space
 There’s only one other kind of space left in type and it’s inside the letters. This may be fully enclosed, like /o’s interior, trapped along the baseline and cap height, like /K, or swirling amidst the stem of the /S, but it’s what gives a typeface the start on all the other spaces we’ve covered.
 
 {% include emsquare-figure
@@ -152,7 +153,9 @@ The user has three kinds of control over this space. Type size, applied to a sin
         caption="Counter changes via size, style and opsz."
 %}
 
-And while typefaces overwhelmingly end with well defined spaces, between words, letters and exceptional pairs, and many typeface families include a blizzard of styles, each with unique spacing, the way the font format, composition software, like design applications and web browsers, Latin typography faces challenges to the type user. And where there is a challenge in Latin, there’s likely to be more elsewhere in the world of scripts.
+And while typefaces overwhelmingly end with well defined spaces, between words, letters and exceptional pairs, and many typeface families include a blizzard of styles, each with unique spacing, the way the font format, composition software, like design applications and web browsers operate, Latin typography faces challenges to the type user. And where there is a challenge in Latin, there’s likely to be more elsewhere in the world of scripts.
+
+##  Variable Fonts and Space
 
 ## Takeaways:
 
