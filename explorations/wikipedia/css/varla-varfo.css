@@ -148,7 +148,7 @@ h1, h2, h3, h4, h5, h6 {
 font-family: var(--font-family);
 font-style: var(--font-style);
 font-size: calc(1pt * var(--font-size));
-letter-spacing: calc(1pt * var(--letter-space));
+letter-spacing: calc(1pt * var(--dynamic-letter-space, var(--letter-space)));
 line-height: var(--line-height);
 
 --font-size: calc(var(--font-size-rem, 1) * var(--document-font-size));
@@ -173,7 +173,7 @@ font-variation-settings:
             "slnt" var(--font-slant),
             "wght" var(--x-font-weight),
             "GRAD" var(--x-font-grade),
-            "XTRA" var(--font-xtra),
+            "XTRA" var(--dynamic-font-xtra, var(--font-xtra)),
             "opsz" var(--font-opsz, var(--font-size)),
             "wdth" var(--font-width),
             "VVFS" var(--font-size)
@@ -820,30 +820,56 @@ i, cite, em, var, dfn {
     --word-space: 0; /* multiplier with --word-space-size */
 }
 
-.runion-01 .runion-line,
-.justification-context-block * {
+
+/** runion-justification-host
+ *
+ * The --dynamic-xxx-xxx properties can be set to "initial" to fall back to
+ * their defaults. We must override the values of the main block above
+ * because a .line_handling_mode-xxx element contain/be contained in
+ * another (in the dom tree structure). BUT we need to use the default
+ * values AND inheritance e.g. from h1 doesn't work here directly.
+ * see: https://drafts.csswg.org/css-variables/#guaranteed-invalid
+ * e.g.:
+ *       --dynamic-font-xtra: initial;
+ *       will turn off --dynamic-font-xtra as set by a parent element
+ *       and fall back to the --font-xtra value as set by default for
+ *       that element.
+ *
+ * initial will trigger the fallback.
+ */
+.runion-justification-host .runion-line,
+.runion-justification-host .justification-context-block * {
     /* word-spacing, when using a <length>:
      *          Specifies extra spacing in addition to the intrinsic
      *          inter-word spacing defined by the font.
      */
-    word-spacing: calc(var(--word-space-size) * var(--word-space));
+    word-spacing: calc(var(--word-space-size) * var(--dynamic-word-space, var(--word-space)));
+}
 
-     --word-space: clamp(
+.line_handling_mode-body * {
+     --dynamic-word-space: clamp(
             var(--justification-wordspace-min),
             calc( var(--justification-wordspace-default) + var(--justification-step) * var(--justification-step-wordspace)),
             var(--justification-wordspace-max)
         );
-    --letter-space: clamp(
+    --dynamic-letter-space: clamp(
             var(--justification-tracking-min),
             calc( var(--justification-tracking-default) + var(--justification-step) * var(--justification-step-tracking)),
             var(--justification-tracking-max)
         );
-    --font-xtra: clamp(
+    --dynamic-font-xtra: clamp(
             var(--justification-xtra-min),
             calc( var(--justification-xtra-default) + var(--justification-step) * var(--justification-step-xtra)),
             var(--justification-xtra-max)
         );
 }
+
+.line_handling_mode-main * {
+    --dynamic-letter-space: initial;
+    --dynamic-word-space: initial;
+    --dynamic-font-xtra: initial;
+}
+
 
 .runion-01 .runion-justified-block {
     white-space: nowrap;

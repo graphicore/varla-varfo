@@ -1665,6 +1665,8 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
 
         if(node.nodeType === Node.ELEMENT_NODE) {
             let skip = node.matches(skipSelector);
+            // TODO: here we can switch into e.g. headline specific line
+            // handling.
             if(skip || _isBlock(node)) {
                 if(notBlocks.length) {
                     // also change the elements in place...
@@ -1718,101 +1720,130 @@ function _getWordSpaceForElement(elem) {
     return wordSpacingPx;
 }
 
+const _JUSTIFICATION_HOST_CLASS = 'runion-justification-host'
+    , _LINE_HANDLING_MODE_CLASS_PREFIX = 'line_handling_mode-';
+
+function _initializeLineHandling(elem, modeKey, options) {
+    // This is removed in unjustify.
+    let modeClass = `${_LINE_HANDLING_MODE_CLASS_PREFIX}${modeKey}`;
+    elem.classList.add(modeClass);
+
+
+    switch(modeKey) {
+        case "body":
+            // calling this "body" for now
+            // This is setting up the justification environment.
+            let wsPx = _getWordSpaceForElement(elem);
+            elem.style.setProperty('--word-space-size', `${wsPx}px`);
+            // console.log('--word-space-size', `${wsPx}px`);
+
+            let [fontSpec/*, fontSizePx, fontSizePt*/] = _getFontSpec(elem)
+            , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
+            , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
+            , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
+            // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
+            // seems to work fine and is noticeably quicker,
+            , stopsFidelityFactor = 1
+                // To be able to use a scale, where step/unit size is the same
+                // between narrowing and widening, the last possible step of each
+                // parameter will be a the decimal partial step and then be
+                // clipped by min/max.
+                // This provides a simple interface for CSS where we can
+                // just set a "step" magnitude via "--jsutification-step".
+                // CAUTION: step sizes only appear to be the same, because of
+                // min/max for each parameter and the composition of all
+                // parameters, the actual difference a step makes changes.
+            , narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor)
+            , wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor)
+            , xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
+            , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
+            , xtraStepSize = options.XTRA
+                        ? Math.max(
+                                xtraNarrowingRange / narrowingStops,
+                                xtraWideningRange / wideningStops
+                                )
+                        : 0
+            , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
+            , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
+            , trackingStepSize = options.letterSpacing
+                        ? Math.max(
+                                trackingNarrowingRange / narrowingStops,
+                                trackingWideningRange / wideningStops
+                                )
+                        : 0
+            , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
+            , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
+            , wordspaceStepSize = options.wordSpacing
+                        ? Math.max(
+                                wordspaceNarrowingRange / narrowingStops,
+                                wordspaceWideningRange / wideningStops
+                            )
+                        : 0
+            ;
+            elem.style.setProperty('--justification-step-xtra', `${xtraStepSize}`);
+            elem.style.setProperty('--justification-xtra-min', `${xtraMin}`);
+            elem.style.setProperty('--justification-xtra-default', `${xtraDefault}`);
+            elem.style.setProperty('--justification-xtra-max', `${xtraMax}`);
+
+            elem.style.setProperty('--justification-step-tracking', `${trackingStepSize}`);
+            elem.style.setProperty('--justification-tracking-min', `${trackingMin}`);
+            elem.style.setProperty('--justification-tracking-default', `${trackingDefault}`);
+            elem.style.setProperty('--justification-tracking-max', `${trackingMax}`);
+
+            elem.style.setProperty('--justification-step-wordspace', `${wordspaceStepSize}`);
+            elem.style.setProperty('--justification-wordspace-min', `${wordspaceMin}`);
+            elem.style.setProperty('--justification-wordspace-default', `${wordspaceDefault}`);
+            elem.style.setProperty('--justification-wordspace-max', `${wordspaceMax}`);
+
+            // This prevents that we apply "empty steps", that don't change anything,
+            // since we can separately turn off the justification parameters.
+            let effectiveNarrowingStops = Math.max(0, ...[
+                xtraNarrowingRange / xtraStepSize
+                , trackingNarrowingRange / trackingStepSize
+                , wordspaceNarrowingRange / wordspaceStepSize
+                ].filter(x=>isFinite(x))
+            );
+
+            let effectiveWideningStops = Math.max(0, ...[
+                xtraWideningRange / xtraStepSize
+                , trackingWideningRange / trackingStepSize
+                , wordspaceWideningRange / wordspaceStepSize
+                ].filter(x=>isFinite(x))
+            );
+
+            // console.log('effectiveNarrowingStops, effectiveWideningStops:'
+            //                  , effectiveNarrowingStops, effectiveWideningStops);
+
+            elem.style.setProperty('--justification-narrowing-stops', `${effectiveNarrowingStops}`);
+            elem.style.setProperty('--justification-widening-stops', `${effectiveWideningStops}`);
+            break;
+        case "main":
+            elem.style.setProperty('--justification-narrowing-stops', '0');
+            elem.style.setProperty('--justification-widening-stops', '0');
+            break;
+    }
+}
+
 // this can essentially be used as just a wrapper around _justifyBlockElement
 // skip === [skipSelector, skipClass]
 function* _justifyNextGenGenerator(elem, skip, options) {
-
-    let fontSpecKey = _getFontSpecKey(elem)
+        // FIXME: This requires a more sophisticated switch, but it's good
+        // enough for now also "body" and "main" are the correct names for
+        // the style we are appliying now, but the "body"/"main" styles
+        // may change, and hence these are likely not good names for
+        // the modeKey, as e.g. main prevails but it's style/mode changes.
+    let modeKey = elem.tagName.toLowerCase() === 'h1' ? 'main' : 'body'
+      , fontSpecKey = `${modeKey}_${_getFontSpecKey(elem)}`
       , fontSpecChanged = fontSpecKey !== getComputedPropertyValues(elem, '--font-spec-key')[0]
       ;
     if(fontSpecChanged) {
-        // This is setting up the justification environment.
-        let wsPx = _getWordSpaceForElement(elem);
-        elem.style.setProperty('--word-space-size', `${wsPx}px`);
-        console.log('--word-space-size', `${wsPx}px`);
-
-        elem.classList.add('runion-justification-host');
-
-        let [fontSpec/*, fontSizePx, fontSizePt*/] = _getFontSpec(elem)
-          , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
-          , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
-          , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
-          // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
-          // seems to work fine and is noticeably quicker,
-          , stopsFidelityFactor = 1
-            // To be able to use a scale, where step/unit size is the same
-            // between narrowing and widening, the last possible step of each
-            // parameter will be a the decimal partial step and then be
-            // clipped by min/max.
-            // This provides a simple interface for CSS where we can
-            // just set a "step" magnitude via "--jsutification-step".
-            // CAUTION: step sizes only appear to be the same, because of
-            // min/max for each parameter and the composition of all
-            // parameters, the actual difference a step makes changes.
-          , narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor)
-          , wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor)
-          , xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
-          , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
-          , xtraStepSize = options.XTRA
-                      ? Math.max(
-                            xtraNarrowingRange / narrowingStops,
-                            xtraWideningRange / wideningStops
-                            )
-                      : 0
-          , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
-          , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
-          , trackingStepSize = options.letterSpacing
-                      ? Math.max(
-                            trackingNarrowingRange / narrowingStops,
-                            trackingWideningRange / wideningStops
-                            )
-                      : 0
-          , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
-          , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
-          , wordspaceStepSize = options.wordSpacing
-                      ? Math.max(
-                            wordspaceNarrowingRange / narrowingStops,
-                            wordspaceWideningRange / wideningStops
-                        )
-                      : 0
-          ;
-        elem.style.setProperty('--justification-step-xtra', `${xtraStepSize}`);
-        elem.style.setProperty('--justification-xtra-min', `${xtraMin}`);
-        elem.style.setProperty('--justification-xtra-default', `${xtraDefault}`);
-        elem.style.setProperty('--justification-xtra-max', `${xtraMax}`);
-
-        elem.style.setProperty('--justification-step-tracking', `${trackingStepSize}`);
-        elem.style.setProperty('--justification-tracking-min', `${trackingMin}`);
-        elem.style.setProperty('--justification-tracking-default', `${trackingDefault}`);
-        elem.style.setProperty('--justification-tracking-max', `${trackingMax}`);
-
-        elem.style.setProperty('--justification-step-wordspace', `${wordspaceStepSize}`);
-        elem.style.setProperty('--justification-wordspace-min', `${wordspaceMin}`);
-        elem.style.setProperty('--justification-wordspace-default', `${wordspaceDefault}`);
-        elem.style.setProperty('--justification-wordspace-max', `${wordspaceMax}`);
-
-        // This prevents that we apply "empty steps", that don't change anything,
-        // since we can separately turn off the justification parameters.
-        let effectiveNarrowingStops = Math.max(0, ...[
-              xtraNarrowingRange / xtraStepSize
-            , trackingNarrowingRange / trackingStepSize
-            , wordspaceNarrowingRange / wordspaceStepSize
-            ].filter(x=>isFinite(x))
-        );
-
-        let effectiveWideningStops = Math.max(0, ...[
-              xtraWideningRange / xtraStepSize
-            , trackingWideningRange / trackingStepSize
-            , wordspaceWideningRange / wordspaceStepSize
-            ].filter(x=>isFinite(x))
-        );
-
-        // console.log('effectiveNarrowingStops, effectiveWideningStops:'
-        //                  , effectiveNarrowingStops, effectiveWideningStops);
-
-        elem.style.setProperty('--justification-narrowing-stops', `${effectiveNarrowingStops}`);
-        elem.style.setProperty('--justification-widening-stops', `${effectiveWideningStops}`);
+        elem.classList.add(_JUSTIFICATION_HOST_CLASS);
+        // This is only for the check above, it doesn't change the font
+        // spec. Also, it makes use of the CSS inhertance of custom
+        // properties.
+        // FIXME: it would still be good to remove it again!
         elem.style.setProperty('--font-spec-key', fontSpecKey);
+        _initializeLineHandling(elem, modeKey, options);
     }
 
     let t0 = performance.now();
@@ -1926,15 +1957,18 @@ export class JustificationController{
         let [, skipClass] = this._skip
           , lineClass = 'runion-line'
           , justifiedBlockClass = 'runion-justified-block'
-          , justificationHostClass = 'runion-justification-host'
           , justificationContextClass = 'justification-context-block'
           ;
 
         for(let lineElem of this._elem.querySelectorAll(`.${lineClass}`))
             lineElem.replaceWith(...lineElem.childNodes);
 
-        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${justificationHostClass}`)]) {
-            elem.classList.remove(justificationHostClass);
+        for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${_JUSTIFICATION_HOST_CLASS}`)]) {
+            elem.classList.remove(_JUSTIFICATION_HOST_CLASS);
+            for(let klass of elem.classList){
+                if(klass.startsWith(_LINE_HANDLING_MODE_CLASS_PREFIX))
+                    elem.classList.remove(klass);
+            }
             for(let propertyName of [
                                   '--word-space-size'
                                 , '--justification-step-xtra'
