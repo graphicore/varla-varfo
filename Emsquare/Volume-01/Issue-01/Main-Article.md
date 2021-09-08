@@ -155,7 +155,7 @@ Changing the height of uppercase, lowercase and the extenders of Latin all have 
 
 Letter spacing can be changed using a variable axis, and was brought up as a possibility several years ago. It should be useful eventually, but in Latin proportional typefaces, variable spacing is problematic as it brings along the need for variation of all the spacing exceptions, the kerning pairs. These exceptions as stored in the font format today, would increase the development, processing and file size of a font family, perhaps exponentially.
 
-There may also be other issues with a spacing axis, aside from file size and complexity, related to what I call “latent kerning” and wonder about in the link provided.
+There may also be other issues with a spacing axis, aside from file size and complexity, related to what I call “latent kerning” and wonder about that in the link provided.
 
 ## Takeaways:
 
