@@ -1324,27 +1324,6 @@ function _justifyLineByWidening(stops, lineElements, container, options=null) {
         }
       ;
 
-    // This block is just a visualization, on "how bad" a line is,
-    // i.e. more unusedWhiteSpace is worse, appears darker red,
-    // "good" lines become lighter red to white.
-    // FIXME: maybe this should rather show how much had to be done to
-    //        the line, like the narrowing indicator.
-    {
-        // wsRatio will be 1 for ideal lines and < 1 for less than full lines.
-        let lineBCR = lineRange.getBoundingClientRect()
-          , lineStart = lineBCR.left
-          , availableLineLength = rightStop - lineStart
-          , actualLineLength = lineBCR.right - lineStart
-          , wsRatio = actualLineLength / availableLineLength
-            // === 0 for ideal lines
-            // === Full line length for empty lines
-            // === how to get the full line length????
-          , hslColor = `hsl(0, 100%, ${100 * wsRatio}%)`
-          ;
-        setPropertyToLine('--line-color-code', hslColor);
-    }
-    // prepare the actual justification
-
     // TODO: does not include generic :before and :after content
     let lineText = _whiteSpaceNormalize(lineRange.toString());
     // Asking for this class is very specific, but at least it covers
@@ -1370,6 +1349,14 @@ function _justifyLineByWidening(stops, lineElements, container, options=null) {
     //}
     // run the actual justification
     justifyControlLoop(readUnusedWhiteSpace, generators);
+
+    // Visualize, with color, how much widening was applied to the line.
+    let wsRatio = readStep() / stops
+      , hslColor = `hsl(0, 100%, ${30 + 70 * (1 - wsRatio)}%)`
+      ;
+    if(wsRatio > 0) // don't mark unchanged lines (these stay green)
+        setPropertyToLine('--line-color-code', hslColor);
+
 }
 
 function _isLineBreaking(element) {
@@ -1581,10 +1568,11 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
     // Makes white-space: no-wrap;
     carryOverElement.classList.add('runion-justified-block');
 
-    for(let line of linesToWiden) {
-        // console.log('_justifyLineByWidening:', line);
-        yield ['_justifyLineByWidening', _justifyLineByWidening(wideningStops, line, carryOverElement)];
-    }
+    if(wideningStops)
+        for(let line of linesToWiden) {
+            // console.log('_justifyLineByWidening:', line);
+            yield ['_justifyLineByWidening', _justifyLineByWidening(wideningStops, line, carryOverElement)];
+        }
 
 }
 
