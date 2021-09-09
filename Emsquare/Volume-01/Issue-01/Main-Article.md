@@ -56,7 +56,7 @@ Add direction of reading, at the behest of whichever direction, or directions, a
         caption="Beginnings and ends of transparencies."
 %}
 
-The em square (called an em quad in metal type), can be seen typographically as a space with beginnings and ends, and nothing in the midst of that, at the size of the type with no additional spacing around it. The other spaces affecting the appearance of our square between the lines, is line spacing, and/or between the letters is letter spacing. Besides reading following from the beginning to end of each glyph, when programs responding to type specifications are told to add line spacing or letterspacing, they do so to the end, i.e. the bottom and right sides of glyphs.
+The em square (realized in physical form as an em quad in metal type), can be seen typographically as a space with beginnings and ends, and nothing in the midst of that, at the size of the type with no additional spacing around it. The other spaces affecting the appearance of our square between the lines, is line spacing, and/or between the letters is letter spacing. Besides reading following from the beginning to end of each glyph, when programs responding to type specifications are told to add line spacing or letterspacing, they do so to the end, i.e. the bottom and right sides of glyphs.
 
 {% assign figures6 = "" | split: "" %}
 {% assign figure6a = "./images/Figure 6.png,6,Em square w/w-out additional line spacing." | split: "," %}
