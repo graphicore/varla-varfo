@@ -175,7 +175,7 @@ font-variation-settings:
             "GRAD" var(--x-font-grade),
             "XTRA" var(--dynamic-font-xtra, var(--font-xtra)),
             "opsz" var(--font-opsz, var(--font-size)),
-            "wdth" var(--font-width),
+            "wdth" var(--dynamic-font-width, var(--font-width)),
             "VVFS" var(--font-size)
             ;
 /* This is not required for the variable fonts, as font-variation-settings
@@ -862,12 +862,18 @@ i, cite, em, var, dfn {
             calc( var(--justification-xtra-default) + var(--justification-step) * var(--justification-step-xtra)),
             var(--justification-xtra-max)
         );
+    --dynamic-font-width: initial;
 }
 
 .line_handling_mode-main * {
     --dynamic-letter-space: initial;
     --dynamic-word-space: initial;
     --dynamic-font-xtra: initial;
+    --dynamic-font-width: clamp(
+            var(--line-length-wdth-min),
+            calc( var(--line-length-wdth-default) + var(--justification-step) * var(--line-length-step-wdth)),
+            var(--line-length-wdth-max)
+        );
 }
 
 

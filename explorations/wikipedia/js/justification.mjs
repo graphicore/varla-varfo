@@ -1818,6 +1818,23 @@ function _initializeLineHandling(elem, modeKey, options) {
             elem.style.setProperty('--justification-widening-stops', `${effectiveWideningStops}`);
             break;
         case "main":
+            let wdthDefault = 85 // take this from --font-width!
+              , wdthMax = 85 // axis goes up to 151
+              , wdthMin = 35 // axis goes down to 25
+              // TODO: this should be dependent from absolute font size
+              // as a step at a big font size has a bigger absolute effect
+              // and may even visibly create an "uneven" edge.
+              , wdthStepSize = 1
+              ;
+
+            elem.style.setProperty('--justification-narrowing-stops', (wdthDefault - wdthMin) / wdthStepSize);
+            elem.style.setProperty('--justification-widening-stops', (wdthMax - wdthDefault) / wdthStepSize);
+            elem.style.setProperty('--line-length-wdth-min', wdthMin);
+            elem.style.setProperty('--line-length-wdth-default', wdthDefault);
+            elem.style.setProperty('--line-length-step-wdth', wdthStepSize);
+            elem.style.setProperty('--line-length-wdth-max', wdthMax);
+            break;
+        default:
             elem.style.setProperty('--justification-narrowing-stops', '0');
             elem.style.setProperty('--justification-widening-stops', '0');
             break;
@@ -1986,6 +2003,10 @@ export class JustificationController{
                                 , '--justification-narrowing-stops'
                                 , '--justification-widening-stops'
                                 , '--font-spec-key'
+                                , '--line-length-wdth-min'
+                                , '--line-length-wdth-default'
+                                , '--line-length-step-wdth'
+                                , '--line-length-wdth-max'
                                 ])
                 elem.style.removeProperty(propertyName);
         }
