@@ -1607,7 +1607,12 @@ function* _justifyInlines(notBlockNodes) {
     // find lines for the next one or two lines at each time must be enough.
 
     let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
-
+    // I am a bit unsure about this: it creates a good starting environmnet,
+    // where the --dynamic-font-xxx properties are applied with the default
+    // instead of the potentially wrong/out of sync --font-xxx properties
+    // from css. But this could also hide/silence errors and make them harder
+    // to debug.
+    // carryOverElement.style.setProperty('--justification-step', 0);
     let i = 0
       , stops = getComputedPropertyValues(carryOverElement
                                     , '--justification-narrowing-stops'
@@ -1806,8 +1811,12 @@ function _initializeLineHandling(elem, modeKey, options) {
             elem.style.setProperty('--justification-widening-stops', `${effectiveWideningStops}`);
             break;
         case "main":
-            let wdthDefault = 85 // take this from --font-width!
-              , wdthMax = 85 // axis goes up to 151
+                 // This value should be in sync with --font-width in any
+                 // case, otherwise the default deviates and that can
+                 // confuse the algorithm. This is because a --justification-step
+                 // of 0 would not match the default, which is expected.
+            let wdthDefault = parseFloat(getComputedPropertyValues(elem, '--font-width')[0])
+              , wdthMax = wdthDefault // axis goes up to 151
               , wdthMin = 35 // axis goes down to 25
               // TODO: this should be dependent from absolute font size
               // as a step at a big font size has a bigger absolute effect
