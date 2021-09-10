@@ -1817,7 +1817,7 @@ function _initializeLineHandling(elem, modeKey, options) {
                  // of 0 would not match the default, which is expected.
             let wdthDefault = parseFloat(getComputedPropertyValues(elem, '--font-width')[0])
               , wdthMax = wdthDefault // axis goes up to 151
-              , wdthMin = 35 // axis goes down to 25
+              , wdthMin = 30 // axis goes down to 25
               // TODO: this should be dependent from absolute font size
               // as a step at a big font size has a bigger absolute effect
               // and may even visibly create an "uneven" edge.
