@@ -167,11 +167,17 @@ When the idea of independent control of line spacing and letter spacing is joine
 %}
 Whether because careful editorial is too costly, or using multiple widths of a typeface family was too expensive or time-consuming to download, the more common solution is adding lots of space for and around the headline along with an often draconian editorial limit on the character count. A variable font with a width axis can be automated to a great extent to alleviate this. But the weight axis of a typeface family typically changes more than one thing at once. 
 
-The spacing is tightened and the weights lightened from those of regular as the typeface is condensed, in order to maintain the same appearance of weight in narrower letters. The opposite happens when a typeface gets wider. While this might be suitable for some kinds of publications, others want a consistent appearance across headlines.
+In a weight axis the spacing is tightened and the weights lightened from those of regular, as the typeface is condensed. This maintains the same appearance of regular weight in narrower styles. The opposite happens when a typeface gets wider. So with an axis that just controls the counter, or the space inside the letters, what we label XTRA, changing the width, while maintaining the spacing weights and everything else, would not mix well with regular, as it would appear a different weight from the regular. This is especially true if the XTRA axis were used at the same range as the width axis.
+
+But if XTRA is used in conjunction with control over the word space and letter spacing values, all used as little as possible to fit lines to a column, the typographer can improve hyphenation, prevent excessively large word spaces, and also justify less than absolutely. The latter meaning I can choose a range of %, like 97% line length, within which to justify. 
+
+Demonstrating this has involved research on how each browser calculates each line, both it’s length and where it breaks, a forward-looking algorithm that considers the next line and the last line of text, development of ranges of adjustability for word space, letter space and XTRA over the range of sizes from 8 to 144, and a UI for testing and output marking lines with color to indicate the change in width.
 {% include figure
         src="./images/Figure 13.png"
         caption="using XTRA, tracking and word space control to justify text 98%."
 %}
+
+A variable hyphen feature, line layout of languages with different direction word structure and word-length tendencies in the world's script use, are ripe for current and future exploration.
 
 ## Takeaways:
 
