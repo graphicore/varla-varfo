@@ -141,7 +141,7 @@ There’s only one other kind of space left in type and it’s inside the letter
 The user has three kinds of control over this space. Type size, applied to a single style of type, makes them grow and shrink linearly to the change of size. Changing to the use of different styles within a regular font family alters the internal white spaces according to the style change from one to the next. Variation font technology, which can provide both of the above, can also provide optical sizes that adjust the internal white spaces over a range of sizes, as well as adding fluid ranges of weight and width axes.
 
 {% include figure
-        src="./images/Figure10.png"
+        src="./images/Figure 10.png"
         caption="Counter changes via size, style and opsz."
 %}
 
@@ -153,7 +153,7 @@ The Opentype 1.8 specification and its successors do not include  variations on 
 
 Changing the height of uppercase, lowercase and the extenders of Latin all have the same basic utility of changing the heights without effecting the widths or horizontal spacing of text, a handy option in placing type in buttons, in shortening the descenders to reduce line space in headlines. These vertical  variations can also be used to change the height of Latin, to better compose with glyphs or text from other languages contained in a fallback font.
 {% include figure
-        src="./images/Figure12.png"
+        src="./images/Figure 12.png"
         caption="Vertical changes to cap height and descend depth."
 %}
 Letter spacing can be changed using a variable axis, and was brought up as a possibility several years ago. It should be useful eventually, but in Latin proportional typefaces, variable spacing is problematic as it brings along the need for variation of all the spacing exceptions, the kerning pairs. These exceptions as stored in the font format today, would increase the development, processing and file size of a font family, perhaps exponentially.
@@ -162,20 +162,26 @@ There may also be other issues with a spacing axis, aside from file size and com
 
 When the idea of independent control of line spacing and letter spacing is joined by the possibilities of a width axis, or an axis that just controls the contents (or both together in a variable font), several other classes of typographic refinements also become possible. One example is with headlines, sub-heads and other sizes above the body size, that are typically shorter in length, but often not short enough for the wide variety of portals the typography may be appearing in.
 {% include figure
-        src="./images/Figure13a.png"
+        src="./images/Figure 13a.png"
         caption="Using a width axis to fit headlines."
 %}
 Whether because careful editorial is too costly, or using multiple widths of a typeface family was too expensive or time-consuming to download, the more common solution is adding lots of space for and around the headline along with an often draconian editorial limit on the character count. A variable font with a width axis can be automated to a great extent to alleviate this. But the weight axis of a typeface family typically changes more than one thing at once. 
 
-The spacing is tightened and the weights lightened from those of regular as the typeface is condensed, in order to maintain the same appearance of weight in narrower letters. The opposite happens when a typeface gets wider. While this might be suitable for some kinds of publications, others want a consistent appearance across headlines.
+In a weight axis the spacing is tightened and the weights lightened from those of regular, as the typeface is condensed. This maintains the same appearance of regular weight in narrower styles. The opposite happens when a typeface gets wider. So with an axis that just controls the counter, or the space inside the letters, what we label XTRA, changing the width, while maintaining the spacing weights and everything else, would not mix well with regular, as it would appear a different weight from the regular. This is especially true if the XTRA axis were used at the same range as the width axis.
+
+But if XTRA is used in conjunction with control over the word space and letter spacing values, all used as little as possible to fit lines to a column, the typographer can improve hyphenation, prevent excessively large word spaces, and also justify less than absolutely. The latter meaning I can choose a range of %, like 97% line length, within which to justify. 
+
+Demonstrating this has involved research on how each browser calculates each line, both it’s length and where it breaks, a forward-looking algorithm that considers the next line and the last line of text, development of ranges of adjustability for word space, letter space and XTRA over the range of sizes from 8 to 144, and a UI for testing and output marking lines with color to indicate the change in width.
 {% include figure
-        src="./images/Figure13.png"
+        src="./images/Figure 13.png"
         caption="using XTRA, tracking and word space control to justify text 98%."
 %}
+
+A variable hyphen feature, line layout of languages with different direction word structure and word-length tendencies in the world's script use, are ripe for current and future exploration.
 
 ## Takeaways:
 
 {% include figure
-        src="./images/Figure11.png"
+        src="./images/Figure 11.png"
         caption="Various variable spaces."
 %}
