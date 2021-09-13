@@ -1056,23 +1056,27 @@ function _calculateFontSpec(spec, keys) {
     return resultSpec;
 }
 
+function _parseFontVariationSettings(variations) {
+    // "GRAD" 0, "VVFS" 31.9992, "XTRA" 468, "opsz" 31.9992, "slnt" 0, "wdth" 30, "wght" 200
+    let result = new Map();
+    for(let kv of variations.split(',')) {
+        let[k, v] = kv.trim().split(' ');
+        k = k.replaceAll(/["']/g, '');
+        v = parseInt(v);
+        result.set(k, v);
+    }
+    return result;
+}
+
 function _getFontSpecProperties(referenceElement) {
-    // NOTE: The opsz fallback could be --font-size, and similarly not
-    // sure whether and why to use --font-weight instead of font-weight.
-    // It is however the best way to get the actually used and calculated
-    // values instead of possibly CSS calc(), var() etc. values and as
-    // such requires less knowledge and/or discipline from the CSS.
-    // FIXME: regarding the NOTE above, it seems more stable to fetch and parse
-    // "font-variation-settings" in order to obtain values for "opsz"
-    // and "wdth", also "wght" but this already covered by "font-weight".
-    let rawValues = getComputedPropertyValues(referenceElement,
-            'font-size', '--font-opsz', 'font-weight', '--font-width',
+    let [rawFontVariations, rawFontFamily] = getComputedPropertyValues(referenceElement,
+            'font-variation-settings',
             '--font-family')
-        // CAUTION order: the pop removes --font-family
-      , fontFamily = rawValues.pop().trim()
-      , [fontSizePx, opsz, weight, width] = rawValues.map(val=>parseFloat(val))
-      , fontSizePt = fontSizePx * 0.75
-      , opticalFontSizePt = opsz || fontSizePt
+      , fontFamily = rawFontFamily.trim()
+      , fontVariations = _parseFontVariationSettings(rawFontVariations)
+      , opticalFontSizePt = fontVariations.get('opsz')
+      , width = fontVariations.get('wdth')
+      , weight = fontVariations.get('wght')
       ;
     return [fontFamily, weight, width, opticalFontSizePt];
 }
