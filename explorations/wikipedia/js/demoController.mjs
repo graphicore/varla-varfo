@@ -142,6 +142,12 @@ class CheckboxWidget {
         this._elem.checked = checked;
         _dispatchChangeEvent(this._elem);
     }
+    get checked() {
+        return this._elem.checked;
+    }
+    set checked(checked) {
+        this.setChecked(checked);
+    }
     reset() {
         this.setChecked(this._defaultChecked);
     }
@@ -347,11 +353,14 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(domTool, baseElement, justificationController
+    constructor(domTool, baseElement, id, justificationController
                 , defaults // currently olnly used for CheckboxWidget
                 , columnConfig
                 , getCurrentLineHeightInPercent, recalculateLineHeight) {
         super(domTool, baseElement);
+        if(id)
+            this[ID] = id;
+
         this._justificationController = justificationController;
         var klass = 'portal_augmentation';
         var dom = this._domTool.createElementfromHTML(
@@ -1189,6 +1198,7 @@ export function main({
                                     wikipediaArticleURLWidgetState]
                                 : null,
                             [PortalAugmentationWidget,
+                                    'portal-augmentation',
                                     justificationController,
                                     defaults,
                                     columnConfig,
@@ -1228,6 +1238,8 @@ export function main({
     // user settings are most important here!
     var updateViewportScheduled = null
       , scheduleUpdateViewport = (time)=> {
+            // If it is not paused updateViewport will start it again.
+            justificationController.pause();
             if(updateViewportScheduled !== null) {
                 clearTimeout(updateViewportScheduled);
             }
@@ -1269,8 +1281,7 @@ export function main({
                 }
             }
 
-            // do not cancel on color-scheme change
-            let  justificationWasRunning = justificationController.running;
+            // do not cancel e.g. on color-scheme change
             if(cancelJustification)
                 justificationController.cancel();
             // CAUTION: this only sets a few CSS-variables, it will always
@@ -1280,7 +1291,9 @@ export function main({
             runion_01(columnConfig, runion01Elem);
             fixCSSKeyframes(document);
             // only run if it is not paused by the user.
-            if(cancelJustification && justificationWasRunning)
+            if(userSettingsWidget.getWidgetById('portal-augmentation')
+                                             .getWidgetById('justificationRunning')
+                                             .checked)
                 justificationController.run();
         }
       , updateAfterChangedContent = ()=>{
