@@ -880,6 +880,9 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
 
 
 function _getInterpolationPosition(val, upper, lower) {
+    if(upper === lower)
+        throw new Error('_getInterpolationPosition with lower === upper '
+            + ` (=== ${lower}) creates a division by zero situation.` );
     let normalValue = val - lower
       , normalUpper = upper - lower
       ;
@@ -1000,74 +1003,94 @@ const FONT_SPEC_CONFIG_ROBOTO_FLEX = {
     }
 };
 
+const FONT_SPECS = {
+    AmstelVar: FONT_SPEC_CONFIG_AMSTEL_VAR,
+    RobotoFlex: FONT_SPEC_CONFIG_ROBOTO_FLEX
+};
+
+
+function _findPosBetween(mark, sortedKeys) {
+    let lower = sortedKeys[0]
+      , upper = lower
+      ;
+    for(let key of sortedKeys) {
+        if(mark >= key)
+            lower = upper = key;
+        if(mark <= key){
+            upper = key;
+            break;
+        }
+    }
+    return [lower, upper];
+}
+
+function _calculateFontSpec(spec, keys) {
+    if('XTRA' in spec)
+        // Bottomed out, could also be keys.length === 0, but the current
+        // test allows shortcutting the spec-depth, so it's more flexible.
+        // I.e. this cold be used to position a spec that does not need
+        // interpolation on an upper level, insead of putting two identical
+        // specs next to each other.
+        return spec;
+    let [key, ...tail] = keys
+        // In the lowest level, this would fail!
+        // As indicator we use the presence of the key XTRA above.
+      , specKeys = Array.from(Object.keys(spec)).map(parseFloat).sort((a,b)=>a-b)
+      , [lower, upper] = _findPosBetween(key, specKeys)
+      ;
+    if(lower === upper) {
+        // This prevents a division by zero in _getInterpolationPosition,
+        // but it also is an optimization.
+        // Could be a direct hit or potentially extrapolation, which we
+        // don't do (yet?) and which is also prevented in findPosBetween.
+        // No need to interpolate, just return the result.
+        return _calculateFontSpec(spec[lower], tail);
+    }
+    let loweSpec = _calculateFontSpec(spec[lower], tail)
+      , upperSpec = _calculateFontSpec(spec[upper], tail)
+      , t = _getInterpolationPosition(key, upper, lower)
+      , resultSpec = {}
+      ;
+    for(let k of Object.keys(upperSpec))
+        resultSpec[k] = _interpolateArray(t, upperSpec[k], loweSpec[k]);
+    return resultSpec;
+}
+
+function _getFontSpecProperties(referenceElement) {
+    // NOTE: The opsz fallback could be --font-size, and similarly not
+    // sure whether and why to use --font-weight instead of font-weight.
+    // It is however the best way to get the actually used and calculated
+    // values instead of possibly CSS calc(), var() etc. values and as
+    // such requires less knowledge and/or discipline from the CSS.
+    // FIXME: regarding the NOTE above, it seems more stable to fetch and parse
+    // "font-variation-settings" in order to obtain values for "opsz"
+    // and "wdth", also "wght" but this already covered by "font-weight".
+    let rawValues = getComputedPropertyValues(referenceElement,
+            'font-size', '--font-opsz', 'font-weight', '--font-width',
+            '--font-family')
+        // CAUTION order: the pop removes --font-family
+      , fontFamily = rawValues.pop().trim()
+      , [fontSizePx, opsz, weight, width] = rawValues.map(val=>parseFloat(val))
+      , fontSizePt = fontSizePx * 0.75
+      , opticalFontSizePt = opsz || fontSizePt
+      ;
+    return [fontFamily, weight, width, opticalFontSizePt];
+}
 
 function _getFontSpec(referenceElement) {
-    // TODO: fontSpecConfig etc. will be for more sizes and different
-    // per font/family.
-    let [fontSizePx, fontFamily] = getComputedPropertyValues(
-                        referenceElement, 'font-size', '--font-family');
-    fontSizePx = parseFloat(fontSizePx);
-    fontFamily = fontFamily.trim();
-    let fontSizePt = fontSizePx * 0.75
-        // This is AmstelVar
-        //   opsz 14 PT, 400 weight, 100 width:
-        //          (min, default, max)
-        //      XTRA: 515, 562, 580 || increment :1 range: 75
-        //      Track: -.4, 0, .2 || increment: ? range: .6
-        //      word-space: 8/14, 14/14, 18/14 || increment: ? range: 10/14
-        //
-        //   opsz 8, 400 weight, 100 width:
-        //      XTRA: 545, 562, 580 || increment: 1 range 35
-        //      Track: -.1, 0, .25 || increment: ? range .35
-        //      word-space: 6/8, 8/8, 12/8 || increment: ? range: 4/8
-      , fontSpecConfigAmstelVar = {
-
-            14: {XTRA: [515, 562, 580], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-           , 8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/,   12/8 - 1]}
-        }
-        // This is RobotoFlex
-        //   opsz 14 PT, 400 weight, 100 width:
-        //          (min, default, max)
-        //      XTRA: 460, 468, 471
-        //      Track: -.1, 0, .13
-        //      word-space: 12/14, 14/14, 19/14
-        //
-        //   opsz 8, 400 weight, 100 width:
-        //      XTRA: 462, 468, 475
-        //      Track: -.06, 0, .2
-        //      word-space: 7/8, 8/8, 14/8
-
-      , fontSpecConfigRobotoFlex = {
-            14: {XTRA: [460, 468, 471], tracking:[-0.1, 0, 0.13],  wordspace: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
-           , 8: {XTRA: [462, 468, 475], tracking:[-0.06, 0, 0.2], wordspace: [7/8 - 1, 1 - 1 /*8/8*/,   14/8 - 1]}
-        }
-      , fontSpecConfigs = {
-            AmstelVar: fontSpecConfigAmstelVar
-          , RobotoFlex: fontSpecConfigRobotoFlex
-        }
-      , fontSpecConfig = fontSpecConfigs[fontFamily]
-      , spec = {}
-      , upperFontSize = 14
-      , lowerFontSize = 8
-      , t = _getInterpolationPosition(fontSizePt, upperFontSize, lowerFontSize)
+    var [fontFamily, weight, width, opticalFontSizePt] = _getFontSpecProperties(referenceElement)
+      , fontSpecConfig = FONT_SPECS[fontFamily]
+      , spec =  _calculateFontSpec(fontSpecConfig, [weight, width, opticalFontSizePt])
       ;
-
-    for(let k of Object.keys(fontSpecConfig[upperFontSize]))
-        spec[k] = _interpolateArray(t, fontSpecConfig[upperFontSize][k],
-                                      fontSpecConfig[lowerFontSize][k]);
-    console.log(`Font Spec for ${fontFamily} @ ${fontSizePt} pt:`, spec);
-    return [spec, fontSizePx, fontSizePt];
+    console.log(`Font Spec for ${fontFamily} @ wght ${weight} wdth ${width} ${opticalFontSizePt} pt`, spec);
+    return spec;
 }
 
-
-function _getFontSpecKey(elem) {
-    let [fontSizePx, fontFamily] = getComputedPropertyValues(
-                        elem, 'font-size', '--font-family');
-    fontSizePx = parseFloat(fontSizePx);
-    fontFamily = fontFamily.trim();
-    let fontSizePt = fontSizePx * 0.75;
-    return `${fontFamily}@${fontSizePt}pt`;
+function _getFontSpecKey(referenceElement) {
+    var [fontFamily, weight, width, opticalFontSizePt] = _getFontSpecProperties(referenceElement);
+    return `${fontFamily}@wght:${weight};wdth:${width};opsz:${opticalFontSizePt};`;
 }
+
 
 function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
                                                 secondLine, isInitialLine) {
@@ -1723,14 +1746,22 @@ function _initializeLineHandling(elem, modeKey, options) {
 
 
     switch(modeKey) {
+        case "pull":
+            // Like body but not tracking!
+            //      Pull - cold size, wght, wdth, track
+            //      Warm: xtra, wordspace
+            // FIXME only "warm", how should this effect the result?
         case "body":
+        // This is interesting because it has another
+        // font-spec than body. Also, it should not do any widening.
+        case "sub":
             // calling this "body" for now
             // This is setting up the justification environment.
             let wsPx = _getWordSpaceForElement(elem);
             elem.style.setProperty('--word-space-size', `${wsPx}px`);
             // console.log('--word-space-size', `${wsPx}px`);
 
-            let [fontSpec/*, fontSizePx, fontSizePt*/] = _getFontSpec(elem)
+            let fontSpec = _getFontSpec(elem)
             , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
             , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
             , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
@@ -1778,10 +1809,12 @@ function _initializeLineHandling(elem, modeKey, options) {
             elem.style.setProperty('--justification-xtra-default', `${xtraDefault}`);
             elem.style.setProperty('--justification-xtra-max', `${xtraMax}`);
 
-            elem.style.setProperty('--justification-step-tracking', `${trackingStepSize}`);
-            elem.style.setProperty('--justification-tracking-min', `${trackingMin}`);
-            elem.style.setProperty('--justification-tracking-default', `${trackingDefault}`);
-            elem.style.setProperty('--justification-tracking-max', `${trackingMax}`);
+            if(modeKey !== 'pull') {
+                elem.style.setProperty('--justification-step-tracking', `${trackingStepSize}`);
+                elem.style.setProperty('--justification-tracking-min', `${trackingMin}`);
+                elem.style.setProperty('--justification-tracking-default', `${trackingDefault}`);
+                elem.style.setProperty('--justification-tracking-max', `${trackingMax}`);
+            }
 
             elem.style.setProperty('--justification-step-wordspace', `${wordspaceStepSize}`);
             elem.style.setProperty('--justification-wordspace-min', `${wordspaceMin}`);
@@ -1803,7 +1836,8 @@ function _initializeLineHandling(elem, modeKey, options) {
                 , wordspaceWideningRange / wordspaceStepSize
                 ].filter(x=>isFinite(x))
             );
-
+            if(modeKey === 'sub' || modeKey === 'pull') // no widening
+                effectiveWideningStops = 0;
             // console.log('effectiveNarrowingStops, effectiveWideningStops:'
             //                  , effectiveNarrowingStops, effectiveWideningStops);
 
@@ -1816,6 +1850,7 @@ function _initializeLineHandling(elem, modeKey, options) {
                  // confuse the algorithm. This is because a --justification-step
                  // of 0 would not match the default, which is expected.
             let wdthDefault = parseFloat(getComputedPropertyValues(elem, '--font-width')[0])
+                // FIXME: the range of 25 to 151 is specific for RobotoFlex
               , wdthMax = wdthDefault // axis goes up to 151
               , wdthMin = 30 // axis goes down to 25
               // TODO: this should be dependent from absolute font size
@@ -1846,11 +1881,29 @@ function* _justifyNextGenGenerator(elem, skip, options) {
         // the style we are appliying now, but the "body"/"main" styles
         // may change, and hence these are likely not good names for
         // the modeKey, as e.g. main prevails but it's style/mode changes.
-    let modeKey = elem.tagName.toLowerCase() === 'h1' ? 'main' : 'body'
-      , fontSpecKey = `${modeKey}_${_getFontSpecKey(elem)}`
-      , fontSpecChanged = fontSpecKey !== getComputedPropertyValues(elem, '--font-spec-key')[0]
+    let modeKey = 'body'// the default
+      , modules = [
+            // CAUTION: order is importnt, first hit matches.
+            ['h1', 'main']
+          , ['h2', 'sub']
+            // blockquote > p is due to how markdown converts this
+          , ['blockquote, blockquote > p', 'pull']
+        ]
       ;
+
+    for(let [selectorString, _modeKey] of modules){
+        if(elem.matches(selectorString)){
+            modeKey = _modeKey;
+            break;
+        }
+    }
+    let fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
+      , [inheritedFontSpecKey] = getComputedPropertyValues(elem, '--font-spec-key')
+      , fontSpecChanged = fontSpecKey !== inheritedFontSpecKey
+      ;
+
     if(fontSpecChanged) {
+        console.log('Switch to font-spec:', fontSpecKey, 'from:', inheritedFontSpecKey || '(none)'); //, 'in', elem, ...elem.classList);
         elem.classList.add(_JUSTIFICATION_HOST_CLASS);
         // This is only for the check above, it doesn't change the font
         // spec. Also, it makes use of the CSS inhertance of custom

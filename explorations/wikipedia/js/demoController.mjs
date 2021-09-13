@@ -1148,7 +1148,7 @@ export function main({
       , runionTargetSelector = '.runify-01, .mw-parser-output'
       , justificationSkip = [
             /* skipSelector selects elements to skip*/
-            '.hatnote, #toc, h2, h3, ul, ol, blockquote, table, .do-not-jsutify,figure>*:not(figcaption)',
+            '.hatnote, #toc, h3, ul, ol, table, .do-not-jsutify,figure>*:not(figcaption)',
             /* skipClass: added to skipped elements */
             'skip-justify'
        ]
