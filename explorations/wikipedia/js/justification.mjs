@@ -1862,11 +1862,11 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
 
-    yield ['DONE _justifyBlockElement'];
+
 
     console.log(`time in _justifyBlockElement ${(t1-t0) /1000} s`);
     console.log(`time in _justifyInlines ${total/1000} s`);
-    yield ['did _justifyBlockElement'];
+    yield ['DONE _justifyBlockElement'];
     return total;
 }
 
