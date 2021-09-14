@@ -846,7 +846,9 @@ i, cite, em, var, dfn {
     word-spacing: calc(var(--word-space-size) * var(--dynamic-word-space, var(--word-space)));
 }
 
-.line_handling_mode-body * {
+.line_handling_mode-body *,
+.line_handling_mode-pull *,
+.line_handling_mode-sub * {
      --dynamic-word-space: clamp(
             var(--justification-wordspace-min),
             calc( var(--justification-wordspace-default) + var(--justification-step) * var(--justification-step-wordspace)),
