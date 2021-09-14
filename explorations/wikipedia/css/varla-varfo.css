@@ -877,7 +877,14 @@ i, cite, em, var, dfn {
             var(--line-length-wdth-max)
         );
 }
-
+/* FIXME: should probably be handled differently, e.g. via a custom property
+ * in the rule above. Same thing for hyphenation, but that is good when
+ * handled in the direct h1 etc. as well (but should be a property).
+ * Because of css-inheritance/specificity mechanics...
+ */
+.line_handling_mode-main  .runion-line {
+    white-space: normal;
+}
 
 .runion-01 .runion-justified-block {
     white-space: nowrap;

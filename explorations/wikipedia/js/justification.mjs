@@ -1537,13 +1537,78 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
 
 }
 
+function* _firstLineForAll(notBlockNodes) {
+    // FIXME: this has a ton of duplication with _justifyInlines;
+    let firstNotBlock = notBlockNodes[0]
+      , lastNotBlock = notBlockNodes[notBlockNodes.length-1]
+      , range = new Range()
+      ;
+    range.setStartBefore(firstNotBlock);
+    range.setEndAfter(lastNotBlock);
+    if(_isWhiteSpaceText(range.toString()))
+        return;
+    // ... insert magic here ...
+    // I wonder if the general find lines would be a good start, but actually
+    // all lines of a block are invalid after the first iteration. Hence,
+    // find lines for the next one or two lines at each time must be enough.
+
+    let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
+    // I am a bit unsure about this: it creates a good starting environmnet,
+    // where the --dynamic-font-xxx properties are applied with the default
+    // instead of the potentially wrong/out of sync --font-xxx properties
+    // from css. But this could also hide/silence errors and make them harder
+    // to debug.
+    // carryOverElement.style.setProperty('--justification-step', 0);
+    let stops = getComputedPropertyValues(carryOverElement
+                                    , '--justification-narrowing-stops'
+                                    , '--justification-widening-stops')
+                                    .map(val=>parseInt(val, 10))
+      , justifyLines = _justifyLines(carryOverElement, stops)
+      , firstLineResult = justifyLines.next()
+      , firstLine = firstLineResult.value
+      ;
+    if(firstLineResult.done)
+        return;
+    // So it yields something, not actually required in here for now.
+    yield firstLine;
+
+    let firstElement = firstLine[0]
+      , properties = {}
+      ;
+    for(let prop of ['--line-color-code', '--justification-step']) {
+        let val = firstElement.style.getPropertyValue(prop);
+        if(val !== '')
+            properties[prop] = val;
+    }
+
+    // This doesn't operate on carryOverElement anymore.
+    carryOverElement.remove();
+
+    // Wrap all text nodes in spans with the properties applied to style
+    // also, unwrap firstLine
+    // also apply runion-line to each node.
+
+    let nodes = [];
+    for(let node of notBlockNodes) {
+        if(node.nodeType === Node.TEXT_NODE)
+            nodes.push(node);
+        else
+            nodes.push(..._deepTextGen(node));
+    }
+    let textNodesRange = new Range();
+    textNodesRange.setStartBefore(nodes[0]);
+    textNodesRange.setEndAfter(nodes[nodes.length - 1]);
+
+    let spans = _packLine(true, 'span', nodes, textNodesRange, textNodesRange,
+                                                true, false, true);
+    for(let span of spans) {
+        for(let [p, v] of Object.entries(properties))
+            span.style.setProperty(p, v);
+    }
+
+}
+
 function* _justifyInlines(notBlockNodes) {
-    // console.log('_justifyInlines', notBlockNodes);
-    // The first line we have in here should be treated as a first line.
-    //    CAUTION: seems like only the first line *of* a block should be
-    //    treated as first line, NOT the first *after* a block!.
-    // We still have e.g. <br /> elements in here, so last lines still
-    // require detection, as they can happen anywhere.
     let firstNotBlock = notBlockNodes[0]
       , lastNotBlock = notBlockNodes[notBlockNodes.length-1]
       , parent = firstNotBlock.parentElement
@@ -1606,7 +1671,7 @@ function* _justifyInlines(notBlockNodes) {
     range.deleteContents();
 }
 
-function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
+function* _justifyBlockElement(elem, lineHandlingGenerator, [skipSelector, skipClass], options) {
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
@@ -1630,13 +1695,13 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
                 if(notBlocks.length) {
                     // also change the elements in place...
                     let t0 = performance.now();
-                    yield* _justifyInlines(notBlocks);
-                    // for(let _ of _justifyInlines(notBlocks)){};
+                    yield* lineHandlingGenerator(notBlocks);
+                    // for(let _ of lineHandlingGenerator(notBlocks)){};
                     total += (performance.now() - t0);
                     notBlocks = [];
-                    yield ['DONE _justifyInlines'];
+                    yield ['DONE lineHandlingGenerator'];
                     //if(i > 9)
-                    //    throw new Error('HALT FOR DEV! XXX DONE _justifyInlines');
+                    //    throw new Error('HALT FOR DEV! XXX DONE lineHandlingGenerator');
                 }
                 if(isBreaking) {/*pass*/}
                 else if(!skip) {
@@ -1655,8 +1720,8 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
     }
     if(notBlocks.length) {
         let t0 = performance.now();
-        yield* _justifyInlines(notBlocks);
-        // for(let _ of _justifyInlines(notBlocks)){};
+        yield* lineHandlingGenerator(notBlocks);
+        // for(let _ of lineHandlingGenerator(notBlocks)){};
         total += (performance.now() - t0);
     }
     // Makes it "white-space: nowrap;" to force some in fringe-cases
@@ -1688,7 +1753,6 @@ function _initializeLineHandling(elem, modeKey, options) {
     let modeClass = `${_LINE_HANDLING_MODE_CLASS_PREFIX}${modeKey}`;
     elem.classList.add(modeClass);
 
-
     switch(modeKey) {
         case "pull":
             // Like body but not tracking!
@@ -1696,8 +1760,8 @@ function _initializeLineHandling(elem, modeKey, options) {
             //      Warm: xtra, wordspace
             // FIXME only "warm", how should this effect the result?
         case "body":
-        // This is interesting because it has another
-        // font-spec than body. Also, it should not do any widening.
+            // This is interesting because it has another
+            // font-spec than body. Also, it should not do any widening.
         case "sub":
             // calling this "body" for now
             // This is setting up the justification environment.
@@ -1796,7 +1860,7 @@ function _initializeLineHandling(elem, modeKey, options) {
             let wdthDefault = parseFloat(getComputedPropertyValues(elem, '--font-width')[0])
                 // FIXME: the range of 25 to 151 is specific for RobotoFlex
               , wdthMax = wdthDefault // axis goes up to 151
-              , wdthMin = 30 // axis goes down to 25
+              , wdthMin = 25 // axis goes down to 25
               // TODO: this should be dependent from absolute font size
               // as a step at a big font size has a bigger absolute effect
               // and may even visibly create an "uneven" edge.
@@ -1813,11 +1877,28 @@ function _initializeLineHandling(elem, modeKey, options) {
         default:
             elem.style.setProperty('--justification-narrowing-stops', '0');
             elem.style.setProperty('--justification-widening-stops', '0');
+
             break;
     }
 }
 
-// this can essentially be used as just a wrapper around _justifyBlockElement
+function _getLineHandlingGenetator(modeKey) {
+    let lineHandlingGenerator;
+    switch(modeKey) {
+        case "main":
+            lineHandlingGenerator = _firstLineForAll;
+            break;
+        case "pull":
+        case "body":
+        case "sub":
+        default:
+            // Default by legacy.
+            lineHandlingGenerator = _justifyInlines;
+    }
+    return lineHandlingGenerator;
+}
+
+
 // skip === [skipSelector, skipClass]
 function* _justifyNextGenGenerator(elem, skip, options) {
         // FIXME: * Ideally these modules will select and configure the
@@ -1847,6 +1928,7 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     let fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
       , [inheritedFontSpecKey] = getComputedPropertyValues(elem, '--font-spec-key')
       , fontSpecChanged = fontSpecKey !== inheritedFontSpecKey
+      , lineHandlingGenerator = _getLineHandlingGenetator(modeKey)
       ;
 
     if(fontSpecChanged) {
@@ -1861,7 +1943,7 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     }
 
     let t0 = performance.now();
-    let total = yield* _justifyBlockElement(elem, skip, options);
+    let total = yield* _justifyBlockElement(elem, lineHandlingGenerator, skip, options);
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
 
