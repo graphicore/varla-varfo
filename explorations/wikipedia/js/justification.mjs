@@ -771,6 +771,7 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
     cloned.style.setProperty('padding', '0');
     cloned.style.setProperty('border', '0');
 
+
     /**
      * MAYBE: Add some element.style to ensure we  have the same line
      * length and not a multi column layout!
@@ -812,7 +813,10 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
             node = node.previousSibling;
             if(node.nodeType === Node.ELEMENT_NODE) {
                 // found it
-                cloned.insertBefore(node.cloneNode(false), cloned.firstChild);
+                let fixIndentElement = node.cloneNode(false);
+                // This must be removed again!
+                fixIndentElement.classList.add('fix-indent-element_marker');
+                cloned.insertBefore(fixIndentElement, cloned.firstChild);
                 break;
             }
         }
@@ -1401,8 +1405,7 @@ function _isLineBreaking(element) {
     //      display: block;
     // }
     // The line finding algorithm will do the right thing earlier
-    // in _justifyBlockElement. (FIXME: ... and it should handle <br />
-    // etc. there as well.)
+    // in _justifyBlockElement.
     //
     // On the other hand with a CSS rule like this:
     //
@@ -1414,59 +1417,6 @@ function _isLineBreaking(element) {
     // We can fool the algorithm successfully, but for now this is
     // a non-issue.
     return false;
-}
-
-// Used to detect soft line breaks, e.g. <br />
-function _isBreakBetweenLines(firstLine, secondLine) {
-    if(firstLine.range.endContainer === secondLine.range.startContainer)
-        return false;
-    // This is very good already, however, there are cases where the nodes
-    // are not the same, and then the question is if there's in between
-    // some breaking element, i.e. a <br /> for now.
-    let range = new Range();
-    range.setStart(firstLine.range.endContainer, firstLine.range.endOffset);
-    range.setEnd(secondLine.range.startContainer, secondLine.range.startOffset);
-    let ancestorElement = range.commonAncestorContainer
-      , secondSameLevel = _getDirectChild(ancestorElement, secondLine.range.startContainer)
-      ;
-
-    // ascending
-    // We established above that node is not the same as home.
-    var node = firstLine.range.endContainer
-      , home = secondLine.range.startContainer
-      ;
-    while(true) {
-        // We right and up and are eventually going to find secondSameLevel
-        node = node.nextSibling || node.parentElement;
-        if(node.nodeType !== Node.ELEMENT_NODE) {
-            if(node === home)
-                return false; // found it
-            continue; // node can be line breaking by itself.
-        }
-        if(_isLineBreaking(node))
-            return true;
-        if(node === secondSameLevel)
-            break; // descend now
-
-    }
-    // descending
-    let nodes = [node];
-    while(true) {
-        node = nodes.shift();
-        if(!node)
-            // this can't happen
-            throw new Error('Ran out of nodes.');
-        if(node.nodeType !== Node.ELEMENT_NODE) {
-            if(node === home)
-                return false; // found it
-            continue; // node can be line breaking by itself.
-        }
-        if(_isLineBreaking(node))
-            return true;
-        if(node.childNodes.length)
-            nodes.unshift(...node.childNodes);
-    }
-    return true;
 }
 
 /*
@@ -1543,22 +1493,6 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
                         firstLine.range, isInitialLine, addHyphen, isTerminalLine);
         }
         //// We have two lines from here on.
-        else if(_isBreakBetweenLines(...lines)) {
-            // FIXME: it would be better to handle the <br /> case in
-            // _justifyBlockElement, just like a _isBlock so we wouldn't
-            // have to test in here all lines with _isBreakBetweenLines.
-            // however, that approach seems to duplicate the <br /> element
-            // somewhere in here, so that would need fixing.
-            //
-            // E.g. a <br /> caused the line break.
-            // No need for trying the narrowing.
-            firstLine = lines[0];
-            let isTerminalLine = false
-                , addHyphen = false
-                ;
-            lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range,
-                        firstLine.range, isInitialLine, addHyphen, isTerminalLine);
-        }
         else {
             [firstLine, secondLine] = lines;
             let isNarrowAdjusted;
@@ -1664,7 +1598,10 @@ function* _justifyInlines(notBlockNodes) {
     carryOverElement.remove();
 
     let newFragment = firstNotBlock.ownerDocument.createDocumentFragment();
-    newFragment.append(...carryOverElement.childNodes);
+    // 'fix-indent-element_marker' must be removed again otherwise
+    // the element will be duplicated.
+    newFragment.append(...Array.from(carryOverElement.childNodes)
+        .filter(e=>!(e.classList && e.classList.contains('fix-indent-element_marker'))));
     parent.insertBefore(newFragment, lastNotBlock.nextSibling);
     range.deleteContents();
 }
@@ -1684,10 +1621,12 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
         i++;
 
         if(node.nodeType === Node.ELEMENT_NODE) {
-            let skip = node.matches(skipSelector);
+            let skip = node.matches(skipSelector)
+              , isBreaking = _isLineBreaking(node)
+              ;
             // TODO: here we can switch into e.g. headline specific line
             // handling.
-            if(skip || _isBlock(node)) {
+            if(skip || _isBlock(node) || isBreaking) {
                 if(notBlocks.length) {
                     // also change the elements in place...
                     let t0 = performance.now();
@@ -1699,7 +1638,8 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], options) {
                     //if(i > 9)
                     //    throw new Error('HALT FOR DEV! XXX DONE _justifyInlines');
                 }
-                if(!skip) {
+                if(isBreaking) {/*pass*/}
+                else if(!skip) {
                     // changes the node in place
                     total += yield* _justifyNextGenGenerator(node, [skipSelector, skipClass], options);
 
