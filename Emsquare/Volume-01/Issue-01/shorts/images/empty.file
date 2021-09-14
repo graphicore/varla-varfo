@@ -1,0 +1,5 @@
+In common practice, the type designer give default spaces and adds kerning pairs to the glyphs of a font to reduce the likelihood of the word space be confused with the space between two letters, or two letters overlapping ungracefully. 
+( fig.1 )
+Both of these composition issues, letters being to far apart or too close, can be stressed by the use of tracking. The simplest example to se is when a pair of glyphs has needed more separation, a positive Kerning. Pair is added, but then deleted by the tracking.
+( fig. 2 )
+This is a Kerning pair we’d like to designate as impervious to tracking, if we could.
