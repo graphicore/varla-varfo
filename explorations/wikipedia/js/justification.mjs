@@ -1820,11 +1820,14 @@ function _initializeLineHandling(elem, modeKey, options) {
 // this can essentially be used as just a wrapper around _justifyBlockElement
 // skip === [skipSelector, skipClass]
 function* _justifyNextGenGenerator(elem, skip, options) {
-        // FIXME: This requires a more sophisticated switch, but it's good
-        // enough for now also "body" and "main" are the correct names for
-        // the style we are appliying now, but the "body"/"main" styles
-        // may change, and hence these are likely not good names for
-        // the modeKey, as e.g. main prevails but it's style/mode changes.
+        // FIXME: * Ideally these modules will select and configure the
+        //          code to run, so this can be configured per publication/
+        //          target/website. But that will need a bit more maturing
+        //          of the current approach.
+        //        * "body" and "main" are the correct names for
+        //          the style we are appliying now, but the "body"/"main" styles
+        //          may change, and hence these are likely not good names for
+        //          the modeKey, as e.g. main prevails but it's style/mode changes.
     let modeKey = 'body'// the default
       , modules = [
             // CAUTION: order is importnt, first hit matches.
