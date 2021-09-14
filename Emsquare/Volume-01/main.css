@@ -71,9 +71,7 @@ figure .enumeration {
     --font-weight: 700;
 }
 
-header,
-blockquote {
-    /* "pull spec"/pull quotes */
+header {
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
@@ -85,7 +83,17 @@ blockquote {
 }
 
 blockquote {
-    margin-block-start: calc(1pt * var(--js-font-size) * var(--line-height));
-    margin-block-end: calc(1pt * var(--js-font-size) * var(--line-height));
-    margin-inline: 0;
+    /* "pull spec"/pull quotes */
+    --font-family: AmstelVar;
+    --font-style: italic;
+    --font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
+    --font-weight: 200;
+    --line-height: 1.05; /* .05 to avoid collisions */
+    --font-width: 50;
+    margin-block-start: 0;
+    /* --js-line-height is expected to be set the outer line-height */
+    margin-block-end: calc(1pt * var(--js-line-height) * var(--document-font-size));
+    text-indent: 0;
+    margin-inline: 1.5em 1em;
 }

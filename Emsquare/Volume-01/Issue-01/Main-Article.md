@@ -11,6 +11,8 @@ Typography can contain a lot of different elements, beyond text and space, like 
 
 One thing is for certain, most of the fonts we use today, contain mostly space. So here the spaces will be dissected, described, exemplified and examined for their role, the interplay of their roles and how some of the roles change with the addition of variable fonts It is in variable fonts that both the glyphs and spaces of a font can be as fluid as the sizing, line spacing and tracking are in application programs and the markup languages they employ to describe pages.
 
+> If I type something, (anything actually), you're seeing a series of shapes in various combinations hanging onto a framework of rectangles.
+
 The largest key on the keyboard is the space key. Typography starts with its parent space, the “imaginary” em square, into rectangles of the same height as the em square representing the default widths of each glyph in a font, including the space. These rectangles are only "defaults", as the space between lines,  between glyphs, and the word space, can be changed by the user, and then by the final display of font in print or screen.
 
 ## Square one.
