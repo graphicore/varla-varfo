@@ -15,7 +15,7 @@ One thing is for certain, most of the fonts we use today, contain mostly space. 
 
 The largest key on the keyboard is the space key. Typography starts with its parent space, the “imaginary” em square, into rectangles of the same height as the em square representing the default widths of each glyph in a font, including the space. These rectangles are only "defaults", as the space between lines,  between glyphs, and the word space, can be changed by the user, and then by the final display of font in print or screen.
 
-## Square one.
+## Square one, where all type begins
 
 This is a rectangle of equal sides and angles, making it a square.
 
@@ -66,7 +66,7 @@ The em square (realized in physical form as an em quad in metal type), can be se
 {% assign figures6 = figures6 | push: figure6a %}
 {% assign figures6 = figures6 | push: figure6b %}
 
-## Line Space
+## Line Spacing and letter drawing Latin typefaces
 Between the lines is called line spacing, in CSS, and is valued either by the size of the space or as a percentage of the size of the type. Between the letters are default letter spacing and kerning, with tracking being a function for changes to both, also usually expressed as a percentage of size. Letterspacing is obviously added at the end of each letter, and line spacing was traditionally, and today in most design applications, added to the bottom of each line. This was done to facilitate cooperative use of the em square and leading, between users and font developers in the use of languages with and without diacritic accents above the uppercase.
 
 Since time immemorial, many type designers have striven to keep all decending glyphs, diacritics and attachment, at or near the bottom of the em, all uppercase heights at or near the top, and all diacritics above the upper and lowercases, within the em, plus 20% of the em. This defacto standard allows the user to align the type on the uppercase at the top of their text container, and either the baseline for all-cap use, or the bottom of the em for mixed case use, allowing any diacritics in the first line to "float" above the rest, with interline diacritics clear of the descenders in the line above.
@@ -106,7 +106,7 @@ As size ranges up, it is almost certainly the result of the length of text getti
         caption="Uppercase line spacing relies on a baseline to cap height metrics, and can be zero or less depending on size."
 %}
 
-## Word Space
+## The Word Space, an important nothing 
 
 The most important character to reading in a font is the space glyph, or word space. In Latin use, its width is derived from a formula, based on the width of one of the letters, or simply chosen visually by the type designer. It is often adjusted by applications, but its fundamental task is to make certain it’s the largest horizontal space in text. Readers can't be confused by the spaces between letters, between letters and punctuation or between punctuation and punctuation, and the word space. While this sounds obvious, it rarely is an issue with Latin type because so much work in the development of typefaces used by the public goes into elimintating any space that can compete, visually, with the word space.
 
@@ -132,7 +132,7 @@ The type designer’s task, then, is to create a default word space and letter s
         caption="Default letter spacing and Kerning vs word space."
 %}
 
-## Counter space
+## Counter space in letterforms
 There’s only one other kind of space left in type and it’s inside the letters. This may be fully enclosed, like /o’s interior, trapped along the baseline and cap height, like /K, or swirling amidst the stem of the /S, but it’s what gives a typeface the start on all the other spaces we’ve covered.
 
 {% include figure
@@ -149,7 +149,7 @@ The user has three kinds of control over this space. Type size, applied to a sin
 
 And while typefaces overwhelmingly end with well defined spaces, between words, letters and exceptional pairs, and many typeface families include a blizzard of styles, each with unique spacing, the way the font format, composition software, like design applications and web browsers operate, Latin typography faces challenges to the type user. And where there is a challenge in Latin, there’s likely to be more elsewhere in the world of scripts.
 
-##  Variable Fonts and Space
+##  Variable fonts and all the spaces
 
 The Opentype 1.8 specification and its successors do not include  variations on the em square size, or on the location of the baseline.  Nevertheless, variable height and depth of glyphs, can change the relationship of glyphs to the height and depth of the em.
 
