@@ -90,7 +90,7 @@ blockquote {
     --font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
     --font-weight: 200;
-    --line-height: 1.05; /* .05 to avoid collisions */
+    --line-height: 1.06; /* .06 to avoid collisions */
     --font-width: 50;
     margin-block-start: 0;
     /* --js-line-height is expected to be set the outer line-height */
