@@ -136,7 +136,7 @@ h1, h2, h3, h4, h5, h6 {
 --letter-space: 0;
 --word-space: 0;/*in fractions of em*/
 
-
+    --hyphens: none;
 }
 
 /** columns **/
@@ -184,6 +184,11 @@ font-variation-settings:
  */
 font-weight: var(--x-font-weight);
 
+
+-webkit-hyphens: var(--hyphens);
+   -moz-hyphens: var(--hyphens);
+    -ms-hyphens: var(--hyphens);
+        hyphens: var(--hyphens);
 }
 
 
@@ -555,7 +560,7 @@ h1 { /* main headline */
     --font-weight: 650;
     --font-width: 85;
     --line-height: 1.02;
-    hyphens: none;
+    --hyphens: none;
 }
 
 /* subsection headline */
@@ -565,6 +570,7 @@ h2
     --font-weight: 750;
     --font-width: 100;
     --line-height: 1.02;
+    --hyphens: none;
 }
 /* sub-subsection headline/"Captionhead" */
 h3
@@ -573,6 +579,7 @@ h3
     --font-weight: 850;
     --font-width: 100;
     --line-height: 1.02;
+    --hyphens: none;
 }
 /* h4 is not used in the Typography article, but in other Wikipedia.
  * Also not used in Emsquare
@@ -583,6 +590,7 @@ h4 {
     --font-weight: 850;
     --font-width: 100;
     --line-height: 1.02;
+    --hyphens: none;
 }
 
 #siteSub {
@@ -750,10 +758,8 @@ i, cite, em, var, dfn {
      */
     word-wrap: break-word;
     overflow-wrap: break-word;
-    -webkit-hyphens: auto;
-      -moz-hyphens: auto;
-      -ms-hyphens: auto;
-           hyphens: auto;
+
+    --hyphens: auto;
 
     text-align: left;
     /* FIXME: should vary with line-length etc. */
@@ -788,7 +794,7 @@ i, cite, em, var, dfn {
 .runion-01 .hatnote{
     padding-inline-start: 0;
     /* because it's usually really short */
-    hyphens: none;
+    --hyphens: none;
 }
 
 
