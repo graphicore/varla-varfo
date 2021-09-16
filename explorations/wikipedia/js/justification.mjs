@@ -1101,7 +1101,7 @@ function _getFontSpecKey(referenceElement) {
 
 
 function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
-                                                secondLine, isInitialLine) {
+                                                secondLine, isInitialLine, initialStep=0) {
     let spans = [], nodes
       , bothLinesTextContent
       , firstLineTextContent = firstLine.range.toString()
@@ -1131,15 +1131,7 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     // Now reduce [--font-xtra, ...] until the line breaks later, i.e.
     // until something from the second line jumps onto the first line, OR,
     // until we run out of negative [--font-xtra, ...] adjustment potential.
-    let adjust = (nodes, step, colorIntensity) => {
-        for(let node of nodes) {
-            if(colorIntensity !== undefined) {
-                let hslColor = `hsl(180, 80%, ${30 + 70 * (1 - colorIntensity)}%)`;
-                node.style.setProperty('--line-color-code', hslColor);
-            }
-            node.style.setProperty('--justification-step', step);
-        }
-    };
+    // using _adjustLine
 
     // We know where the initial break happened, at least, we can get the
     // full contents of the initial line (from firstLine.range.toString());
@@ -1201,10 +1193,11 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
         }
     }
 
-    let startValue = 0
-      , step = null
+    let startValue = initialStep
+      , step = initialStep
       , adjustmens = genNarrowAdjustments(stops, startValue)
       ;
+    _adjustLine(spans, step);
     while(true) {
         let adjustmentVal = adjustmens.next();
         yield 'adjusted next';
@@ -1214,13 +1207,13 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
             // don't adjust this with negative width ->
             //          undo all adjustments and go to positive width
             resultLine = currentLine;
-            step = null;
+            step = initialStep;
             break;
         }
         // if there's potential for adjustment
 
         step = adjustmentVal.value;
-        adjust(spans, step);
+        _adjustLine(spans, step);
         let currentLineContent;
         if(!currentLine)
             [currentLineContent, currentLine] = getStartLineContent(findLinesArguments);
@@ -1248,7 +1241,7 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
                 // Turns out that this happens sometimes depending on how
                 // the browser decides to break the line, in this case, now
                 // try to return as if the adjustmentPotential is depleted.
-                //adjust(spans, null);
+                //_adjustLine(spans, '');
                 //resultLine = currentLine;
                 //adjustment = null;
                 // break;
@@ -1300,9 +1293,8 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     let newSpans = _packLine(true, 'span', resultLine.nodes, resultLine.range,
                              resultLine.range, isInitialLine, addHyphen, false);
 
-    let isNarrowAdjusted = step !== null;
-    if(isNarrowAdjusted)
-        adjust(newSpans, step, Math.abs(step) / stops);
+    let isNarrowAdjusted = step !== initialStep;
+    _adjustLine(newSpans, step);
     // remove adjustment spans
     for(let elem of spans) {
         // The nodes from newSpans are already removed as children of these elements.
@@ -1314,18 +1306,39 @@ function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
     // font-size/font-spec, so one value wouldn't do.
     // console.log(`narrowing ${adjustment}`);
 
-    return [newSpans, isNarrowAdjusted];
+    return [newSpans, isNarrowAdjusted, step];
+}
+
+function _setPropertyToLine(lineElements, name, value) {
+     for(let elem of lineElements)
+        elem.style.setProperty(name, value);
+}
+
+function _adjustLine(lineElements, adjustmentStep) {
+    // FIXME: --adjustment-step?
+    _setPropertyToLine(lineElements, '--justification-step', adjustmentStep);
+}
+
+function _setLineColorCode(lineElements, adjustmentStep, narrowingStops, wideningStops) {
+    let hslColor;
+    if(narrowingStops && adjustmentStep < 0) {
+        let colorIntensity = Math.abs(adjustmentStep) / narrowingStops;
+        hslColor = `hsl(180, 80%, ${30 + 70 * (1 - colorIntensity)}%)`;
+    }
+    else if(wideningStops && adjustmentStep > 0) {
+        let colorIntensity = adjustmentStep / wideningStops;
+        hslColor = `hsl(0, 100%, ${30 + 70 * (1 - colorIntensity)}%)`;
+    }
+    else//(adjustmentStep === 0)
+        hslColor = '';
+    _setPropertyToLine(lineElements, '--line-color-code', hslColor);
 }
 
 function _justifyLineByWidening(stops, lineElements, container, options=null) {
     let lineRange = new Range()
       , firstNode = lineElements[0]
       , lastNode = lineElements[lineElements.length-1]
-      , setPropertyToLine = (name, value)=>{
-            for(let elem of lineElements) {
-                elem.style.setProperty(name, value);
-            }
-        }
+      , adjustLine =  (step)=>_adjustLine(lineElements, step)
       , _lineStyleForAll = firstNode.ownerDocument.defaultView.getComputedStyle(firstNode)
       , getPropertyFromLine = (name)=>_lineStyleForAll.getPropertyValue(name)
       ;
@@ -1363,13 +1376,16 @@ function _justifyLineByWidening(stops, lineElements, container, options=null) {
     if(lastNode.classList.contains('r00-l-hyphen'))
         lineText +=  '-';
 
-    let setStep = val=>setPropertyToLine('--justification-step', val)
-      , readStep = ()=>parseFloat(getPropertyFromLine('--justification-step'))
+        // FIXME: using --justification-step as a start value is only
+        // interesting for the special case not for the general!
+    let readStep = ()=>parseFloat(getPropertyFromLine('--justification-step')) || 0
       , generators = []
       ;
 
     generators.push(
-            _justifyByGenerator(setStep, readStep, 0 , stops));
+            // hmm, if readStep < 0, we should probably still start there
+            // in the special case scenrio!
+            _justifyByGenerator(adjustLine, readStep, readStep(), stops));
 
     // if(!options || options.wordSpacing !== false) {
     //         // We had some good results with this not used at all,
@@ -1382,12 +1398,8 @@ function _justifyLineByWidening(stops, lineElements, container, options=null) {
     justifyControlLoop(readUnusedWhiteSpace, generators);
 
     // Visualize, with color, how much widening was applied to the line.
-    let wsRatio = readStep() / stops
-      , hslColor = `hsl(0, 100%, ${30 + 70 * (1 - wsRatio)}%)`
-      ;
-    if(wsRatio > 0) // don't mark unchanged lines (these stay green)
-        setPropertyToLine('--line-color-code', hslColor);
-
+    let step = readStep();
+    return step;
 }
 
 function _isLineBreaking(element) {
@@ -1424,12 +1436,26 @@ function _isLineBreaking(element) {
  * lastLine is the last returned line, after it, the search for the
  * next line must begin.
  */
-function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
+function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]
+                      , interLineHarmonizationFactor) {
     let lastLine = null
+      , lastStep = 0
+      , initialStep = 0
       , isInitialLine = true
-      , linesToWiden = []
       ;
     while(true) {
+        // With this we can have a releation between the narrowing of
+        // the previous line and the current line, the initial motivation
+        // was to optically harmonize subsequent lines of the main headline
+        // if the adjustment was very extreme. So, there we start with a
+        // value half between 0 and the previous line, instead of starting
+        // with zero. I.e.: interLineHarmonizationFactor = 0.5;
+        if(interLineHarmonizationFactor) {
+            initialStep = Math.round(lastStep * interLineHarmonizationFactor);
+            initialStep = Math.min(wideningStops, Math.max(-narrowingStops, initialStep));
+            // Set this for the whole parent as the base to operate on.
+            carryOverElement.style.setProperty('--justification-step', initialStep);
+        }
         let lines = []
           , firstLine = null
           , secondLine = null
@@ -1445,11 +1471,8 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
             skipUntilAfter = lastLine[lastLine.length-1].firstChild;
             startNode = _getDirectChild(carryOverElement, skipUntilAfter);
         }
-        if(!startNode) {
-            if(lastLine)
-                yield lastLine; // we don't use these anyways!
+        if(!startNode)
             break;
-        }
 
         let continueWithNextSiblings = startNode !== carryOverElement
           , findLinesArguments = [[
@@ -1475,7 +1498,6 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
             let lastLineLastElem = lastLine[lastLine.length - 1];
             // Search for "missing textNode mystery" in the CSS file
             lastLineLastElem.classList.remove('new-style-current-last-line-elem');
-            yield lastLine;
             isInitialLine = false;
         }
 
@@ -1491,26 +1513,31 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
               ;
             lastLine = _packLine(true, 'span', firstLine.nodes, firstLine.range,
                         firstLine.range, isInitialLine, addHyphen, isTerminalLine);
+            _adjustLine(lastLine, initialStep);
+            _setLineColorCode(lastLine, initialStep, narrowingStops, wideningStops || 0);
         }
         //// We have two lines from here on.
         else {
             [firstLine, secondLine] = lines;
-            let isNarrowAdjusted;
 
-            let gen = _findAndJustifyLineByNarrowing(
+            let isNarrowAdjusted
+              ,  gen = _findAndJustifyLineByNarrowing(
                                 findLinesArguments, narrowingStops, firstLine,
-                                secondLine, isInitialLine)
+                                secondLine, isInitialLine, initialStep)
               , result = null
               ;
             while( !(result=gen.next()).done) {
                 /*yield result.value; */
             }
             // is done
-            [lastLine, isNarrowAdjusted] = result.value;
+            [lastLine, isNarrowAdjusted, lastStep] = result.value;
 
-
-            if(!isNarrowAdjusted)
-                linesToWiden.push(lastLine);
+            // Allow widening when lastStep < 0 even if wideningStops
+            // is zero, because we can widen within the narrowing range.
+            if(!isNarrowAdjusted && wideningStops !== false)
+               lastStep = _justifyLineByWidening(wideningStops, lastLine, carryOverElement);
+            _setLineColorCode(lastLine, lastStep, narrowingStops, wideningStops || 0);
+            yield lastLine;
         }
 
         // Search for "missing textNode mystery" in the CSS file
@@ -1528,87 +1555,10 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]) {
 
     // Makes white-space: no-wrap;
     carryOverElement.classList.add('runion-justified-block');
-
-    if(wideningStops)
-        for(let line of linesToWiden) {
-            // console.log('_justifyLineByWidening:', line);
-            yield ['_justifyLineByWidening', _justifyLineByWidening(wideningStops, line, carryOverElement)];
-        }
-
 }
 
-function* _firstLineForAll(notBlockNodes) {
-    // FIXME: this has a ton of duplication with _justifyInlines;
-    let firstNotBlock = notBlockNodes[0]
-      , lastNotBlock = notBlockNodes[notBlockNodes.length-1]
-      , range = new Range()
-      ;
-    range.setStartBefore(firstNotBlock);
-    range.setEndAfter(lastNotBlock);
-    if(_isWhiteSpaceText(range.toString()))
-        return;
-    // ... insert magic here ...
-    // I wonder if the general find lines would be a good start, but actually
-    // all lines of a block are invalid after the first iteration. Hence,
-    // find lines for the next one or two lines at each time must be enough.
-
-    let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
-    // I am a bit unsure about this: it creates a good starting environmnet,
-    // where the --dynamic-font-xxx properties are applied with the default
-    // instead of the potentially wrong/out of sync --font-xxx properties
-    // from css. But this could also hide/silence errors and make them harder
-    // to debug.
-    // carryOverElement.style.setProperty('--justification-step', 0);
-    let stops = getComputedPropertyValues(carryOverElement
-                                    , '--justification-narrowing-stops'
-                                    , '--justification-widening-stops')
-                                    .map(val=>parseInt(val, 10))
-      , justifyLines = _justifyLines(carryOverElement, stops)
-      , firstLineResult = justifyLines.next()
-      , firstLine = firstLineResult.value
-      ;
-    if(firstLineResult.done)
-        return;
-    // So it yields something, not actually required in here for now.
-    yield firstLine;
-
-    let firstElement = firstLine[0]
-      , properties = {}
-      ;
-    for(let prop of ['--line-color-code', '--justification-step']) {
-        let val = firstElement.style.getPropertyValue(prop);
-        if(val !== '')
-            properties[prop] = val;
-    }
-
-    // This doesn't operate on carryOverElement anymore.
-    carryOverElement.remove();
-
-    // Wrap all text nodes in spans with the properties applied to style
-    // also, unwrap firstLine
-    // also apply runion-line to each node.
-
-    let nodes = [];
-    for(let node of notBlockNodes) {
-        if(node.nodeType === Node.TEXT_NODE)
-            nodes.push(node);
-        else
-            nodes.push(..._deepTextGen(node));
-    }
-    let textNodesRange = new Range();
-    textNodesRange.setStartBefore(nodes[0]);
-    textNodesRange.setEndAfter(nodes[nodes.length - 1]);
-
-    let spans = _packLine(true, 'span', nodes, textNodesRange, textNodesRange,
-                                                true, false, true);
-    for(let span of spans) {
-        for(let [p, v] of Object.entries(properties))
-            span.style.setProperty(p, v);
-    }
-
-}
-
-function* _justifyInlines(notBlockNodes) {
+// This a lot like a decorator of the justifyLinesGenerator.
+function* _justifyInlines(notBlockNodes, justifyLinesGenerator) {
     let firstNotBlock = notBlockNodes[0]
       , lastNotBlock = notBlockNodes[notBlockNodes.length-1]
       , parent = firstNotBlock.parentElement
@@ -1632,19 +1582,9 @@ function* _justifyInlines(notBlockNodes) {
     // all lines of a block are invalid after the first iteration. Hence,
     // find lines for the next one or two lines at each time must be enough.
 
-    let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes);
-    // I am a bit unsure about this: it creates a good starting environmnet,
-    // where the --dynamic-font-xxx properties are applied with the default
-    // instead of the potentially wrong/out of sync --font-xxx properties
-    // from css. But this could also hide/silence errors and make them harder
-    // to debug.
-    // carryOverElement.style.setProperty('--justification-step', 0);
-    let i = 0
-      , stops = getComputedPropertyValues(carryOverElement
-                                    , '--justification-narrowing-stops'
-                                    , '--justification-widening-stops')
-                                    .map(val=>parseInt(val, 10))
-      , justifyLines = _justifyLines(carryOverElement, stops)
+    let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes)
+      , i = 0
+      , justifyLines = justifyLinesGenerator(carryOverElement)
       ;
     while(true) {
         let result = justifyLines.next();
@@ -1671,7 +1611,7 @@ function* _justifyInlines(notBlockNodes) {
     range.deleteContents();
 }
 
-function* _justifyBlockElement(elem, lineHandlingGenerator, [skipSelector, skipClass], options) {
+function* _justifyBlockElement(elem, [skipSelector, skipClass], lineHandlingGenerator, options) {
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
@@ -1748,10 +1688,13 @@ function _getWordSpaceForElement(elem) {
 const _JUSTIFICATION_HOST_CLASS = 'runion-justification-host'
     , _LINE_HANDLING_MODE_CLASS_PREFIX = 'line_handling_mode-';
 
-function _initializeLineHandling(elem, modeKey, options) {
+function _getLineHandlingParameters(elem, modeKey, options) {
     // This is removed in unjustify.
-    let modeClass = `${_LINE_HANDLING_MODE_CLASS_PREFIX}${modeKey}`;
-    elem.classList.add(modeClass);
+    var properties = []
+      , setProperty = (name, val)=>properties.push([name, val])
+      , interLineHarmonizationFactor = 0
+      , narrowingStops, wideningStops
+      ;
 
     switch(modeKey) {
         case "pull":
@@ -1766,68 +1709,69 @@ function _initializeLineHandling(elem, modeKey, options) {
             // calling this "body" for now
             // This is setting up the justification environment.
             let wsPx = _getWordSpaceForElement(elem);
-            elem.style.setProperty('--word-space-size', `${wsPx}px`);
+            setProperty('--word-space-size', `${wsPx}px`);
             // console.log('--word-space-size', `${wsPx}px`);
 
             let fontSpec = _getFontSpec(elem)
-            , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
-            , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
-            , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
-            // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
-            // seems to work fine and is noticeably quicker,
-            , stopsFidelityFactor = 1
-                // To be able to use a scale, where step/unit size is the same
-                // between narrowing and widening, the last possible step of each
-                // parameter will be a the decimal partial step and then be
-                // clipped by min/max.
-                // This provides a simple interface for CSS where we can
-                // just set a "step" magnitude via "--jsutification-step".
-                // CAUTION: step sizes only appear to be the same, because of
-                // min/max for each parameter and the composition of all
-                // parameters, the actual difference a step makes changes.
-            , narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor)
-            , wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor)
-            , xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
-            , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
-            , xtraStepSize = options.XTRA
-                        ? Math.max(
-                                xtraNarrowingRange / narrowingStops,
-                                xtraWideningRange / wideningStops
-                                )
-                        : 0
-            , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
-            , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
-            , trackingStepSize = options.letterSpacing
-                        ? Math.max(
-                                trackingNarrowingRange / narrowingStops,
-                                trackingWideningRange / wideningStops
-                                )
-                        : 0
-            , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
-            , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
-            , wordspaceStepSize = options.wordSpacing
-                        ? Math.max(
-                                wordspaceNarrowingRange / narrowingStops,
-                                wordspaceWideningRange / wideningStops
-                            )
-                        : 0
-            ;
-            elem.style.setProperty('--justification-step-xtra', `${xtraStepSize}`);
-            elem.style.setProperty('--justification-xtra-min', `${xtraMin}`);
-            elem.style.setProperty('--justification-xtra-default', `${xtraDefault}`);
-            elem.style.setProperty('--justification-xtra-max', `${xtraMax}`);
+              , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
+              , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
+              , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
+              // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
+              // seems to work fine and is noticeably quicker,
+              , stopsFidelityFactor = 1
+              ;
+                  // To be able to use a scale, where step/unit size is the same
+                  // between narrowing and widening, the last possible step of each
+                  // parameter will be a the decimal partial step and then be
+                  // clipped by min/max.
+                  // This provides a simple interface for CSS where we can
+                  // just set a "step" magnitude via "--jsutification-step".
+                  // CAUTION: step sizes only appear to be the same, because of
+                  // min/max for each parameter and the composition of all
+                  // parameters, the actual difference a step makes changes.
+            narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor);
+            wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor);
+            let xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
+              , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
+              , xtraStepSize = options.XTRA
+                          ? Math.max(
+                                  xtraNarrowingRange / narrowingStops,
+                                  xtraWideningRange / wideningStops
+                                  )
+                          : 0
+              , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
+              , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
+              , trackingStepSize = options.letterSpacing
+                          ? Math.max(
+                                  trackingNarrowingRange / narrowingStops,
+                                  trackingWideningRange / wideningStops
+                                  )
+                          : 0
+              , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
+              , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
+              , wordspaceStepSize = options.wordSpacing
+                          ? Math.max(
+                                  wordspaceNarrowingRange / narrowingStops,
+                                  wordspaceWideningRange / wideningStops
+                              )
+                          : 0
+              ;
+            setProperty('--justification-step-xtra', `${xtraStepSize}`);
+            setProperty('--justification-xtra-min', `${xtraMin}`);
+            setProperty('--justification-xtra-default', `${xtraDefault}`);
+            setProperty('--justification-xtra-max', `${xtraMax}`);
 
             if(modeKey !== 'pull') {
-                elem.style.setProperty('--justification-step-tracking', `${trackingStepSize}`);
-                elem.style.setProperty('--justification-tracking-min', `${trackingMin}`);
-                elem.style.setProperty('--justification-tracking-default', `${trackingDefault}`);
-                elem.style.setProperty('--justification-tracking-max', `${trackingMax}`);
+                setProperty('--justification-step-tracking', `${trackingStepSize}`);
+                setProperty('--justification-tracking-min', `${trackingMin}`);
+                setProperty('--justification-tracking-default', `${trackingDefault}`);
+                setProperty('--justification-tracking-max', `${trackingMax}`);
             }
 
-            elem.style.setProperty('--justification-step-wordspace', `${wordspaceStepSize}`);
-            elem.style.setProperty('--justification-wordspace-min', `${wordspaceMin}`);
-            elem.style.setProperty('--justification-wordspace-default', `${wordspaceDefault}`);
-            elem.style.setProperty('--justification-wordspace-max', `${wordspaceMax}`);
+            setProperty('--justification-step-wordspace', `${wordspaceStepSize}`);
+            setProperty('--justification-wordspace-min', `${wordspaceMin}`);
+            setProperty('--justification-wordspace-default', `${wordspaceDefault}`);
+            setProperty('--justification-wordspace-max', `${wordspaceMax}`);
 
             // This prevents that we apply "empty steps", that don't change anything,
             // since we can separately turn off the justification parameters.
@@ -1848,9 +1792,8 @@ function _initializeLineHandling(elem, modeKey, options) {
                 effectiveWideningStops = 0;
             // console.log('effectiveNarrowingStops, effectiveWideningStops:'
             //                  , effectiveNarrowingStops, effectiveWideningStops);
-
-            elem.style.setProperty('--justification-narrowing-stops', `${effectiveNarrowingStops}`);
-            elem.style.setProperty('--justification-widening-stops', `${effectiveWideningStops}`);
+            narrowingStops = effectiveNarrowingStops;
+            wideningStops = effectiveWideningStops;
             break;
         case "main":
                  // This value should be in sync with --font-width in any
@@ -1866,38 +1809,33 @@ function _initializeLineHandling(elem, modeKey, options) {
               // and may even visibly create an "uneven" edge.
               , wdthStepSize = 1
               ;
-
-            elem.style.setProperty('--justification-narrowing-stops', (wdthDefault - wdthMin) / wdthStepSize);
-            elem.style.setProperty('--justification-widening-stops', (wdthMax - wdthDefault) / wdthStepSize);
-            elem.style.setProperty('--line-length-wdth-min', wdthMin);
-            elem.style.setProperty('--line-length-wdth-default', wdthDefault);
-            elem.style.setProperty('--line-length-step-wdth', wdthStepSize);
-            elem.style.setProperty('--line-length-wdth-max', wdthMax);
+            narrowingStops = (wdthDefault - wdthMin) / wdthStepSize;
+            // false turns off widening completely
+            wideningStops = ((wdthMax - wdthDefault) / wdthStepSize) || false;
+            interLineHarmonizationFactor = 0.5;
+            setProperty('--line-length-wdth-min', wdthMin);
+            setProperty('--line-length-wdth-default', wdthDefault);
+            setProperty('--line-length-step-wdth', wdthStepSize);
+            setProperty('--line-length-wdth-max', wdthMax);
             break;
         default:
-            elem.style.setProperty('--justification-narrowing-stops', '0');
-            elem.style.setProperty('--justification-widening-stops', '0');
-
+            narrowingStops = 0;
+            wideningStops = 0;
             break;
     }
-}
 
-function _getLineHandlingGenetator(modeKey) {
-    let lineHandlingGenerator;
-    switch(modeKey) {
-        case "main":
-            lineHandlingGenerator = _firstLineForAll;
-            break;
-        case "pull":
-        case "body":
-        case "sub":
-        default:
-            // Default by legacy.
-            lineHandlingGenerator = _justifyInlines;
-    }
-    return lineHandlingGenerator;
-}
 
+        // bind some args to the inner generator
+    let justifyLinesGenerator = carryOverElement=>
+                            _justifyLines(carryOverElement,
+                                        [narrowingStops, wideningStops],
+                                        interLineHarmonizationFactor)
+        // bind the inner generator to the outer generator
+      , lineHandlingGenerator = notBlockNodes=>
+                    _justifyInlines(notBlockNodes, justifyLinesGenerator)
+      ;
+    return [lineHandlingGenerator, properties];
+}
 
 // skip === [skipSelector, skipClass]
 function* _justifyNextGenGenerator(elem, skip, options) {
@@ -1928,22 +1866,26 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     let fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
       , [inheritedFontSpecKey] = getComputedPropertyValues(elem, '--font-spec-key')
       , fontSpecChanged = fontSpecKey !== inheritedFontSpecKey
-      , lineHandlingGenerator = _getLineHandlingGenetator(modeKey)
+      , [lineHandlingGenerator, elementProperties] = _getLineHandlingParameters(elem, modeKey, options)
       ;
 
     if(fontSpecChanged) {
+        // initialize
         console.log('Switch to font-spec:', fontSpecKey, 'from:', inheritedFontSpecKey || '(none)'); //, 'in', elem, ...elem.classList);
         elem.classList.add(_JUSTIFICATION_HOST_CLASS);
         // This is only for the check above, it doesn't change the font
         // spec. Also, it makes use of the CSS inhertance of custom
         // properties.
-        // FIXME: it would still be good to remove it again!
         elem.style.setProperty('--font-spec-key', fontSpecKey);
-        _initializeLineHandling(elem, modeKey, options);
+        // This is removed in unjustify.
+        let modeClass = `${_LINE_HANDLING_MODE_CLASS_PREFIX}${modeKey}`;
+        elem.classList.add(modeClass);
+        for(let [prop, val] of elementProperties)
+            elem.style.setProperty(prop, val);
     }
 
     let t0 = performance.now();
-    let total = yield* _justifyBlockElement(elem, lineHandlingGenerator, skip, options);
+    let total = yield* _justifyBlockElement(elem, skip, lineHandlingGenerator, options);
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
 
@@ -2079,8 +2021,6 @@ export class JustificationController{
                                 , '--justification-wordspace-min'
                                 , '--justification-wordspace-default'
                                 , '--justification-wordspace-max'
-                                , '--justification-narrowing-stops'
-                                , '--justification-widening-stops'
                                 , '--font-spec-key'
                                 , '--line-length-wdth-min'
                                 , '--line-length-wdth-default'

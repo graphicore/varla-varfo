@@ -844,7 +844,11 @@ i, cite, em, var, dfn {
  * initial will trigger the fallback.
  */
 .runion-justification-host .runion-line,
-.runion-justification-host .justification-context-block * {
+.runion-justification-host .justification-context-block,
+.runion-justification-host .justification-context-block *,
+/* Looking at e.g. h1 .runion-justification-host === .justification-context-block i.e.: */
+.runion-justification-host.justification-context-block *
+{
     /* word-spacing, when using a <length>:
      *          Specifies extra spacing in addition to the intrinsic
      *          inter-word spacing defined by the font.
@@ -852,9 +856,9 @@ i, cite, em, var, dfn {
     word-spacing: calc(var(--word-space-size) * var(--dynamic-word-space, var(--word-space)));
 }
 
-.line_handling_mode-body *,
-.line_handling_mode-pull *,
-.line_handling_mode-sub * {
+.line_handling_mode-body, .line_handling_mode-body *,
+.line_handling_mode-pull, .line_handling_mode-pull *,
+.line_handling_mode-sub, .line_handling_mode-sub * {
      --dynamic-word-space: clamp(
             var(--justification-wordspace-min),
             calc( var(--justification-wordspace-default) + var(--justification-step) * var(--justification-step-wordspace)),
@@ -871,9 +875,15 @@ i, cite, em, var, dfn {
             var(--justification-xtra-max)
         );
     --dynamic-font-width: initial;
+    --inter-line-harmonization-factor: initial;
 }
 
-.line_handling_mode-main * {
+.line_handling_mode-pull, .line_handling_mode-pull * {
+    --dynamic-letter-space: initial;
+}
+
+.line_handling_mode-main, .line_handling_mode-main * {
+    --inter-line-harmonization-factor: 0.5;
     --dynamic-letter-space: initial;
     --dynamic-word-space: initial;
     --dynamic-font-xtra: initial;
