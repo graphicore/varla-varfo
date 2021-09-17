@@ -1100,7 +1100,7 @@ function _getFontSpecKey(referenceElement) {
 }
 
 
-function* _findAndJustifyLineByNarrowing(findLinesArguments, stops, firstLine,
+function* _findLineApplyNarrowing(findLinesArguments, stops, firstLine,
                                                 secondLine, isInitialLine, initialStep=0) {
     let spans = [], nodes
       , bothLinesTextContent
@@ -1334,7 +1334,7 @@ function _setLineColorCode(lineElements, adjustmentStep, narrowingStops, widenin
     _setPropertyToLine(lineElements, '--line-color-code', hslColor);
 }
 
-function _justifyLineByWidening(stops, lineElements, container, options=null) {
+function _applyLineWidening(stops, lineElements, container) {
     let lineRange = new Range()
       , firstNode = lineElements[0]
       , lastNode = lineElements[lineElements.length-1]
@@ -1417,7 +1417,7 @@ function _isLineBreaking(element) {
     //      display: block;
     // }
     // The line finding algorithm will do the right thing earlier
-    // in _justifyBlockElement.
+    // in _blockHandler.
     //
     // On the other hand with a CSS rule like this:
     //
@@ -1431,12 +1431,7 @@ function _isLineBreaking(element) {
     return false;
 }
 
-/*
- * Return a new line or null if there's no further line left.
- * lastLine is the last returned line, after it, the search for the
- * next line must begin.
- */
-function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]
+function* _linesGenerator(carryOverElement, [narrowingStops, wideningStops]
                       , interLineHarmonizationFactor) {
     let lastLine = null
       , lastStep = 0
@@ -1521,7 +1516,7 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]
             [firstLine, secondLine] = lines;
 
             let isNarrowAdjusted
-              ,  gen = _findAndJustifyLineByNarrowing(
+              ,  gen = _findLineApplyNarrowing(
                                 findLinesArguments, narrowingStops, firstLine,
                                 secondLine, isInitialLine, initialStep)
               , result = null
@@ -1535,7 +1530,7 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]
             // Allow widening when lastStep < 0 even if wideningStops
             // is zero, because we can widen within the narrowing range.
             if(!isNarrowAdjusted && wideningStops !== false)
-               lastStep = _justifyLineByWidening(wideningStops, lastLine, carryOverElement);
+               lastStep = _applyLineWidening(wideningStops, lastLine, carryOverElement);
             _setLineColorCode(lastLine, lastStep, narrowingStops, wideningStops || 0);
             yield lastLine;
         }
@@ -1558,7 +1553,7 @@ function* _justifyLines(carryOverElement, [narrowingStops, wideningStops]
 }
 
 // This a lot like a decorator of the justifyLinesGenerator.
-function* _justifyInlines(notBlockNodes, justifyLinesGenerator) {
+function* _inlinesHandler(linesGenerator, notBlockNodes) {
     let firstNotBlock = notBlockNodes[0]
       , lastNotBlock = notBlockNodes[notBlockNodes.length-1]
       , parent = firstNotBlock.parentElement
@@ -1584,17 +1579,17 @@ function* _justifyInlines(notBlockNodes, justifyLinesGenerator) {
 
     let carryOverElement = _createIsolatedBlockContextElement(notBlockNodes)
       , i = 0
-      , justifyLines = justifyLinesGenerator(carryOverElement)
+      , linesGen = linesGenerator(carryOverElement)
       ;
     while(true) {
-        let result = justifyLines.next();
+        let result = linesGen.next();
         if(result.done)
             break;
         // not used, but just to yield something
         yield result.value;
         i++;
         if(i > Infinity)
-            throw new Error('HALT FOR DEV!!! ' + i + ' (_justifyInlines)');
+            throw new Error('HALT FOR DEV!!! ' + i + ' (_inlinesHandler)');
     }
     // NOTE: this could be in a finally clause, however currently for
     // debugging it's better when the carryOverElement stays available,
@@ -1611,7 +1606,7 @@ function* _justifyInlines(notBlockNodes, justifyLinesGenerator) {
     range.deleteContents();
 }
 
-function* _justifyBlockElement(elem, [skipSelector, skipClass], lineHandlingGenerator, options) {
+function* _blockHandler(elem, [skipSelector, skipClass], options, inlinesHandler) {
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
@@ -1635,19 +1630,18 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], lineHandlingGene
                 if(notBlocks.length) {
                     // also change the elements in place...
                     let t0 = performance.now();
-                    yield* lineHandlingGenerator(notBlocks);
-                    // for(let _ of lineHandlingGenerator(notBlocks)){};
+                    yield* inlinesHandler(notBlocks);
+                    // for(let _ of inlinesHandler(notBlocks)){};
                     total += (performance.now() - t0);
                     notBlocks = [];
-                    yield ['DONE lineHandlingGenerator'];
+                    yield ['DONE inlinesHandler'];
                     //if(i > 9)
-                    //    throw new Error('HALT FOR DEV! XXX DONE lineHandlingGenerator');
+                    //    throw new Error('HALT FOR DEV! XXX DONE inlinesHandler');
                 }
                 if(isBreaking) {/*pass*/}
                 else if(!skip) {
                     // changes the node in place
-                    total += yield* _justifyNextGenGenerator(node, [skipSelector, skipClass], options);
-
+                    total += yield* _lineTreatmentGenerator(node, [skipSelector, skipClass], options);
                 }
                 else if(skipClass)
                     node.classList.add(skipClass);
@@ -1660,8 +1654,8 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], lineHandlingGene
     }
     if(notBlocks.length) {
         let t0 = performance.now();
-        yield* lineHandlingGenerator(notBlocks);
-        // for(let _ of lineHandlingGenerator(notBlocks)){};
+        yield* inlinesHandler(notBlocks);
+        // for(let _ of inlinesHandler(notBlocks)){};
         total += (performance.now() - t0);
     }
     // Makes it "white-space: nowrap;" to force some in fringe-cases
@@ -1669,7 +1663,6 @@ function* _justifyBlockElement(elem, [skipSelector, skipClass], lineHandlingGene
     elem.classList.add('runion-justified-block');
     return total;
 }
-
 
 function _getWordSpaceForElement(elem) {
     // assert CSS word-spacing === normal
@@ -1688,7 +1681,7 @@ function _getWordSpaceForElement(elem) {
 const _JUSTIFICATION_HOST_CLASS = 'runion-justification-host'
     , _LINE_HANDLING_MODE_CLASS_PREFIX = 'line_handling_mode-';
 
-function _getLineHandlingParameters(elem, modeKey, options) {
+function _getLineTreatmentParameters(elem, modeKey, options) {
     // This is removed in unjustify.
     var properties = []
       , setProperty = (name, val)=>properties.push([name, val])
@@ -1826,19 +1819,19 @@ function _getLineHandlingParameters(elem, modeKey, options) {
 
 
         // bind some args to the inner generator
-    let justifyLinesGenerator = carryOverElement=>
-                            _justifyLines(carryOverElement,
+    let linesGenerator = carryOverElement=>
+                            _linesGenerator(carryOverElement,
                                         [narrowingStops, wideningStops],
                                         interLineHarmonizationFactor)
         // bind the inner generator to the outer generator
-      , lineHandlingGenerator = notBlockNodes=>
-                    _justifyInlines(notBlockNodes, justifyLinesGenerator)
+      , inlinesHandler = notBlockNodes=>
+                    _inlinesHandler(linesGenerator, notBlockNodes)
       ;
-    return [lineHandlingGenerator, properties];
+    return [inlinesHandler, properties];
 }
 
 // skip === [skipSelector, skipClass]
-function* _justifyNextGenGenerator(elem, skip, options) {
+function* _lineTreatmentGenerator(elem, skip, options) {
         // FIXME: * Ideally these modules will select and configure the
         //          code to run, so this can be configured per publication/
         //          target/website. But that will need a bit more maturing
@@ -1866,7 +1859,7 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     let fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
       , [inheritedFontSpecKey] = getComputedPropertyValues(elem, '--font-spec-key')
       , fontSpecChanged = fontSpecKey !== inheritedFontSpecKey
-      , [lineHandlingGenerator, elementProperties] = _getLineHandlingParameters(elem, modeKey, options)
+      , [inlinesHandler, elementProperties] = _getLineTreatmentParameters(elem, modeKey, options)
       ;
 
     if(fontSpecChanged) {
@@ -1885,15 +1878,13 @@ function* _justifyNextGenGenerator(elem, skip, options) {
     }
 
     let t0 = performance.now();
-    let total = yield* _justifyBlockElement(elem, skip, lineHandlingGenerator, options);
+    let total = yield* _blockHandler(elem, skip, options, inlinesHandler);
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
 
-
-
-    console.log(`time in _justifyBlockElement ${(t1-t0) /1000} s`);
-    console.log(`time in _justifyInlines ${total/1000} s`);
-    yield ['DONE _justifyBlockElement'];
+    console.log(`time in _blockHandler ${(t1-t0) /1000} s`);
+    console.log(`time in _inlinesHandler ${total/1000} s`);
+    yield ['DONE _blockHandler'];
     return total;
 }
 
@@ -1957,7 +1948,7 @@ export class JustificationController{
             if(!this._gen) {
                 this._reportStatus('init');
                 this._unjustify();
-                this._gen = _justifyNextGenGenerator(this._elem, this._skip, this._options);
+                this._gen = _lineTreatmentGenerator(this._elem, this._skip, this._options);
             }
             else
                 this._reportStatus('continue');
