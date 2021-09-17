@@ -9,7 +9,7 @@ styles:
 ---
 
 
-Size wise, typeface families have a long history of short spans of size masters in metal type, a brief history in early digital systems of multiple masters for various resolutions, and a flourishing of families from a broad range of masters in PostScript and then OpenType.
+Size wise, typeface families have a long history of small families. style-wise, with many sizes of metal type, a brief history in early digital systems of multiple masters for various resolutions, a flourishing of families with a broad range of styles and few size masters in PostScript. Then OpenType continued the PostScript tradition, until variable fonts.
 
 In early metal types, a set of matrices that covered a short span of sizes from 6 to 11 points was common for a text typeface family. In later hand-set metal types, a family could be so useful and popular as to receive a wide range of sizes, such as from 10 to 96 points.
 
