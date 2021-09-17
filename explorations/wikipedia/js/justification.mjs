@@ -1315,8 +1315,7 @@ function _setPropertyToLine(lineElements, name, value) {
 }
 
 function _adjustLine(lineElements, adjustmentStep) {
-    // FIXME: --adjustment-step?
-    _setPropertyToLine(lineElements, '--justification-step', adjustmentStep);
+    _setPropertyToLine(lineElements, '--line-adjust-step', adjustmentStep);
 }
 
 function _setLineColorCode(lineElements, adjustmentStep, narrowingStops, wideningStops) {
@@ -1376,9 +1375,9 @@ function _applyLineWidening(stops, lineElements, container) {
     if(lastNode.classList.contains('r00-l-hyphen'))
         lineText +=  '-';
 
-        // FIXME: using --justification-step as a start value is only
+        // FIXME: using --line-adjust-step as a start value is only
         // interesting for the special case not for the general!
-    let readStep = ()=>parseFloat(getPropertyFromLine('--justification-step')) || 0
+    let readStep = ()=>parseFloat(getPropertyFromLine('--line-adjust-step')) || 0
       , generators = []
       ;
 
@@ -1449,7 +1448,7 @@ function* _linesGenerator(carryOverElement, [narrowingStops, wideningStops]
             initialStep = Math.round(lastStep * interLineHarmonizationFactor);
             initialStep = Math.min(wideningStops, Math.max(-narrowingStops, initialStep));
             // Set this for the whole parent as the base to operate on.
-            carryOverElement.style.setProperty('--justification-step', initialStep);
+            carryOverElement.style.setProperty('--line-adjust-step', initialStep);
         }
         let lines = []
           , firstLine = null
@@ -1749,22 +1748,22 @@ function _getLineTreatmentParameters(elem, modeKey, options) {
                               )
                           : 0
               ;
-            setProperty('--justification-step-xtra', `${xtraStepSize}`);
-            setProperty('--justification-xtra-min', `${xtraMin}`);
-            setProperty('--justification-xtra-default', `${xtraDefault}`);
-            setProperty('--justification-xtra-max', `${xtraMax}`);
+            setProperty('--line-adjust-step-xtra', `${xtraStepSize}`);
+            setProperty('--line-adjust-xtra-min', `${xtraMin}`);
+            setProperty('--line-adjust-xtra-default', `${xtraDefault}`);
+            setProperty('--line-adjust-xtra-max', `${xtraMax}`);
 
             if(modeKey !== 'pull') {
-                setProperty('--justification-step-tracking', `${trackingStepSize}`);
-                setProperty('--justification-tracking-min', `${trackingMin}`);
-                setProperty('--justification-tracking-default', `${trackingDefault}`);
-                setProperty('--justification-tracking-max', `${trackingMax}`);
+                setProperty('--line-adjust-step-tracking', `${trackingStepSize}`);
+                setProperty('--line-adjust-tracking-min', `${trackingMin}`);
+                setProperty('--line-adjust-tracking-default', `${trackingDefault}`);
+                setProperty('--line-adjust-tracking-max', `${trackingMax}`);
             }
 
-            setProperty('--justification-step-wordspace', `${wordspaceStepSize}`);
-            setProperty('--justification-wordspace-min', `${wordspaceMin}`);
-            setProperty('--justification-wordspace-default', `${wordspaceDefault}`);
-            setProperty('--justification-wordspace-max', `${wordspaceMax}`);
+            setProperty('--line-adjust-step-wordspace', `${wordspaceStepSize}`);
+            setProperty('--line-adjust-wordspace-min', `${wordspaceMin}`);
+            setProperty('--line-adjust-wordspace-default', `${wordspaceDefault}`);
+            setProperty('--line-adjust-wordspace-max', `${wordspaceMax}`);
 
             // This prevents that we apply "empty steps", that don't change anything,
             // since we can separately turn off the justification parameters.
@@ -1791,7 +1790,7 @@ function _getLineTreatmentParameters(elem, modeKey, options) {
         case "main":
                  // This value should be in sync with --font-width in any
                  // case, otherwise the default deviates and that can
-                 // confuse the algorithm. This is because a --justification-step
+                 // confuse the algorithm. This is because a --line-adjust-step
                  // of 0 would not match the default, which is expected.
             let wdthDefault = parseFloat(getComputedPropertyValues(elem, '--font-width')[0])
                 // FIXME: the range of 25 to 151 is specific for RobotoFlex
@@ -1806,10 +1805,10 @@ function _getLineTreatmentParameters(elem, modeKey, options) {
             // false turns off widening completely
             wideningStops = ((wdthMax - wdthDefault) / wdthStepSize) || false;
             interLineHarmonizationFactor = 0.5;
-            setProperty('--line-length-wdth-min', wdthMin);
-            setProperty('--line-length-wdth-default', wdthDefault);
-            setProperty('--line-length-step-wdth', wdthStepSize);
-            setProperty('--line-length-wdth-max', wdthMax);
+            setProperty('--line-adjust-wdth-min', wdthMin);
+            setProperty('--line-adjust-wdth-default', wdthDefault);
+            setProperty('--line-adjust-step-wdth', wdthStepSize);
+            setProperty('--line-adjust-wdth-max', wdthMax);
             break;
         default:
             narrowingStops = 0;
@@ -2000,23 +1999,23 @@ export class JustificationController{
             }
             for(let propertyName of [
                                   '--word-space-size'
-                                , '--justification-step-xtra'
-                                , '--justification-xtra-min'
-                                , '--justification-xtra-default'
-                                , '--justification-xtra-max'
-                                , '--justification-step-tracking'
-                                , '--justification-tracking-min'
-                                , '--justification-tracking-default'
-                                , '--justification-tracking-max'
-                                , '--justification-step-wordspace'
-                                , '--justification-wordspace-min'
-                                , '--justification-wordspace-default'
-                                , '--justification-wordspace-max'
+                                , '--line-adjust-step-xtra'
+                                , '--line-adjust-xtra-min'
+                                , '--line-adjust-xtra-default'
+                                , '--line-adjust-xtra-max'
+                                , '--line-adjust-step-tracking'
+                                , '--line-adjust-tracking-min'
+                                , '--line-adjust-tracking-default'
+                                , '--line-adjust-tracking-max'
+                                , '--line-adjust-step-wordspace'
+                                , '--line-adjust-wordspace-min'
+                                , '--line-adjust-wordspace-default'
+                                , '--line-adjust-wordspace-max'
                                 , '--font-spec-key'
-                                , '--line-length-wdth-min'
-                                , '--line-length-wdth-default'
-                                , '--line-length-step-wdth'
-                                , '--line-length-wdth-max'
+                                , '--line-adjust-wdth-min'
+                                , '--line-adjust-wdth-default'
+                                , '--line-adjust-step-wdth'
+                                , '--line-adjust-wdth-max'
                                 ])
                 elem.style.removeProperty(propertyName);
         }

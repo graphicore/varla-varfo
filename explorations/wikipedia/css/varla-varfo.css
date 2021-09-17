@@ -860,19 +860,19 @@ i, cite, em, var, dfn {
 .line_handling_mode-pull, .line_handling_mode-pull *,
 .line_handling_mode-sub, .line_handling_mode-sub * {
      --dynamic-word-space: clamp(
-            var(--justification-wordspace-min),
-            calc( var(--justification-wordspace-default) + var(--justification-step) * var(--justification-step-wordspace)),
-            var(--justification-wordspace-max)
+            var(--line-adjust-wordspace-min),
+            calc( var(--line-adjust-wordspace-default) + var(--line-adjust-step) * var(--line-adjust-step-wordspace)),
+            var(--line-adjust-wordspace-max)
         );
     --dynamic-letter-space: clamp(
-            var(--justification-tracking-min),
-            calc( var(--justification-tracking-default) + var(--justification-step) * var(--justification-step-tracking)),
-            var(--justification-tracking-max)
+            var(--line-adjust-tracking-min),
+            calc( var(--line-adjust-tracking-default) + var(--line-adjust-step) * var(--line-adjust-step-tracking)),
+            var(--line-adjust-tracking-max)
         );
     --dynamic-font-xtra: clamp(
-            var(--justification-xtra-min),
-            calc( var(--justification-xtra-default) + var(--justification-step) * var(--justification-step-xtra)),
-            var(--justification-xtra-max)
+            var(--line-adjust-xtra-min),
+            calc( var(--line-adjust-xtra-default) + var(--line-adjust-step) * var(--line-adjust-step-xtra)),
+            var(--line-adjust-xtra-max)
         );
     --dynamic-font-width: initial;
     --inter-line-harmonization-factor: initial;
@@ -888,9 +888,9 @@ i, cite, em, var, dfn {
     --dynamic-word-space: initial;
     --dynamic-font-xtra: initial;
     --dynamic-font-width: clamp(
-            var(--line-length-wdth-min),
-            calc( var(--line-length-wdth-default) + var(--justification-step) * var(--line-length-step-wdth)),
-            var(--line-length-wdth-max)
+            var(--line-adjust-wdth-min),
+            calc( var(--line-adjust-wdth-default) + var(--line-adjust-step) * var(--line-adjust-step-wdth)),
+            var(--line-adjust-wdth-max)
         );
 }
 /* FIXME: should probably be handled differently, e.g. via a custom property
