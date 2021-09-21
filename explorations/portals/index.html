@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html id="page_portal-testbed" class="page_portal-testbed"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Portal Testbed - iframe</title>
+
+<!-- our entry point --->
+<script async type="module" src="./main.mjs"></script>
+<link rel="stylesheet" href="./main.css">
+
+</head>
+<body>
+
+<div class="container-toggle-user_settings">
+    <button title="Toggle User Settings Widget" class="toggle-user_settings">⚙</button>
+</div>
+<div class="insert_user_settings"></div>
+
+<!--
+	Some rough ideas:
+
+	slider-> portal width
+	communicate: -> after changing portal width, ask for portal height and
+				adjust... (could become interesting when we start to
+				make media-queries based on height! but then, we just
+				need to set it, not ask what it is ...)
+		height => auto/fit
+
+	zoom-option: 100% 1 iframe csspx = 1 csspx
+				 fit to width: [width (slider?)] uses a transform
+
+				devices, maybe actually a device-emulation using calibrated
+						CSS and actual device sizes! This will set height!
+
+	portal width  [text unit(px, ...) or drag/marquee] [option ]
+	height [text unit(px, ...) or drag/marquee] [option auto-fit (communicate)]
+
+	container-width:
+			portal-width: no overflow
+			[text unit(px, ...) or drag/marquee]: overflow: scroll
+	portal-zoom: fit-to-container, 1:1, scale-to-physical
+
+
+	Device width and height in CSS-Pixel is the main entry.
+	Cannot set different device-pixel-ratios this way, yet, at all, because it
+	won't change when css-transformed; but we don't need to use d-p-r
+	@media queries.
+
+	[x] use calibrated units // DB did not ask for this, but this is another use case!
+
+
+
+	to width and heights:
+			container
+			portal
+
+	ideally, the container never scrolls itself, but it can be used to
+	remove the document flow issues that css `transform: scale()` has.
+
+	transform can be used to make the portal fit to the container:
+		* Either, put a known device css-pixel width and height to the portal
+		and scale to a calibrated, known physical device size to make a
+		good size-proof!
+
+		* put some random/user choice width on the container and make the
+		portal fit into the container, while it's width and height changes.
+		Will look very much like browser zoom, like emulating changes to
+		device-pixel-ratio (but the portal can't use this in media-queries).
+
+		* None: the container has to fit to the portal size.
+-->
+<div class="testbed-subject_container">
+	<iframe id="testbed-subject" src="/varla-varfo/Emsquare/Volume-01/Issue-01/Main-Article.html"></iframe>
+</div>
+</body>
+</html>

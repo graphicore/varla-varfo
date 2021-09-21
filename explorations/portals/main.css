@@ -1,0 +1,10 @@
+@import "../wikipedia/css/varla-varfo.css";
+@import "../wikipedia/css/widgets.css";
+
+#testbed-subject {
+    /* Invert back; the iframe provides it's own
+     * handling of dark mode.
+     */
+    filter: invert(var(--mode-invert, 0))
+
+}

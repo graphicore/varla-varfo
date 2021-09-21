@@ -28,4 +28,5 @@ styles:
 {%- assign _issue_path_part = article_path_parts[-2] -%}
 {%- capture issue -%}{%- include get-number subject=_issue_path_part -%}{%- endcapture -%}
 * Volume {{volume}}, Issue {{issue}}: [{{article.title}}]({{article.url | relative_url }})
-{% endfor %}
+{% endfor -%}
+* [Portal Testing Page](/varla-varfo/explorations/portals/)
