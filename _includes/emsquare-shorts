@@ -1,0 +1,54 @@
+{%- assign has_shorts = false -%}
+{%- assign path_parts = page.path | split: "/" -%}
+{%- assign dir = path_parts | pop | join: "/" -%}
+{%- assign dir_size = dir | size -%}
+{%- assign pages = site.pages | sort_natural: "path" -%}
+
+{%- comment %}
+This will be available in the "figure" include in shorts and luckily
+for us, it doesn't change the global/above namespace that includes this.
+{%- endcomment -%}
+{%- assign figures_relative_prefix = "./shorts/" -%}
+
+{%- for article in pages -%}
+    {%- assign test_path = article.path | slice: 0, dir_size -%}
+    {%- assign article_path_size = article.path | size -%}
+    {%- assign article_rel_path = article.path | slice: dir_size, article_path_size -%}
+    {%- assign article_path_parts = article.path | split: "/" -%}
+    {%- assign article_dir_parts = article_path_parts | pop -%}
+    {%- if test_path != dir or article_dir_parts[-1] != "shorts" -%}
+        {% continue %}
+    {%- endif -%}
+
+    {%- capture short -%}
+    {% include_relative {{ article_rel_path }} %}
+    {%- endcapture -%}
+    {%- if article.title -%}
+      {%- comment %}
+      Removeing the front matter.
+      The presence of article.title implies that the short has front matter.
+      The original issue is, that we need to get the content as an include,
+      so that the liquid is executed, e.g. for "{ % include figure...",
+      which is not happening via article.content and article.output is
+      empty, despite the documentation suggesting it should be there.
+      {% endcomment -%}
+
+      {%- assign short_parts = short | split: "---" %}
+      {%- assign short_parts_size = short_parts | size %}
+      {%- assign short = short_parts | slice: 2, short_parts_size | join "---"-%}
+    {%- endif -%}
+
+    {%- unless has_shorts -%}
+        {%- assign has_shorts = true -%}
+        <aside class="shorts">
+        <h1>Shorts</h1>
+    {%- endunless %}
+            <article class="short">
+            <!-- included: {{article_rel_path}}-->
+            <h2 id="{{ article.title | slugify }}">{{ article.title }}</h2>
+            {{short | markdownify}}
+            </article>
+{% endfor %}
+{%- if has_shorts -%}
+        </aside>
+{%- endif -%}

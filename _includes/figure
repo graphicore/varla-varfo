@@ -19,7 +19,7 @@ NOTE: `alt` is optional and `caption` is its default.
     {%- endif %}
 {%- endcapture -%}
 <figure>
-    <img src="{{ include.src }}" alt="{{alt}}" />
+    <img src="{{ figures_relative_prefix }}{{ include.src }}" alt="{{alt}}" />
     {% comment %} caption is treated as markdown {% endcomment -%}
     <figcaption>{{ include.caption | markdownify }}</figcaption>
 </figure>
