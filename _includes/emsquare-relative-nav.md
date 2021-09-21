@@ -42,5 +42,5 @@ Very specific for articles.
     {%- capture _volume -%}{%- include get-number subject=_volume_path_part -%}{%- endcapture -%}
     {%- assign _issue_path_part = _path_parts[-2] -%}
     {%- capture _issue -%}{%- include get-number subject=_issue_path_part -%}{%- endcapture -%}
-{% increment counter %}. {{label}}  [Volume {{_volume}} — Issue {{_issue}}: {{article.title}}]({{article.url | relative_url}})
+{% increment counter %}. {{label}}  [Volume&nbsp;{{_volume}}&nbsp;— Issue&nbsp;{{_issue}}: {{article.title}}]({{article.url | relative_url}})
 {%- endfor -%}
