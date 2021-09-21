@@ -1,8 +1,3 @@
-header {
-    padding: 2em 0 0 0;
-    --font-size-rem: 2;
-    --font-weight: 600;
-}
 
 h2, h3, h4, h5, h6 {
     /* --js-line-height is expected to be set in the outer element by runion_01 */
@@ -76,10 +71,20 @@ figure .enumeration {
 }
 
 
-header{
-    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
-    margin-inline: calc(1pt * var(--font-size));
+body {
+    margin-inline:  2.6666em;
 }
+header {
+    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
+    padding: 2em 0 0 0;
+    background: var(--background); /* must be done explicitly */
+}
+
+.container-toggle-user_settings:not(#page_portal-testbed *){
+    margin-left: calc(-1pt * 2.6666 * var(--font-size));
+}
+
+
 header .title{
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;

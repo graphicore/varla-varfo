@@ -264,11 +264,13 @@ b, strong {
 
     --dark-link-color: #6f5608;
     --dark-layout-border-color: #a06b27;
+    --dark-background: #000;
 
 
 
     /* default */
-    --background: var(--light-background);
+    --default-background: var(--light-background);
+    --background: var(--default-background);
     --color: var(--light-color);
     --mode-invert: var(--light-mode-invert);
 }
@@ -468,9 +470,13 @@ b, strong {
         /* This is actually the inverted color of what we really want:
          * a nice light sky blue (according to the color-picker: #7b91d4)
          * */
+        --background: var(--dark-background);
         --link-color: var(--dark-link-color);
         --layout-border-color: var(--dark-layout-border-color);
         --mode-invert: var(--dark-mode-invert);
+    }
+    :root * {
+        --background: var(--default-background);
     }
     * {
         --grad-active-animation: var(--grad-animation-name);
@@ -480,12 +486,15 @@ b, strong {
     }
 }
 :root.explicit-dark-mode{
+    --background: var(--dark-background);
     --link-color: var(--dark-link-color);
     --layout-border-color: var(--dark-layout-border-color);
     --mode-invert: var(--dark-mode-invert);
 }
+
 .explicit-dark-mode * {
     --grad-active-animation: var(--grad-animation-name);
+    --background: var(--default-background);
 }
 
 @media (prefers-color-scheme: light){
@@ -496,6 +505,7 @@ b, strong {
         --link-color: var( --light-link-color);
         --layout-border-color: var(--light-layout-border-color);
     }
+
     * {
         --grad-active-animation: no-animation;
     }
