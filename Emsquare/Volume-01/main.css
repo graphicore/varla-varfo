@@ -6,7 +6,11 @@ header {
 
 h2, h3, h4, h5, h6 {
     /* --js-line-height is expected to be set in the outer element by runion_01 */
-    margin-block: calc(1pt * var(--js-line-height) * var(--document-font-size));
+    margin-block-start: calc(1pt * var(--js-line-height) * var(--document-font-size));
+}
+
+.short > h2:first-child{
+    margin-block-start: 0;
 }
 
 nav.relative-navigation ol {
@@ -71,12 +75,17 @@ figure .enumeration {
     --font-weight: 700;
 }
 
-header {
+
+header{
+    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
+    margin-inline: calc(1pt * var(--font-size));
+}
+header .title{
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 
-    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
+    /* inherited from header --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
     --font-weight: 200;
     --line-height: 1.0;
     --font-width: 30;

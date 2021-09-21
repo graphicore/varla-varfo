@@ -15,11 +15,17 @@
     </div>
     <div class="insert_user_settings"></div>
     <header>
-        <span class="main-caption">Emsquare — Volume {{volume}} — Issue {{issue}}</span>
+        <span class="title">Emsquare — Volume {{volume}} — Issue {{issue}}</span>
     </header>
+
+
     <nav class="relative-navigation">
+        {% comment %}
+        TODO: will have to show inly previous link, if available.
         {{ relnav | markdownify }}
+        {% endcomment %}
     </nav>
+
     <main class="{{ page.class }}">
       <article class="runify-01">
         <h1>
@@ -34,8 +40,12 @@
       </article>
     </main>
     <nav class="relative-navigation">
+        {% comment %}
+        TODO: will have to show inly next link, if available.
         {{ relnav | markdownify }}
+        {% endcomment %}
     </nav>
+
     <footer>
           {%- capture footer -%}{%- include emsquare-footer.md -%}{%- endcapture -%}
           {{ footer | markdownify }}

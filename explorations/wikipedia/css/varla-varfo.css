@@ -564,7 +564,8 @@ h1 { /* main headline */
 }
 
 /* subsection headline */
-h2
+h2,
+.shorts h1
 {
     --font-size-rem: 2.3333 ; /* ~ 28 pt @ 12 pt body*/
     --font-weight: 750;
@@ -573,7 +574,8 @@ h2
     --hyphens: none;
 }
 /* sub-subsection headline/"Captionhead" */
-h3
+h3,
+.shorts h2
 {
     --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
     --font-weight: 850;
@@ -584,7 +586,9 @@ h3
 /* h4 is not used in the Typography article, but in other Wikipedia.
  * Also not used in Emsquare
  */
-h4 {
+h4,
+.shorts h3
+ {
 
     --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
     --font-weight: 850;
