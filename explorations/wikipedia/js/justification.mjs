@@ -1433,6 +1433,7 @@ function _isLineBreaking(element) {
 function* _linesGenerator(carryOverElement, [narrowingStops, wideningStops]
                       , interLineHarmonizationFactor) {
     let lastLine = null
+      , stepBeforeLastStep = 0
       , lastStep = 0
       , initialStep = 0
       , isInitialLine = true
@@ -1445,11 +1446,14 @@ function* _linesGenerator(carryOverElement, [narrowingStops, wideningStops]
         // value half between 0 and the previous line, instead of starting
         // with zero. I.e.: interLineHarmonizationFactor = 0.5;
         if(interLineHarmonizationFactor) {
-            initialStep = Math.round(lastStep * interLineHarmonizationFactor);
+            // Harmonize between the two previous lines.
+            initialStep = (stepBeforeLastStep - lastStep) * interLineHarmonizationFactor + lastStep;
             initialStep = Math.min(wideningStops, Math.max(-narrowingStops, initialStep));
             // Set this for the whole parent as the base to operate on.
             carryOverElement.style.setProperty('--line-adjust-step', initialStep);
         }
+        stepBeforeLastStep = lastStep;
+
         let lines = []
           , firstLine = null
           , secondLine = null
