@@ -527,11 +527,15 @@ b, strong {
 }
 
 
-:root{
+:root {
     background: var(--background);
     color: var(--color);
+}
+
+:root > * { /* That's applied to body. */
     filter: invert(var(--mode-invert, 0))
 }
+
 img {
     /* Invert back; this is quite elegant! */
     filter: invert(var(--mode-invert, 0))
