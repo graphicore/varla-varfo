@@ -92,7 +92,8 @@ header .title{
 
     /* inherited from header --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
     --font-weight: 200;
-    --line-height: 1.0;
+    /* Used to be 1.0; but this shouls anyways rather scale down than break. */
+    --line-height: .8;
     --font-width: 30;
     --hyphens: none;
 }

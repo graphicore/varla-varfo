@@ -569,7 +569,15 @@ h1 { /* main headline */
 
     --font-weight: 650;
     --font-width: 85;
-    --line-height: 1.02;
+    /* With .8 this will colide at some widths, but it looks better with
+     * the smaller line gap when it does not. Hence we're searching for a
+     * solution here (e.g. YTRA?).
+     */
+    --line-height: .8; /*1.02;*/
+    /* only when line-height < 1.02 this is required so descenders don't
+     * hit the paragraph below.
+     */
+    margin-block-end: .15em;
     --hyphens: none;
 }
 
