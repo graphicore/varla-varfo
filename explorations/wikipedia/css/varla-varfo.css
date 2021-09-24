@@ -11,6 +11,8 @@
 :root{
     /* can't use this per @font-face rule */
     font-synthesis: none;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
 }
 body {
     margin: 0;
