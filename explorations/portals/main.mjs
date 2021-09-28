@@ -164,8 +164,8 @@ const PORTAL_PROPERTIES_TEMPLATE = `
 <fieldset>
     <legend>Select Page</legend>
     <select class="testbed_subject-select_pages">
-        <option value="/varl-varfo/Emsquare/Volume-01/Issue-01/Main-Article.html" selected> Emsquare — Volume 1 — Issue 1: Space …</option>
-        <option value="/varl-varfo/Emsquare/Volume-01/Issue-02/Main-Article.html" selected> Emsquare — Volume 1 — Issue 2:  Size …</option>
+        <option value="/varla-varfo/Emsquare/Volume-01/Issue-01/Main-Article.html" selected> Emsquare — Volume 1 — Issue 1: Space …</option>
+        <option value="/varla-varfo/Emsquare/Volume-01/Issue-02/Main-Article.html" selected> Emsquare — Volume 1 — Issue 2:  Size …</option>
         <option value="../wikipedia/Typography/firefox_save_page_as/Typography%20-%20Wikipedia.html">Typography - Wikipedia</option>
         <option value="../techniques/variations.html">CSS-Animation Variations</option>
     </select>
