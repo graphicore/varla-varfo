@@ -1062,12 +1062,30 @@ function _fixSynthSub(elem, style/*, cache*/) {
     elem.style.setProperty('--sup-scale', supScale);
 }
 
+const stopsSynthBlockquoteMargins = [
+    /* [fontSize, --sup-scale] */
+    [ 30, 0]
+  , [ 65, 1]
+];
+
+function _fixBlockquoteMargins(elem, style) {
+    if(style.getPropertyValue('--variable-margin') !== '') {
+        // the @keyframe animation is actually supported
+        throw new IsSupported();
+    }
+    let columnWidth = parseFloat(style.getPropertyValue('--column-width-en'))
+      , [/*normalizedColumnWidth*/, [variableMargin]] = _interpolatePiecewise(stopsSynthBlockquoteMargins, columnWidth)
+      ;
+    elem.style.setProperty('--variable-margin', variableMargin);
+}
+
 const _fixCssKeyFramesFunctions = [
     // synth-sub must be first, as grade depends on
     // font-size and this changes font-size.
     ['synth-sub-and-super-script', _fixSynthSub, ['--grad-400', '--grad-700']]
   , ['AmstelVar-grad-by-font-size', _fixGradeAmstelVar, ['--grad-400', '--grad-700']]
   , ['RobotoFlex-grad-by-font-size', _fixGradeRobotoFlex, ['--sup-scale']]
+  , ['blockquote-margins', _fixBlockquoteMargins, ['--variable-margin']]
 ];
 
 function fixCSSKeyframes(document) {

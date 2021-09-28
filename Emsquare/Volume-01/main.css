@@ -113,5 +113,48 @@ blockquote {
     /* --js-line-height is expected to be set the outer line-height */
     margin-block-end: calc(1pt * var(--js-line-height) * var(--document-font-size));
     text-indent: 0;
-    margin-inline: 1.5em 1em;
+    /* These margins shrink depnding on available space.
+     * MAYBE: this must go up to the column/margin definitions algorithm.
+     * Especially the hardcoded values for min/max space are related to
+     * the column widht algorithm.
+     */
+    animation-name: blockquote-margins;
+    animation-duration: 1s;
+    /* max --column-width-en is 65;
+     * min can go down to 0  but a good min is like 30
+     *
+     * @max margin-inline: 1.5em 1em;
+     * @min margin-inline: .5em 0;
+     */
+    --blockquote-margins-min-space: 30;
+    --blockquote-margins-max-space: 65;
+    --blockquote-margins-actual-space: clamp(
+            var(--blockquote-margins-min-space),
+            var(--column-width-en),
+            var(--blockquote-margins-max-space)
+            );
+    --blockquote-margins-animation-progression: calc(
+              (var(--blockquote-margins-actual-space) - var(--blockquote-margins-min-space))
+            / (var(--blockquote-margins-max-space) - var(--blockquote-margins-min-space))
+            );
+
+
+    animation-delay: calc(-1s * var(--blockquote-margins-animation-progression));
+    margin-inline-start: calc(0.5em + 1em * var(--variable-margin));
+    margin-inline-end:   calc(0em + 1em * var(--variable-margin));
+}
+
+@property --variable-margin {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes blockquote-margins {
+    0% { /* <= 30 --column-width-en */
+        --variable-margin:  0;
+    }
+    100% { /* >= 65 --column-width-en */
+        --variable-margin: 1;
+    }
 }
