@@ -209,12 +209,7 @@ class Line {
     }
 }
 
-function _getContainingRect(lineRangeOrNode) {
-    let lineParent = getClosestBlockParent(
-                // if it has a startContainer it's probably a Range
-                // otherwise, assume it is a  Node
-                lineRangeOrNode.startContainer || lineRangeOrNode);
-
+function _getContainingRect(lineRangeOrNode, lineParent) {
     let parentRects = lineParent.getClientRects();
     // expect all of the line to be
 
@@ -227,6 +222,8 @@ function _getContainingRect(lineRangeOrNode) {
       , logs = []
       ;
     for(let rect of parentRects) {
+        if(rect.width === 0 || rect.height === 0)
+            continue;
         // If lineRect is contained in rect we got a hit.
 
         // FIXME: top and bottom tests failed with very small line-space
@@ -247,12 +244,19 @@ function _getContainingRect(lineRangeOrNode) {
                    //     "нок. Отныне создавать книги стало го-"
                    // I got:
                    //      "rig 543.0333557128906 <= 542.3999938964844 false"
+                   //      difference: -0.63336181640625
                    // which is a very small rule violation, but still breaks,
                    // hence, I add a second more forgiving rule:
                    //           rect.right - lineRect.right >= -2
                    // It's not quite clear to me how the browser decides
                    // which magnitude of rule breaking is OK, so this is
                    // so far a game of guessing.
+                   //
+                   // TODO: a "best fit" approach could be better than a
+                   //        definite fit. E.g. where the biggest portion
+                   //        of the area of lineRect is contained.
+                   // Setting -webkit-hyphens: none; for runion lines
+                   // made this check much more relieable again!
                 && (lineRect.right <= rect.right || rect.right - lineRect.right >= -2 )) {
             return [rect, lineParent];
         }
@@ -264,10 +268,10 @@ function _getContainingRect(lineRangeOrNode) {
             parentRects, '\nclosest block parent:', lineParent,
             lineRangeOrNode.getClientRects()
             , 'lineRangeOrNode:', lineRangeOrNode]);
-        logs.push(['top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top]);
-        logs.push(['bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom]);
-        logs.push(['lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left]);
-        logs.push(['rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right]);
+        logs.push(['top', lineRect.top, '>=', rect.top, lineRect.top >= rect.top, 'difference:', rect.top - lineRect.top]);
+        logs.push(['bot', lineRect.bottom, '<=', rect.bottom, lineRect.bottom <= rect.bottom, 'difference:', rect.bottom - lineRect.bottom]);
+        logs.push(['lef', lineRect.left, '>=', rect.left, lineRect.left >= rect.left, 'difference:', rect.left - lineRect.left]);
+        logs.push(['rig', lineRect.right, '<=', rect.right, lineRect.right <= rect.right, 'difference:', rect.right - lineRect.right]);
     }
     for(let line of logs)
         console.log(...line);
@@ -754,11 +758,21 @@ function _createIsolatedBlockContextElement(notBlockNodes) {
     // block elements.
     let block = notBlockNodes[0].parentElement
       , cloned = block.cloneNode(false/*deep*/)
+      , _getFullWidth = elem=>{
+            // Here an issue in Safari occurred where the element had two
+            // client rects, the first had no dimension, i.e. width and
+            // height were 0, for no apparent reason. Previously this just
+            // took the first rect in any case, now we use the first rect
+            // that has a width.
+            for(let rect of elem.getClientRects())
+                if(rect.width) return rect.width;
+            return 0;
+        }
         // In the standard box model, this would be equal to the
         // width or height property of the element + padding + border-width.
         // But if box-sizing: border-box is set for the element this
         // would be directly equal to its width or height.
-      , fullWidth = block.getClientRects()[0].width
+      , fullWidth = _getFullWidth(block)
       , lineLengthAffectingSizes = getElementSizesInPx(block
                                       , 'padding-inline-start'
                                       , 'padding-inline-end'
@@ -1363,17 +1377,17 @@ function _applyLineWidening(stops, lineElements, container) {
             // This will be called a lot and it's *very* expensive!
             // lineRange.getBoundingClientRect() includes also the hyphens
             // added with :after if any!
-            return rightStop  - lineRange.getBoundingClientRect().right;
+            // seems better when filtering out non-dimensional rects.
+            var right = 0;
+            for(let rect of lineRange.getClientRects()) {
+                if(rect.height === 0 || rect.width === 0)
+                    continue;
+                if(rect.right > right)
+                    right = rect.right;
+            }
+            return rightStop - right;
         }
       ;
-
-    // TODO: does not include generic :before and :after content
-    let lineText = _whiteSpaceNormalize(lineRange.toString());
-    // Asking for this class is very specific, but at least it covers
-    // one common pseudo class content case in our scenario.
-
-    if(lastNode.classList.contains('r00-l-hyphen'))
-        lineText +=  '-';
 
         // FIXME: using --line-adjust-step as a start value is only
         // interesting for the special case not for the general!

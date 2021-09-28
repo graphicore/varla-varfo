@@ -968,6 +968,15 @@ i, cite, em, var, dfn {
     white-space: nowrap;
     /* This is the cool when we toggle the color-coded-lines class*/
     transition: background 3s;
+    /* Prevent Safari from displaying hyphens where there should be none.
+     * Safari will hyphenate some lines regardless when they are close
+     * enough to breaking after width-control. This is effectively making
+     * the line with a hyphen within or after the last word.
+     *  But at this point we already create the required hyphenation ourselves,
+     * hence its save and needed to turn it off here and it fixes the
+     * Safari issue.
+     */
+    --hyphens: none;
 }
 
 
@@ -1056,11 +1065,6 @@ i, cite, em, var, dfn {
  * looking for.
  * The heuristic that the adds the hyphen class may still have flaws!
  */
-
-/* Prevent Safari from displaying hyphens where there should be none.*/
-.r00-l-last::after{
-    content: '';
-}
 .runion-line.r00-l-hyphen::after {
     content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
                      doesn't do anything*/
