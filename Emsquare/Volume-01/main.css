@@ -72,19 +72,21 @@ figure .enumeration {
 
 
 body {
-    margin-inline:  2.6666em;
+    --body-margin: 2.6666; /*1 em of the header */
+    margin: 0 calc(1em * var(--body-margin));
 }
+
+
+.container-toggle-user_settings:not(#page_portal-testbed *) {
+    /* Must be moved to the left to be right at the edge. */
+    margin-left: calc(-1pt * var( --body-margin) * var(--font-size));
+}
+
 header {
     --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
     padding: 2em 0 0 0;
     background: var(--background); /* must be done explicitly */
 }
-
-.container-toggle-user_settings:not(#page_portal-testbed *){
-    margin-left: calc(-1pt * 2.6666 * var(--font-size));
-}
-
-
 header .title{
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
