@@ -8,7 +8,7 @@
 
 @font-face {
     font-family: 'AmstelVar';
-    src: url('../fonts/Amstelvar/Amstelvar-Roman[wdth,wght,opsz].ttf') format('truetype');
+    src: url('../fonts/Amstelvar/Amstelvar-Roman[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,wdth,wght,opsz].ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
 
@@ -16,7 +16,7 @@
 
 @font-face {
     font-family: 'AmstelVar';
-    src: url('../fonts/Amstelvar/Amstelvar-Italic[wdth,wght,opsz].ttf') format('truetype');
+    src: url('../fonts/Amstelvar/Amstelvar-Italic[GRAD,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,wdth,wght,opsz].ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
 }
