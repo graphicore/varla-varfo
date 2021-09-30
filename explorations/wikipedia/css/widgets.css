@@ -36,12 +36,15 @@ button.toggle-user_settings {
     border-radius: .25em;
 }
 
-.widgets_container {
+.widgets_container, .widgets_container h3 {
 
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
     --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 
+}
+
+.widgets_container {
     max-width: 27rem;
     border: 1px solid black;
     background: #fffffff4;

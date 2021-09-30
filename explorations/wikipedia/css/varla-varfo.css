@@ -46,6 +46,31 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0;
 }
 
+:root {
+    --body-font-family: AmstelVar;
+    --body-font-grad-animation-name: AmstelVar-grad-by-font-size;
+    /* FIXME: get default --font-xtra (XTRA) value by font-size and font-family
+     *
+     * used to be 520 but making it narrow to work out justification */
+    /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
+     * was 440 and I thought it was tight.
+     */
+    --body-font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --headlines-font-family: RobotoFlex;
+    --headlines-font-xtra: RobotoFlex-grad-by-font-size;
+    --headlines-font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+}
+
+.switched-fonts {
+    --body-font-family: RobotoFlex;
+    --body-font-grad-animation-name: RobotoFlex-grad-by-font-size;
+    --body-font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --headlines-font-family: AmstelVar;
+    --headlines-font-xtra: AmstelVar-grad-by-font-size;
+    --headlines-font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+}
+
+
 /* use :root for custom properties
  * "*" destroys inheritance!
  *
@@ -76,23 +101,14 @@ h1, h2, h3, h4, h5, h6 {
 
 
 /* --font choice/variation settings*/
---font-family: AmstelVar;
---grad-animation-name: AmstelVar-grad-by-font-size;
+--font-family: var(--body-font-family);
+--grad-animation-name: var(--body-grad-animation-name);
+--font-xtra: var(--body-font-xtra);
 
 --font-style: normal; /* oblique is basically broken */
---font-slant: 0;
+--font-slnt: 0;
 --font-weight: 400; /* depending on font/font-family this can go anywhere */
 --font-grade: 0;
-/* FIXME: get default --font-xtra (XTRA) value by font-size and font-family
- *
- * used to be 520 but making it narrow to work out justification */
-/* interestingly, vabro.js suggests to sart at 375 and to max out at 402
- * was 440 and I thought it was tight.
- *
- *
- */
---font-xtra: 562;/* by (xtra, wdth) */
-
 --font-width: 100; /* this goes into wdth */
 
 
@@ -172,7 +188,7 @@ font-weight: var(--x-font-weight);
  * Since "VVFS" is not an axis name, it has no effect on the font display.
  */
 font-variation-settings:
-            "slnt" var(--font-slant),
+            "slnt" var(--font-slnt),
             "wght" var(--x-font-weight),
             "GRAD" var(--x-font-grade),
             "XTRA" var(--dynamic-font-xtra, var(--font-xtra)),
@@ -543,23 +559,10 @@ img {
     filter: invert(var(--mode-invert, 0))
 }
 
-/* Attempts to use the framework to reproduce the original font-settings. */
-#mw-head,
-#mw-panel {
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
-}
-.vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
-    --font-size-rem: 3/4;
-    --line-height: 1.125;
-    word-wrap: break-word;
-}
-
 h1, h2, h3, h4 {
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-family: var(--headlines-font-family);
+    --grad-animation-name: var(--headlines-grad-animation-name);
+    --font-xtra: var(--headlines-font-xtra);
 }
 
 h1 { /* main headline */
@@ -625,9 +628,9 @@ h4,
     /* This functions as the "subhead", but it seems to be:
      * "From Wikipedia, the free encyclopedia" in every case!
      */
-    --font-family: AmstelVar;
-    --grad-animation-name: AmstelVar-grad-by-font-size;
-    --font-xtra: 562; /* look at font spec for defalt value*/
+    --font-family: var(--body-font-family);
+    --grad-animation-name: var(--body-grad-animation-name);
+    --font-xtra: var(--body-font-xtra);
     --font-size-rem: 3/2;
     --font-weight: 400;
 }

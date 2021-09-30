@@ -342,6 +342,7 @@ const GRADE_DARK_MODE_LOCAL_STORAGE_KEY = 'varla-varfo-grade-dark-mode'
     , JUSTIFICATION_OPTION_XTRA_STORAGE_KEY = 'varla-varfo-justification-option-XTRA'
     , JUSTIFICATION_OPTION_LETTERSPACING_STORAGE_KEY = 'varla-varfo-justification-option-letterspacing'
     , JUSTIFICATION_OPTION_WORDSPACING_STORAGE_KEY = 'varla-varfo-justification-option-wordspacing'
+    , SWITCH_FONT_STYLES_STORAGE_KEY = 'varla-varfo-switch-font-styles'
     ;
 
 const PORTAL_AUGMENTATION_TEMPLATE = `
@@ -377,6 +378,18 @@ class PortalAugmentationWidget extends _ContainerWidget {
             return key in defaults ? defaults[key] : notDefDefaultValue;
         }
 
+        let resetJustification = () => {
+            if(this._justificationController.running)
+                this._justificationController.restart();
+            else
+                this._justificationController.cancel();
+
+            // on initilization this is not possible
+            if(this._widgets !== null)
+                this.getWidgetById('justificationRunning')
+                    .setChecked(this._justificationController.running);
+        };
+
         let widgetsConfig = [
             // Line-height algorithm manipuation
             // TODO: it would be propper cool to have a single min-max slider
@@ -401,6 +414,22 @@ class PortalAugmentationWidget extends _ContainerWidget {
                     recalculateLineHeight(min / 100, max / 100);
                     this.getWidgetById('line-height')
                         .displayActualValue(getCurrentLineHeightInPercent());
+                }
+            ],
+            '<hr />',
+            // [checkbox] font-switcheroo
+            [
+               CheckboxWidget, {
+                      klass: `${klass}-switch-font-styles`
+                    , label: 'Switch Font Styles'
+                },
+                false, /* checked: bool */
+                false, /* buttonStyle: bool */
+                SWITCH_FONT_STYLES_STORAGE_KEY,
+                (isOn)=> {
+                    let action = isOn ? 'add' : 'remove';
+                    this._domTool.documentElement.classList[action]('switched-fonts');
+                    resetJustification();
                 }
             ],
             '<hr />',
@@ -480,15 +509,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                       klass: `${klass}-reset-justification`
                     , text: 'reset justification'
                 },
-                () => {
-                    if(this._justificationController.running)
-                        this._justificationController.restart();
-                    else
-                        this._justificationController.cancel();
-
-                    this.getWidgetById('justificationRunning')
-                        .setChecked(this._justificationController.running);
-                }
+                resetJustification
             ],
             '<hr />',
             // [checkbox] grade in dark-mode: on/off default: on

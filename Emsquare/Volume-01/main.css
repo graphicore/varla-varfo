@@ -18,9 +18,9 @@ nav.relative-navigation li {
 }
 
 header, nav, footer, .content-page{
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468;
+    --font-family: var(--headlines-font-family);
+    --grad-animation-name: var(--headlines-grad-animation-name);
+    --font-xtra: var(--headlines-font-xtra);
 }
 footer{
     --font-size-rem: 3/4;
@@ -47,9 +47,9 @@ figure {
      * that influence justification and sets different css custom parameters
      * to the ".runion-justification-host" element.
      */
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-family: var(--headlines-font-family);
+    --grad-animation-name: var(--headlines-grad-animation-name);
+    --font-xtra: var(--headlines-font-xtra);
     /*
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
      * .vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li
@@ -91,9 +91,9 @@ body, header, footer{
     background: var(--background); /* must be done explicitly */
 }
 header .title{
-    --font-family: RobotoFlex;
-    --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-family: var(--headlines-font-family);
+    --grad-animation-name: var(--headlines-grad-animation-name);
+    --font-xtra: var(--headlines-font-xtra);
 
     /* inherited from header --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
     --font-weight: 200;
@@ -107,9 +107,20 @@ header .title{
 
 blockquote {
     /* "pull spec"/pull quotes */
-    --font-family: AmstelVar;
-    --font-style: italic;
-    --font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --font-family: var(--body-font-family);
+    --grad-animation-name: var(--body-grad-animation-name);
+    --font-xtra: var(--body-font-xtra);
+
+    /* FIXME: this is a hack and only works because AmstelVar and RobotoFlex
+     * have no overlap in how to create italic/slanted text:
+     * RobotoFlex, it doesn't have an italic, it has a slnt axis though, -10 is fully slanted.
+     * AmstelVar, it doesn't have a slnt axis, it has an italic font style though.
+     * Using e.g. oblique 10deg in font-style is not yet supported anywhere
+     * so we cannot use it.
+     *
+     */
+    --font-style: italic; /* AmstelVar */
+    --font-slnt: -10; /* RobotoFlex */
     --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
     --font-weight: 200;
     --line-height: 1.06; /* .06 to avoid collisions */

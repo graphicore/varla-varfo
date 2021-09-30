@@ -16,15 +16,35 @@
         ;
 }
 
-.templatequote {
+
+/* Attempts to use the framework to reproduce the original font-settings. */
+#mw-head,
+#mw-panel {
+    /* The UI is never AmstelVar. */
     --font-family: RobotoFlex;
     --grad-animation-name: RobotoFlex-grad-by-font-size;
-    --font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
-    --font-size-rem: 2.6666;
-    --font-weight: 200;
-    --line-height: 1.0;
-    --font-width: 30;
+    --font-xtra: 468;
+}
+.vector-menu-portal .body li, .vector-menu-portal .vector-menu-content li {
+    --font-size-rem: 3/4;
+    --line-height: 1.125;
+    word-wrap: break-word;
+}
 
+/* FIXME: should have the same style as in Emsquare.
+ * Not duplicated and the duplication is incomplete.
+ *
+ */
+.templatequote {
+    --font-family: var(--body-font-family);
+    --grad-animation-name: var(--headlines-grad-animation-name);
+    --font-xtra: var(--headlines-font-xtra);
+    --font-style: italic; /* AmstelVar */
+    --font-slnt: -10; /* RobotoFlex */
+    --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/
+    --font-weight: 200;
+    --line-height: 1.06; /* .06 to avoid collisions */
+    --font-width: 50;
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--js-font-size) * var(--line-height));
     margin-block-end: calc(1pt * var(--js-font-size) * var(--line-height));

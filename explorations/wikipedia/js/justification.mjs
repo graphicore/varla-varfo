@@ -1806,14 +1806,21 @@ function _getLineTreatmentParameters(elem, modeKey, options) {
             wideningStops = effectiveWideningStops;
             break;
         case "main":
-                 // This value should be in sync with --font-width in any
-                 // case, otherwise the default deviates and that can
-                 // confuse the algorithm. This is because a --line-adjust-step
-                 // of 0 would not match the default, which is expected.
-            let wdthDefault = parseFloat(getComputedPropertyValues(elem, '--font-width')[0])
-                // FIXME: the range of 25 to 151 is specific for RobotoFlex
-              , wdthMax = wdthDefault // axis goes up to 151
-              , wdthMin = 25 // axis goes down to 25
+            let [rawWDTHDefault, rawFontFamily] = getComputedPropertyValues(
+                                    elem,  '--font-width', '--font-family')
+                // This value should be in sync with --font-width in any
+                // case, otherwise the default deviates and that can
+                // confuse the algorithm. This is because a --line-adjust-step
+                // of 0 would not match the default, which is expected.
+              , wdthDefault = parseFloat(rawWDTHDefault)
+              , fontFamily = rawFontFamily.trim()
+              , wdthMax = wdthDefault // axis goes up to RobotFlex: 151 AmstelVar: 125
+              // FIXME: we should have these differences defined as data.
+              , spec = {
+                        RobotoFlex: [35 /* axis goes down to 25 */]
+                      , AmstelVar: [50 /* axis goes down to 50 */]
+                }
+              , [wdthMin] = spec[fontFamily]
               // TODO: this should be dependent from absolute font size
               // as a step at a big font size has a bigger absolute effect
               // and may even visibly create an "uneven" edge.
