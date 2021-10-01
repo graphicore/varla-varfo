@@ -493,7 +493,7 @@ b, strong {
         --layout-border-color: var(--dark-layout-border-color);
         --mode-invert: var(--dark-mode-invert);
     }
-    :root * {
+    body * {
         --background: var(--default-background);
     }
     * {
@@ -545,18 +545,31 @@ b, strong {
 }
 
 
-:root {
+:root, body {
     background: var(--background);
     color: var(--color);
 }
 
-:root > * { /* That's applied to body. */
+/* FIXME: I'm not sure why the filter seems to have an influence
+ * on the z-position of the demo controll UI, but it has. This is rather
+ * a dirty fix than having understood the actual reason.
+ */
+body > *:not(.insert_user_settings) {
+    filter: invert(var(--mode-invert, 0))
+}
+.insert_user_settings > * {
     filter: invert(var(--mode-invert, 0))
 }
 
 img {
     /* Invert back; this is quite elegant! */
     filter: invert(var(--mode-invert, 0))
+}
+
+a {
+    text-decoration: none;
+    color: var(--link-color);
+    background: none;
 }
 
 h1, h2, h3, h4 {
