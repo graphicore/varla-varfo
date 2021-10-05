@@ -87,9 +87,6 @@ header {
     padding: 2em 0 0 0;
 }
 
-body, header, footer{
-    background: var(--background); /* must be done explicitly */
-}
 header .title{
     --font-family: var(--headlines-font-family);
     --grad-animation-name: var(--headlines-grad-animation-name);

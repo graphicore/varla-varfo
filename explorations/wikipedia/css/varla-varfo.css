@@ -16,7 +16,6 @@
 }
 body {
     margin: 0;
-    background: inherit;
 }
 
 @font-face {
@@ -273,7 +272,6 @@ b, strong {
 
     --light-link-color: #0645ad;
     --light-layout-border-color: #a7d7f9;
-
     --light-background: #fff;
     --light-color: #000;
 
@@ -283,6 +281,7 @@ b, strong {
     --dark-link-color: #6f5608;
     --dark-layout-border-color: #a06b27;
     --dark-background: #000;
+    --dark-color: #fff;
 
 
 
@@ -489,13 +488,13 @@ b, strong {
          * a nice light sky blue (according to the color-picker: #7b91d4)
          * */
         --background: var(--dark-background);
+        /* Unused because it will be inverted from light-color
+        * --color: var(--dark-color);*/
         --link-color: var(--dark-link-color);
         --layout-border-color: var(--dark-layout-border-color);
         --mode-invert: var(--dark-mode-invert);
     }
-    body * {
-        --background: var(--default-background);
-    }
+
     * {
         --grad-active-animation: var(--grad-animation-name);
     }
@@ -505,14 +504,16 @@ b, strong {
 }
 :root.explicit-dark-mode{
     --background: var(--dark-background);
+    /* Unused because it will be inverted from light-color
+     * --color: var(--dark-color);*/
     --link-color: var(--dark-link-color);
     --layout-border-color: var(--dark-layout-border-color);
     --mode-invert: var(--dark-mode-invert);
 }
 
+.explicit-dark-mode,
 .explicit-dark-mode * {
     --grad-active-animation: var(--grad-animation-name);
-    --background: var(--default-background);
 }
 
 @media (prefers-color-scheme: light){
@@ -550,14 +551,28 @@ b, strong {
     color: var(--color);
 }
 
-/* FIXME: I'm not sure why the filter seems to have an influence
- * on the z-position of the demo controll UI, but it has. This is rather
- * a dirty fix than having understood the actual reason.
+/* Filter influencs the positioning of the demo controll UI and it also
+ * destroys absolute positioning in the wikipedia exploration,
+ * i.e. of the top and left menu.
+ *
+ * Reason:  https://drafts.fxtf.org/filter-effects/#FilterProperty
+ *
+ * A value other than none for the filter property results in the creation
+ * of a containing block for absolute and fixed positioned descendants
+ * unless the element it applies to is a document root element in the
+ * current browsing context.
+ *
+ * However, we can't just invert body either, because in iOS safari the
+ * "safe area" is rendered with body background color, but the filter is
+ * not applied, so body must have the explicit expected color to match
+ * the safe area boxes.
+ *
+ * Overall, the invert approach is a bit hacky, but I like how e.g. the
+ * HTML form ui is responding OK without extra effort.
  */
-body > *:not(.insert_user_settings) {
-    filter: invert(var(--mode-invert, 0))
-}
-.insert_user_settings > * {
+body > *:not(.insert_user_settings, #mw-navigation),
+.insert_user_settings > *, #mw-navigation > *
+ {
     filter: invert(var(--mode-invert, 0))
 }
 

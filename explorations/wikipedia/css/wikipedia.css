@@ -60,7 +60,6 @@ h2, h3, h4, h5, h6 {
 
 body {
     margin: 0;
-    background-color: #f6f6f6;
 }
 
 
@@ -182,7 +181,6 @@ html body.mediawiki .mbox-small {
     border: 1px solid var(--layout-border-color);
     border-right-width: 1px;
     border-right-width: 0;
-    background-color: var(--background);
 }
 .mw-body, #mw-data-after-content {
     margin-left: 10em;
