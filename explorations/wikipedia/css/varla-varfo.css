@@ -138,8 +138,13 @@ h1, h2, h3, h4, h5, h6 {
         + var(--font-size-change-by-distance, 0))
         ;
 
+--letter-space: 0;
+--word-space: 0;/*in fractions of em*/
 
+--hyphens: none;
+}
 
+:root, .runion-01{
 /* FIXME: depending on line-length these should change
  * with runion-01 we have always shorter lines, hence these are not of use
  * anymore:
@@ -150,12 +155,7 @@ h1, h2, h3, h4, h5, h6 {
  * the above, and also the below is likely too static.
  */
 --line-height: var(--js-line-height, 1.3);
---letter-space: 0;
---word-space: 0;/*in fractions of em*/
-
-    --hyphens: none;
 }
-
 /** columns **/
 
 * {
@@ -166,6 +166,7 @@ font-family: var(--font-family);
 font-style: var(--font-style);
 font-size: calc(1pt * var(--font-size));
 letter-spacing: calc(1pt * var(--dynamic-letter-space, var(--letter-space)));
+
 line-height: var(--line-height);
 
 --font-size: calc(var(--font-size-rem, 1) * var(--document-font-size));
