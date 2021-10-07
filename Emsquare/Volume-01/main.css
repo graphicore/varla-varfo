@@ -105,7 +105,7 @@ header .title{
 blockquote {
     /* "pull spec"/pull quotes */
     --font-family: var(--body-font-family);
-    --grad-animation-name: var(--body-grad-animation-name);
+    --grad-animation-name: var(--body-font-grad-animation-name);
     --font-xtra: var(--body-font-xtra);
 
     /* FIXME: this is a hack and only works because AmstelVar and RobotoFlex

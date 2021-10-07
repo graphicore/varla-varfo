@@ -56,7 +56,7 @@ h1, h2, h3, h4, h5, h6 {
      */
     --body-font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     --headlines-font-family: RobotoFlex;
-    --headlines-font-xtra: RobotoFlex-grad-by-font-size;
+    --headlines-font-grad-animation-name: RobotoFlex-grad-by-font-size;
     --headlines-font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 
@@ -65,7 +65,7 @@ h1, h2, h3, h4, h5, h6 {
     --body-font-grad-animation-name: RobotoFlex-grad-by-font-size;
     --body-font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
     --headlines-font-family: AmstelVar;
-    --headlines-font-xtra: AmstelVar-grad-by-font-size;
+    --headlines-font-grad-animation-name: AmstelVar-grad-by-font-size;
     --headlines-font-xtra: 562; /*FIXME: consider full spec, including esp. --font-size (pt)*/
 }
 
@@ -101,7 +101,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* --font choice/variation settings*/
 --font-family: var(--body-font-family);
---grad-animation-name: var(--body-grad-animation-name);
+--grad-animation-name: var(--body-font-grad-animation-name);
 --font-xtra: var(--body-font-xtra);
 
 --font-style: normal; /* oblique is basically broken */
@@ -541,6 +541,7 @@ b, strong {
     --layout-border-color: var(--light-layout-border-color);
 }
 
+.explicit-light-mode,
 .explicit-light-mode * {
     --grad-active-animation: no-animation;
 }
@@ -589,7 +590,7 @@ a {
 
 h1, h2, h3, h4 {
     --font-family: var(--headlines-font-family);
-    --grad-animation-name: var(--headlines-grad-animation-name);
+    --grad-animation-name: var(--headlines-font-grad-animation-name);
     --font-xtra: var(--headlines-font-xtra);
 }
 
@@ -657,7 +658,7 @@ h4,
      * "From Wikipedia, the free encyclopedia" in every case!
      */
     --font-family: var(--body-font-family);
-    --grad-animation-name: var(--body-grad-animation-name);
+    --grad-animation-name: var(--body-font-grad-animation-name);
     --font-xtra: var(--body-font-xtra);
     --font-size-rem: 3/2;
     --font-weight: 400;
