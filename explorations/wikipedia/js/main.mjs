@@ -321,5 +321,5 @@ const config = {
 };
 
 window.onload = ()=>{
-    main(config);
+    main(window, config);
 };

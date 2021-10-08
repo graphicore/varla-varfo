@@ -200,7 +200,7 @@ class PortalPropertiesWidget {
             let changeItem= ()=>{
                 let path= this._uiPortalSelectItem.value.split('.')
                   , item = path.reduce((arr, i)=>arr[i], PORTALS)
-                  , [label, width, height] = item
+                  , [/*label */, width, height] = item
                   ;
                 // keep orientation as it is
                 let currentWidth = parseInt(this._uiWidth.value, 10)
@@ -276,18 +276,54 @@ class PortalPropertiesWidget {
 
 }
 
-function main() {
-    let userSettingsWidget = new WidgetsContainerWidget(
-                    document.querySelector('.insert_user_settings'),
+function main(window) {
+    let userSettingsWidget = null
+      , registeredChildWidgets = new Set()
+      , registerChildWidget = (widget) => {
+            registeredChildWidgets.add(widget);
+            // May require activation:
+            if(userSettingsWidget && userSettingsWidget.isActive)
+                widget.activate('append');
+            // Must be unregistered on destroy:
+            widget.onDestroy(()=>{
+                registeredChildWidgets.delete(widget);
+            });
+        }
+      ;
+    if(window.registerSettingsWidget) {
+        for(let registered of window.registerSettingsWidget)
+            registerChildWidget(registered);
+    }
+    window.registerSettingsWidget = {push: registerChildWidget};
+
+    let document = window.document
+      , userSettingsWidgetContainer = document.querySelector('.insert_user_settings')
+      ;
+    userSettingsWidget = new WidgetsContainerWidget(
+                    userSettingsWidgetContainer,
                     [
                         [PortalPropertiesWidget, document.getElementById('testbed-subject')]
                     ],
-                    false
+                    // No close button, use only the toggle button
+                    // because it also toggles the child widgets.
+                    true
                     );
-    let toggle = (/*evt*/)=>{
-        userSettingsWidget.toggle();
+    let toggle = (/*evt*/)=> {
+        userSettingsWidget.toggle('prepend');
+        for(let widget of registeredChildWidgets) {
+            if(userSettingsWidget.isActive)
+                widget.activate('append');
+            else
+                widget.close();
+        }
+        if(userSettingsWidget.isActive)
+            userSettingsWidgetContainer.classList.add('enabled');
+        else
+            userSettingsWidgetContainer.classList.remove('enabled');
     };
     for(let elem of document.querySelectorAll('.toggle-user_settings'))
         elem.addEventListener('click', toggle);
+    // turn on initially
+    toggle();
 }
-window.onload = main;
+window.onload = ()=>main(window);

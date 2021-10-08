@@ -13,8 +13,5 @@ const config = {
 };
 
 window.onload = ()=>{
-    main(config);
-    let requestFullScreen = evt=>evt.target.requestFullscreen();
-    for(let elem of document.querySelectorAll('figure img'))
-        elem.addEventListener('click', requestFullScreen);
+    main(window, config);
 };

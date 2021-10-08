@@ -18,6 +18,7 @@ export default class WidgetsContainerWidget {
         this._domTool = new DOMTool(this._baseElement.ownerDocument);
         this._isActive = false;
         this._noClose = noClose;
+        this._onDestroyHandlers = [];
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': 'widgets_container'},
             this._noClose ? WIDGETS_CONTAINER_NO_CLOSE_TEMPLATE
@@ -52,10 +53,10 @@ export default class WidgetsContainerWidget {
     get isActive() {
         return this._isActive;
     }
-    activate() {
+    activate(insertionPosition='prepend') {
         if(this._isActive)
             return;
-        this._domTool.insert(this._baseElement, 'prepend', this.container);
+        this._domTool.insert(this._baseElement, insertionPosition, this.container);
         for(let widget of this._widgets)
             if(widget.activate)
                 widget.activate();
@@ -63,7 +64,7 @@ export default class WidgetsContainerWidget {
         this._isActive = true;
     }
     close() {
-        if(!this._isActive || this._noClose)
+        if(!this._isActive)
             return;
         // event listeners are preserved
         this._domTool.removeNode(this.container);
@@ -73,11 +74,14 @@ export default class WidgetsContainerWidget {
 
         this._isActive = false;
     }
-    toggle() {
+    toggle(insertionPosition) {
         if(this._isActive)
             this.close();
         else
-            this.activate();
+            this.activate(insertionPosition);
+    }
+    onDestroy(fn) {
+        this._onDestroyHandlers.push(fn);
     }
     destroy() {
         // Hardly implemented so far, but removing this.container from
@@ -91,6 +95,9 @@ export default class WidgetsContainerWidget {
             if(widget.destroy)
                 widget.destroy();
         this._domTool.removeNode(this.container);
+        for(let fn of this._onDestroyHandlers)
+            fn();
+        this._onDestroyHandlers.splice(0, this._onDestroyHandlers.lengt);  // shouldn't matter anymore.
     }
     reset() {
         for(let widget of this._widgets)

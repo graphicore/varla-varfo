@@ -46,12 +46,8 @@ button.toggle-user_settings {
 
 .widgets_container {
     max-width: 27rem;
-    border: 1px solid black;
     background: #fffffff4;
     padding: .5em 1em;
-    margin: 1em;
-    border-radius: 0.4em;
-    box-shadow: -2px 2px 10px black;
 }
 
 .page_content-item .widgets_container{
@@ -114,19 +110,11 @@ label.user_preferences-user_distance::after {
     margin-block-end: .5em;
 }
 
-#page_portal-testbed,
 :fullscreen::backdrop {
     background: darkgrey;
     --background: darkgrey;
 }
 
-.page_portal-testbed body{
-    background: none;
-}
-
-.page_portal-testbed .widgets_container{
-    margin: 1em;
-}
 #testbed-subject {
     width: 1024px;
     height: 768px;

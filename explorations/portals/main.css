@@ -1,10 +1,56 @@
 @import "../wikipedia/css/varla-varfo.css";
 @import "../wikipedia/css/widgets.css";
 
+
+#page_portal-testbed {
+    background: darkgrey;
+    --background: darkgrey;
+
+    /*
+    flex-direction: row;
+    display: flex;
+    min-height: 100%;
+    */
+}
+
+.page_portal-testbed body {
+    background: none;
+    display: flex;
+    flex: 1;
+}
+
+
+.container-toggle-user_settings{
+    position: absolute;
+    z-index: 99;
+}
+
+.insert_user_settings{
+    display: none;
+}
+.insert_user_settings.enabled {
+    display: initial;
+    /* Also as optical separation when no scroll is required. */
+
+}
+
+.testbed-subject_container,
+.insert_user_settings.enabled {
+    height: 100vh;
+    overflow-y: scroll;
+}
+
+.testbed-subject_container{
+    flex-grow: 1;
+}
+
+.page_portal-testbed .widgets_container{
+}
+
 #testbed-subject {
     /* Invert back; the iframe provides it's own
      * handling of dark mode.
      */
-    filter: invert(var(--mode-invert, 0))
-
+    filter: invert(var(--mode-invert, 0));
+    margin: auto;
 }

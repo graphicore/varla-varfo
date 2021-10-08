@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>Portal Testbed - iframe</title>
 
+<script>
+// Will be read from the iframe window when it's
+// accessible under the same origin policy.
+window.isVarlaVarfoWidgetHost=true;
+</script>
 <!-- our entry point --->
 <script async type="module" src="./main.mjs"></script>
 <link rel="stylesheet" href="./main.css">

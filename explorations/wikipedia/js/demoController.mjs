@@ -12,27 +12,6 @@ class _ContainerWidget {
         this._widgets = null;
     }
 
-    /* lol, not so sure that this should be in the super class*/
-    _handleUserSettingsChange(type, value) {
-        // A simple debouncing scheme: This collects all events that
-        // come in synchronously, usually right after initialization,
-        // then dispatches all together asynchronously, using a generic
-        // promise for the delay.
-        if(this._collectedChanges === null) {
-            this._collectedChanges = [];
-            // dispatch async
-            Promise.resolve(true)
-            .then(()=>{
-                var event = new CustomEvent(USER_SETTINGS_EVENT,
-                        { detail: this._collectedChanges, bubbles: true });
-                // reset
-                this._collectedChanges = null;
-                this._domTool.window.dispatchEvent(event);
-            });
-        }
-        this._collectedChanges.push([type, value]);
-    }
-
     // the subclass must define this.
     get _widgetsContainer(){
         throw new Error('Not Implemented: _widgetsContainer');
@@ -354,14 +333,14 @@ const PORTAL_AUGMENTATION_TEMPLATE = `
 /* We may not use this now */
 class PortalAugmentationWidget extends _ContainerWidget {
     /* Set information about the portal that we can't determine yet ourselves. */
-    constructor(domTool, baseElement, id, justificationController
+    constructor(domTool, baseElement, id, targetElement, justificationController
                 , defaults // currently olnly used for CheckboxWidget
                 , columnConfig
                 , getCurrentLineHeightInPercent, recalculateLineHeight) {
         super(domTool, baseElement);
         if(id)
             this[ID] = id;
-
+        this._targetElement = targetElement;
         this._justificationController = justificationController;
         var klass = 'portal_augmentation';
         var dom = this._domTool.createElementfromHTML(
@@ -428,7 +407,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 SWITCH_FONT_STYLES_STORAGE_KEY,
                 (isOn)=> {
                     let action = isOn ? 'add' : 'remove';
-                    this._domTool.documentElement.classList[action]('switched-fonts');
+                    this._targetElement.classList[action]('switched-fonts');
                     resetJustification();
                 }
             ],
@@ -464,7 +443,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 LINE_COLOR_CODING_STORAGE_KEY,
                 (isOn)=> {
                     let action = isOn ? 'add' : 'remove';
-                    this._domTool.documentElement.classList[action]('color-coded-lines');
+                    this._targetElement.classList[action]('color-coded-lines');
                 }
             ],
             '<h3>Justification Options:</h3>',
@@ -522,11 +501,11 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 GRADE_DARK_MODE_LOCAL_STORAGE_KEY,
                 (isOn)=> {
                     let value = isOn ?  '1' : '0';
-                    this._domTool.documentElement.style.setProperty(
+                    this._targetElement.style.setProperty(
                                                 '--toggle-grade', value);
                 }
             ],
-            [   SliderWidget, {
+            [   SliderWidget, this._targetElement, {
                       klass: `${klass}-amplify_grade`
                     , label: 'Amplify&nbsp;Grade'
                     , min: '1'
@@ -547,7 +526,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
 }
 
 function _dispatchChangeEvent(elem) {
-    let evt = document.createEvent("HTMLEvents");
+    let evt = elem.ownerDocument.createEvent("HTMLEvents");
     evt.initEvent("change", false, true);
     elem.dispatchEvent(evt);
 }
@@ -561,10 +540,11 @@ const SLIDER_TEMPLATE = `
 `;
 
 class SliderWidget {
-    constructor(domTool, container, templateVars, localStorageKey,
+    constructor(domTool, container, targetElement, templateVars, localStorageKey,
                                             customProperty, onChange) {
         this._domTool = domTool;
         this.container = container;
+        this._targetElement = targetElement;
         var template = SLIDER_TEMPLATE;
         this._defaultValue = templateVars.value;
 
@@ -582,7 +562,7 @@ class SliderWidget {
                     evt.target.parentNode.setAttribute('data-value', evt.target.value);
                 }
               , onChange = evt=> {
-                    this._domTool.documentElement.style.setProperty(
+                    this._targetElement.style.setProperty(
                                                 customProperty, evt.target.value);
                     this._domTool.window.localStorage.setItem(localStorageKey, evt.target.value);
                     this._onChange(evt.target.value);
@@ -625,10 +605,11 @@ const COLOR_SCHEME_SWITCH_TEMPLATE = `
 </form>
 `;
 class ColorSchemeWidget {
-    constructor(domTool, container, templateVars, localStorageKey,
+    constructor(domTool, container, targetElement, templateVars, localStorageKey,
                                     rootNodeClassTemplate, onChange) {
         this._domTool = domTool;
         this.container = container;
+        this._targetElement = targetElement;
         var template = COLOR_SCHEME_SWITCH_TEMPLATE;
         for(let [k,v] of Object.entries(templateVars))
             template = template.replaceAll('{' + k + '}', v);
@@ -660,11 +641,10 @@ class ColorSchemeWidget {
     _setColorScheme() {
         var checkedInput = this._root.querySelector('input[type="radio"][name="color-scheme"]:checked')
           , localStorageValue = null
-          , rootElement = this._domTool.document.documentElement
           ;
         if(checkedInput.value === 'default') {
             for(let mode of ['light', 'dark'])
-                rootElement.classList.remove(this._rootNodeClassTemplate.replace('{schemeName}',mode));
+                this._targetElement.classList.remove(this._rootNodeClassTemplate.replace('{schemeName}',mode));
         }
         else {
             let mode = checkedInput.value
@@ -672,9 +652,9 @@ class ColorSchemeWidget {
               ;
             localStorageValue = mode;
 
-            rootElement.classList.remove(
+            this._targetElement.classList.remove(
                 this._rootNodeClassTemplate.replace('{schemeName}',otherMode));
-            rootElement.classList.add(
+            this._targetElement.classList.add(
                 this._rootNodeClassTemplate.replace('{schemeName}',mode));
         }
         // "default" will delete the entry
@@ -700,9 +680,9 @@ const USER_PREFERENCES_TEMPLATE = `
 
 
 class UserPreferencesWidget extends _ContainerWidget{
-    constructor(domTool, baseElement) {
+    constructor(domTool, baseElement, targetElement, handleUserSettingsChange) {
         super(domTool, baseElement);
-
+        this._targetElement = targetElement;
         var klass = 'user_preferences';
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': klass},
@@ -715,7 +695,7 @@ class UserPreferencesWidget extends _ContainerWidget{
                             'insert: widgets', this._widgetsContainer);
         var widgetsConfig = [
             /* SLIDER +- 4PT  in 0.01 steps */
-            [   SliderWidget, {
+            [   SliderWidget, this._targetElement, {
                       klass: `${klass}-fine_user_zoom`
                     , label: 'Fine&nbsp;Zoom'
                     , min: '-4'
@@ -724,21 +704,21 @@ class UserPreferencesWidget extends _ContainerWidget{
                     , step: '.01'
                 },
                 FINE_USER_ZOOM_LOCAL_STORAGE_KEY, '--fine-user-zoom',
-                (v)=>this._handleUserSettingsChange('fine-user-zoom', v)
+                (v)=>handleUserSettingsChange('fine-user-zoom', v)
             ],
-            [   ColorSchemeWidget, {
+            [   ColorSchemeWidget, this._targetElement, {
                       klass: `${klass}-color_scheme`
                     , label: 'Color&nbsp;Scheme'
                 },
                 COLOR_SCHEME_LOCAL_STORAGE_KEY, 'explicit-{schemeName}-mode',
-                (v)=>this._handleUserSettingsChange('color-scheme', v)
+                (v)=>handleUserSettingsChange('color-scheme', v)
             ],
             /* SLIDER +- 4PT  in 0.01 steps
              * 10 inch -> 1pt change
              * I'll use 25cm -> 1pt change as metric units suit me better
              * we may have to localize this!
              */
-            [   SliderWidget, {
+            [   SliderWidget, this._targetElement, {
                       klass: `${klass}-user_distance`
                     , label: 'Relative&nbsp;Distance'
                     , min: '-200'  // - 2 meters
@@ -747,7 +727,7 @@ class UserPreferencesWidget extends _ContainerWidget{
                     , step: '25'
                 },
                 USER_DISTANCE_LOCAL_STORAGE_KEY, '--user-distance-cm',
-                (v)=>this._handleUserSettingsChange('user-distance', v)
+                (v)=>handleUserSettingsChange('user-distance', v)
             ],
 
         ];
@@ -1170,19 +1150,34 @@ function fixCSSKeyframes(document) {
 }
 
 
-export function main({
+export function main(
+                    contentWindow,
+                    {
                       columnConfig=COLUMN_CONFIG.en
                     , massageMarkupFunc=null
                     , WikipediaArticleURLWidget=null
                     , defaults={}
                     }) {
+    let contentDocument = contentWindow.document
+      , widgetHostWindow = contentWindow.parent && contentWindow.parent.isVarlaVarfoWidgetHost
+                ? contentWindow.parent
+                : contentWindow
+      , widgetHostDocument = widgetHostWindow.document
+      , widgetInParent = contentWindow !== widgetHostWindow
+      ;
+
+    if(widgetInParent) {
+        if(!widgetHostWindow.registerSettingsWidget)
+            widgetHostWindow.registerSettingsWidget = [];
+    }
+
     if(massageMarkupFunc)
         massageMarkupFunc(document);
     setDefaultFontSize(document);
 
     let justificationController = null
       , userSettingsWidget = null
-      , userSettingsWidgetContainer = document.querySelector('.insert_user_settings')
+      , userSettingsWidgetSelector = '.insert_user_settings'
         // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
       , runionTargetSelector = '.runify-01, .mw-parser-output'
       , justificationSkip = [
@@ -1195,12 +1190,15 @@ export function main({
       , runion01Elem = null
       ;
 
-    if(!userSettingsWidgetContainer) {
-        console.log('Demo is disabled: no userSettingsWidgetContainer.');
-        return;
-    }
+
 
     let initContent = () => {
+        let userSettingsWidgetContainer = widgetHostDocument.querySelector(userSettingsWidgetSelector);
+        if(!userSettingsWidgetContainer) {
+            console.log('Demo is disabled: no userSettingsWidgetContainer.');
+            return;
+        }
+
         let wikipediaArticleURLWidgetState = null;
         if(justificationController !== null) {
             justificationController.destroy();
@@ -1215,15 +1213,35 @@ export function main({
         }
         // FIXME: we must be able to use this with more than one element.
         //        as runion_01 is applied to all matching elements as well
-        runion01Elem = document.querySelector(runionTargetSelector);
+        runion01Elem = contentDocument.querySelector(runionTargetSelector);
 
         // FIXME:
         //      run justificationController only always after runion_01 is finished!
         justificationController = new JustificationController(runion01Elem, justificationSkip);
 
         let recalculateLineHeight = (min, max) => _runion_01_recalculateLineHeight(columnConfig, runion01Elem, min, max)
-          , getCurrentLineHeightInPercent = ()=> {
+          , getCurrentLineHeightInPercent = () => {
               return (parseFloat(runion01Elem.style.getPropertyValue('--js-line-height')) * 100).toFixed(2);
+          }
+          , _collectedChanges = []
+          , handleUserSettingsChange = (type, value) => {
+              // A simple debouncing scheme: This collects all events that
+              // come in synchronously, usually right after initialization,
+              // then dispatches all together asynchronously, using a generic
+              // promise for the delay.
+              if(_collectedChanges.length === 0) {
+                  // dispatch async
+                  Promise.resolve(true)
+                  .then(()=>{
+                      // this event will trigger scheduleUpdateViewport
+                      var event = new CustomEvent(USER_SETTINGS_EVENT,
+                              { detail: _collectedChanges.slice(), bubbles: true });
+                      // reset
+                      _collectedChanges.splice(0, _collectedChanges.length);
+                      contentWindow.dispatchEvent(event);
+                  });
+              }
+              _collectedChanges.push([type, value]);
           }
           ;
 
@@ -1238,38 +1256,56 @@ export function main({
                                 : null,
                             [PortalAugmentationWidget,
                                     'portal-augmentation',
+                                    contentDocument.documentElement,
                                     justificationController,
                                     defaults,
                                     columnConfig,
                                     getCurrentLineHeightInPercent,
                                     recalculateLineHeight],
-                            UserPreferencesWidget,
-                            [   SimpleButtonWidget, {
-                                      klass: `widgets_container-reset_all`
-                                    , text: 'reset all'
-                                },
-                                () => {
-                                    userSettingsWidget.reset();
-                                }
-                            ],
-                        ].filter(item=>!!item));
-        let toggle = (/*evt*/)=>{
-            let top = `${window.scrollY}px`;
-            if(!userSettingsWidget.isActive ||
-                    top === userSettingsWidget.container.style.getPropertyValue('top'))
-                // If it is active and in view we turn if off.
-                userSettingsWidget.toggle();
+                            [UserPreferencesWidget,
+                                    contentDocument.documentElement,
+                                    handleUserSettingsChange],
+                            [SimpleButtonWidget, {
+                                          klass: `widgets_container-reset_all`
+                                        , text: 'reset all'
+                                    },
+                                    () => {
+                                        userSettingsWidget.reset();
+                                    }
+                                ],
+                        ].filter(item=>!!item),
+                        // Create a button to close the widget.
+                        widgetInParent ? true : false
+                    );
 
-            if(userSettingsWidget.isActive)
-                userSettingsWidget.container.style.setProperty('top', top);
-        };
-        for(let elem of document.querySelectorAll('.toggle-user_settings')) {
-            if(toggleUserSettingsWidget !== null) {
-                elem.removeEventListener('click', toggleUserSettingsWidget);
+        if(widgetInParent) {
+            // Don't show or activate the widget toggle button, will
+            // be handled in parent window.
+            for(let elem of document.querySelectorAll('.toggle-user_settings')) {
+                elem.style.setProperty('display', 'none');
             }
-            elem.addEventListener('click', toggle);
+            widgetHostWindow.registerSettingsWidget.push(userSettingsWidget);
         }
-        toggleUserSettingsWidget = toggle;
+        else {
+            // Controls to bring the menu up when it's inline in the document.
+            let toggle = (/*evt*/)=>{
+                let top = `${contentWindow.scrollY}px`;
+                if(!userSettingsWidget.isActive ||
+                        top === userSettingsWidget.container.style.getPropertyValue('top'))
+                    // If it is active and in view we turn if off.
+                    userSettingsWidget.toggle();
+
+                if(userSettingsWidget.isActive)
+                    userSettingsWidget.container.style.setProperty('top', top);
+            };
+            for(let elem of document.querySelectorAll('.toggle-user_settings')) {
+                if(toggleUserSettingsWidget !== null) {
+                    elem.removeEventListener('click', toggleUserSettingsWidget);
+                }
+                elem.addEventListener('click', toggle);
+            }
+            toggleUserSettingsWidget = toggle;
+        }
     };
 
     // Must be executed on viewport changes as well as on userSettings
@@ -1285,14 +1321,14 @@ export function main({
             updateViewportScheduled = setTimeout(updateViewport,
                                     time !== undefined ? time : 100);
         }
-      , currentWindowWidth = window.innerWidth
+      , currentWindowWidth = contentWindow.innerWidth
       , resizeHandler = (/*evt*/)=>{
             // don't update when height changes, because it has no
             // implications on layout so far, and it doesn't work with
             // e.g. all browsers on the iPhone, where scrolling increases
             // the adress bar and triggers a resize event.
-            if(currentWindowWidth !== window.innerWidth) {
-                currentWindowWidth = window.innerWidth;
+            if(currentWindowWidth !== contentWindow.innerWidth) {
+                currentWindowWidth = contentWindow.innerWidth;
                 scheduleUpdateViewport();
             }
         }
@@ -1349,15 +1385,17 @@ export function main({
     // OSsses may change height to make room for the main toolbar when in
     // fullscreen and the mouse touches the upper/lower screen edge,
     // iOS increases the address bar when scrolled into zoom etc ...
-    window.addEventListener('resize', resizeHandler);
-    window.addEventListener(USER_SETTINGS_EVENT, scheduleUpdateViewport);
+    contentWindow.addEventListener('resize', resizeHandler);
+    contentWindow.addEventListener(USER_SETTINGS_EVENT, scheduleUpdateViewport);
 
     if(WikipediaArticleURLWidget) {
-        window.document.addEventListener('click',
+        contentDocument.addEventListener('click',
             (evt)=> userSettingsWidget
                     .getWidgetById('wikipedia-article-url')
                     .windowClickHandler(evt)
         );
     }
+    contentWindow.addEventListener('beforeunload',
+                ()=>userSettingsWidget && userSettingsWidget.destroy());
 }
 
