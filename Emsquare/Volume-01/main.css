@@ -26,11 +26,6 @@ footer{
     --font-size-rem: 3/4;
 }
 
-
-article{
-    background: white;
-}
-
 figure {
     margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
     margin-block-end:   calc(1pt * var(--font-size) * var(--line-height));
