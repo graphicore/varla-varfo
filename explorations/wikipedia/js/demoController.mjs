@@ -90,7 +90,8 @@ class CheckboxWidget {
 
         _templateVars.push(['*button style*', buttonStyle ? '<span></span>' : '']);
         _templateVars.push(['*checked*', this._defaultChecked ? 'checked="checked"' : '']);
-
+        if(!('extra-classes' in templateVars))
+            _templateVars.push(['extra-classes', '']);
         for(let [k,v] of _templateVars)
             template = template.replaceAll('{' + k + '}', v);
         {
@@ -103,13 +104,16 @@ class CheckboxWidget {
         this._elem = this.container.querySelector(`.${templateVars.klass} input[type="checkbox"]`);
         {
             let onChange = evt=> {
-                    this._domTool.window.localStorage.setItem(localStorageKey,
+                    if(this._localStorageKey)
+                        this._domTool.window.localStorage.setItem(this._localStorageKey,
                                     evt.target.checked ? 'true' : 'false');
                     this._onChange(evt.target.checked);
                 }
               ;
-            let storedValue = this._domTool.window.localStorage.getItem(localStorageKey)
-              ;
+            let storedValue = null;
+            if(this._localStorageKey)
+                storedValue = this._domTool.window.localStorage.getItem(this._localStorageKey);
+
             if(storedValue !== null)
                 this._elem.checked = storedValue === 'true' ? true : false;
 
@@ -736,6 +740,154 @@ class UserPreferencesWidget extends _ContainerWidget{
     }
 }
 
+
+const INSPECTOR_TEMPLATE = `
+<fieldset>
+    <legend>Inspect</legend>
+    <!-- insert: widgets -->
+</fieldset>
+`;
+const INSPECTION_MODE_CLASS = 'varla_varfo-font_spec_inspector';
+class InspectorWidget extends _ContainerWidget {
+    constructor(domTool, baseElement, targetElement) {
+        super(domTool, baseElement);
+        this._targetElement = targetElement;
+        var klass = 'inspector';
+        var dom = this._domTool.createElementfromHTML(
+            'div', {'class': klass},
+            INSPECTOR_TEMPLATE
+        );
+        this.container = dom;
+        this._baseElement.appendChild(dom);
+        this._widgetsContainer = this._domTool.createElement('div');
+        this._domTool.insertAtMarkerComment(this.container,
+                            'insert: widgets', this._widgetsContainer);
+
+
+        var widgetsConfig = [
+            //switch to turn on/off selection tool
+            // [checkbox] play/pause justification
+            [   CheckboxWidget, {
+                      klass: `${klass}-toggle_selection_tool`
+                    , label: 'Inspect element'
+                    , [ID]: 'inspect-element-toggle'
+                },
+                false, /* checked: bool */
+                true, /* buttonStyle: bool */
+                undefined,
+                (isOn)=> {
+                    // actually the indicator should listen/subscribe
+                    // to changes on the this._targetElement about this!
+                    console.log('CheckboxWidget toggle!', `${klass}-toggle_selection_tool`, isOn, this._targetElement);
+                    this._targetElement.classList[isOn ? 'add':'remove'](INSPECTION_MODE_CLASS);
+
+                }
+            ],
+
+
+            // when inspection in ON we need to listen to click events
+            // from the content window and filter elements to see if
+            // and what we want to display of them.
+
+            //first Observer:
+            //    -> when .inspector-toggle_selection_tool is added
+            //        -> document catch and interrupt all click events
+            //        -> if user settings widget is hidden, bring it up
+            //          (and/or bring it by???),
+            //           and scroll the reporting container into view
+            //        -> report event.target to here ...
+
+
+            // Elements that don't apply should be reported as well, so
+            // that we can see the tool is responsive, however the report
+            // would differ.
+            // When stuff changes, it would be nice to have the tool change
+            // as well, though, if a line is lost, we can't track it until
+            // it re-appears, a new version of the line would be another
+            // line anyways, often with other contents etc. but tracking
+            // is not a high priority!
+
+          // [maybe: switch inspection display modes/type of information shown]
+          // display to show inspection values
+
+
+        ];
+        this._inspectionIsOn  = false;
+
+        let targetWindow = this._targetElement.ownerDocument.defaultView;
+        // used to unregister the click Event
+        this._abortController = null;
+
+        this._toggleObserver = new targetWindow.MutationObserver(
+                                this._toggleObserverCallback.bind(this));
+        this._toggleObserver.observe(this._targetElement,
+                                { attributes: true });
+        this._widgets = this._initWidgets(widgetsConfig);
+        this._toggleSwitch = this.getWidgetById('inspect-element-toggle');
+        // stays of unless the default is changed above.
+        this._toggleInspectionMode();
+    }
+    _toggleObserverCallback (mutationRecords) {
+        for(let rec of mutationRecords) {
+            if(rec.type === 'attributes' && rec.attributeName === 'class') {
+                this._toggleInspectionMode();
+                break;
+            }
+        }
+    }
+    _clickHandler(evt) {
+        let elem = evt.target
+          , report = []
+          , depth = 0
+          ;
+        while(elem) {
+            report.push([elem.tagName, elem]);
+            elem = elem.parentElement;
+            depth += 1;
+        }
+        report = report.reverse().map(([head, ...tail], i)=>[('  '.repeat(i)) + (i ? '╚> ' : '') + head, ...tail]);
+
+        console.log(
+            ...report.reduce((accum, [head, ...tail])=>[...(accum || []), '\n\n' + head, ...tail], ['clicked===>']));
+        evt.preventDefault();
+        evt.stopPropagation();
+    }
+    _startClickHandling() {
+        let doc = this._targetElement.ownerDocument;
+        this._abortController = new doc.defaultView.AbortController();
+        doc.addEventListener(
+                'click'
+              , (...args)=>this._clickHandler(...args)
+              , {
+                    capture: true
+                  , signal: this._abortController.signal
+                }
+        );
+        if(!this._toggleSwitch.checked)
+            this._toggleSwitch.checked = true;
+        this._inspectionIsOn = true;
+    }
+    _stopClickHandling() {
+        this._abortController.abort();
+        this._abortController = null;
+        if(this._toggleSwitch.checked)
+            this._toggleSwitch.checked = false;
+        this._inspectionIsOn = false;
+    }
+    _toggleInspectionMode() {
+        let isOn = this._targetElement.classList.contains(INSPECTION_MODE_CLASS);
+        if(this._inspectionIsOn === isOn)
+            return;
+        if(isOn)
+            this._startClickHandling();
+        else
+            this._stopClickHandling();
+    }
+    destroy () {
+        this._toggleObserver.disconnect();
+    }
+}
+
 function getElementFontSizePt(elem) {
     var [fontSizePx] = getElementSizesInPx(elem, 'font-size')
       , fontSizePT = fontSizePx * (3/4)
@@ -1265,6 +1417,8 @@ export function main(
                             [UserPreferencesWidget,
                                     contentDocument.documentElement,
                                     handleUserSettingsChange],
+                            [InspectorWidget,
+                                    contentDocument.documentElement],
                             [SimpleButtonWidget, {
                                           klass: `widgets_container-reset_all`
                                         , text: 'reset all'

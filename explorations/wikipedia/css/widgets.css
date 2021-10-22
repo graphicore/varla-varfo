@@ -200,3 +200,74 @@ label.portal_augmentation-amplify_grade::after {
 .portal_augmentation-run_justification_checkbox > input:checked ~ span:after{
     content: "▮▮ pause";
 }
+
+
+
+:root{
+    /* The crosshair is black with a white outline for contrast.
+     * doing it this way so I can use the same as an toolbar icon and
+     * as actual cursor.
+     *
+     * Note: using \ to escape newlines works well in Chrome and Firefox
+     * but it destroys syntax highlighting in my editor. Actually, having
+     * a full stop at the end of this comment and some magic(?) number
+     * of characters in the last line restores syntax highlighting again.
+     */
+    ---cursor-crosshair-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'>\
+                <g id='crosshair_cursor' fill='transparent'>\
+                      <circle cx='10' cy='10' r='7' />\
+                    <line x1='10' y1='0' x2='10' y2='20' />\
+                    <line x1='0' y1='10' x2='20' y2='10' />\
+                </g>\
+                <use href='%23crosshair_cursor' stroke='white' stroke-width='5' opacity='.7' />\
+                <use href='%23crosshair_cursor' stroke='black' stroke-width='2' />\
+            </svg>");
+}
+
+.inspector-toggle_selection_tool > input {
+  visibility: hidden;
+  position: absolute;
+  cursor: pointer;
+}
+
+.inspector-toggle_selection_tool > input ~ span{
+    background: #f5f4f3;
+    border: 0.0625em solid #edebe9;
+    border: 0.0625em outset ThreeDLightShadow;
+    padding: 0.4em;
+    border-radius: .2em;
+}
+
+.inspector-toggle_selection_tool > input ~ span:after {
+  content: " inactive";
+}
+
+.inspector-toggle_selection_tool > input ~ span:before {
+  display: inline-block;
+  content: "";
+  background: no-repeat var(---cursor-crosshair-url);
+  background-size: contain;
+  vertical-align:middle;
+  width: 1em;
+  height: 1em;
+  opacity: .3;
+}
+.inspector-toggle_selection_tool > input:checked ~ span:before {
+    opacity: 1;
+}
+
+.inspector-toggle_selection_tool > input:checked ~ span:after {
+  content: " active";
+}
+.inspector-toggle_selection_tool > input:checked ~ * {
+  background: lime;
+}
+
+.varla_varfo-font_spec_inspector,
+.inspector-toggle_selection_tool > input:checked ~ * {
+    cursor: var(---cursor-crosshair-url), auto;
+}
+
+.varla_varfo-font_spec_inspector *:hover{
+    box-shadow: 0 0 10px deeppink;
+}
