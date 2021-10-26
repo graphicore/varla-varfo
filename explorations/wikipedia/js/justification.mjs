@@ -1074,7 +1074,7 @@ function _calculateFontSpec(spec, keys) {
     return resultSpec;
 }
 
-function _parseFontVariationSettings(variations) {
+export function parseFontVariationSettings(variations) {
     // "GRAD" 0, "VVFS" 31.9992, "XTRA" 468, "opsz" 31.9992, "slnt" 0, "wdth" 30, "wght" 200
     let result = new Map();
     for(let kv of variations.split(',')) {
@@ -1091,7 +1091,7 @@ function _getFontSpecProperties(referenceElement) {
             'font-variation-settings',
             '--font-family')
       , fontFamily = rawFontFamily.trim()
-      , fontVariations = _parseFontVariationSettings(rawFontVariations)
+      , fontVariations = parseFontVariationSettings(rawFontVariations)
       , opticalFontSizePt = fontVariations.get('opsz')
       , width = fontVariations.get('wdth')
       , weight = fontVariations.get('wght')

@@ -1,7 +1,7 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
+import {getElementSizesInPx, getComputedStyle} from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget, {ID}  from './WidgetsContainerWidget.mjs';
-import {JustificationController} from './justification.mjs';
+import {JustificationController, parseFontVariationSettings} from './justification.mjs';
 
 class _ContainerWidget {
     constructor(domTool, baseElement) {
@@ -96,12 +96,14 @@ class CheckboxWidget {
             template = template.replaceAll('{' + k + '}', v);
         {
             let frag = this._domTool.createFragmentFromHTML(template);
+            this._elem = frag.querySelector(`.${templateVars.klass} input[type="checkbox"]`);
+            this._rootElem = frag.querySelector(`.${templateVars.klass}`);
             this.container.appendChild(frag);
         }
         this._localStorageKey = localStorageKey;
         // parent change propagation
         this._onChange = onChange;
-        this._elem = this.container.querySelector(`.${templateVars.klass} input[type="checkbox"]`);
+
         {
             let onChange = evt=> {
                     if(this._localStorageKey)
@@ -120,6 +122,9 @@ class CheckboxWidget {
             this._elem.addEventListener('change', onChange);
             onChange({target: this._elem});
         }
+    }
+    get root() {
+        return this._rootElem;
     }
     setChecked(checked) {
         this._elem.checked = checked;
@@ -745,6 +750,7 @@ const INSPECTOR_TEMPLATE = `
 <fieldset>
     <legend>Inspect</legend>
     <!-- insert: widgets -->
+    <pre class="varla_varfo-font_spec_inspector-report"></pre>
 </fieldset>
 `;
 const INSPECTION_MODE_CLASS = 'varla_varfo-font_spec_inspector';
@@ -757,6 +763,9 @@ class InspectorWidget extends _ContainerWidget {
             'div', {'class': klass},
             INSPECTOR_TEMPLATE
         );
+        this._reportContainer = dom.querySelector('.varla_varfo-font_spec_inspector-report');
+
+
         this.container = dom;
         this._baseElement.appendChild(dom);
         this._widgetsContainer = this._domTool.createElement('div');
@@ -835,20 +844,127 @@ class InspectorWidget extends _ContainerWidget {
             }
         }
     }
+    createtReport(elem) {
+        let result = []
+          , style = getComputedStyle(elem)
+          , rawFontVariationSettings = style.getPropertyValue('font-variation-settings')
+          , fontVariations = parseFontVariationSettings(rawFontVariationSettings)
+          , ptpx=(ptsize)=>`${ptsize}&nbsp;pt/${ptsize*1.333333}&nbsp;px`
+          , ptpxrem=(ptsize, docpptsize)=>`${ptpx(ptsize)}/${ptsize/docpptsize}&nbsp;rem`
+          , pxptrem=(pxsize, docpptsize)=>ptpxrem(pxsize*0.75, docpptsize)
+          , pxptem=(pxsize, empxsize)=>`${pxsize/empxsize}&nbsp;em/${pxsize*0.75}&nbsp;pt/${pxsize}&nbsp;px`
+          , styleAsNumber=(prop)=>parseFloat(style.getPropertyValue(prop))
+          ;
+
+        // --default-browser-font-size
+        // --document-font-size: ${}&nbsp;pt/${}&nbsp;px (1 rem)
+        {
+            let browserFontSize = styleAsNumber('--default-browser-font-size');
+            result.push('\ndefault browser font-size:', ptpx(browserFontSize));
+        }
+
+
+        let docElemStyle = getComputedStyle(elem.ownerDocument.documentElement)
+          , docFontSizePx = parseFloat(docElemStyle.getPropertyValue('font-size'))
+          , docFontSize = docFontSizePx * 0.75
+          ;
+
+        result.push('\ndocument font-size:', ptpxrem(docFontSize, docFontSize));
+
+        result.push(`\n<${elem.tagName.toLowerCase()}>`
+                            ,'classes:', elem.classList + '');
+
+
+        result.push('\nfont family:', style.getPropertyValue('font-family'));
+        result.push('\nstyle:');
+        if(fontVariations.get('slnt') !== 0)
+            result.push('slanted', `${fontVariations.get('slnt')}&nbsp;deg`);
+        else if(style.getPropertyValue('font-style') === 'italic')
+            result.push('italic');
+        else
+            result.push('normal/upright');
+
+
+        let fontSizePx = styleAsNumber('font-size');
+        result.push('\nelement font-size:', pxptrem(fontSizePx, docFontSize));
+
+
+        // FIXME: column-width/line-length/ --column-width-en // not as easy to read out
+
+        let lineHeightPx = styleAsNumber('line-height')
+          , letterSpacingPx = styleAsNumber('letter-spacing')
+          , wordSpacingPx = styleAsNumber('word-spacing')
+          ;
+
+        result.push('\nline height:', pxptem(lineHeightPx, fontSizePx));
+
+        result.push('\nXTRA:', fontVariations.get('XTRA'));
+        result.push('\nletter spacing:', pxptem(letterSpacingPx));
+        result.push('\nword spacing:', pxptem(wordSpacingPx));
+
+
+        // font-family
+        // font-size 16px
+        // font-style italic OR it's a slnt axis: slnt -10
+        result.push('\nfont-variation-settings:');
+        // same as font-size in PT and only there for debugging, non-functional.
+        fontVariations.delete('VVFS');
+        for(let [k, v] of fontVariations.entries    ())
+            result.push('\n    ', k, v);
+
+        //let ineterstingProps = new Set(['word-spacing', 'letter-spacing']);
+        // i.e. font-size should be displayed in PT
+        // Also relative to document em (rem) is interesting.
+        //for(let prop of style) {
+            // about -- custom properties, we could get all rules that apply
+            // to element and collect all propery names that are
+            // mentioned. Then we only show the calculated value if it
+            // is directly applied somewhere.
+            //
+            // Custom properties don't come up in Chrome, so we can as
+            // well skip them all.
+        //    if(prop.startsWith('font-') || ineterstingProps.has(prop))
+        //        result.push('\n', prop, style.getPropertyValue(prop));
+        //}
+        return result;
+    }
     _clickHandler(evt) {
         let elem = evt.target
-          , report = []
-          , depth = 0
+          //, report = []
+          //, depth = 0
           ;
-        while(elem) {
-            report.push([elem.tagName, elem]);
-            elem = elem.parentElement;
-            depth += 1;
-        }
-        report = report.reverse().map(([head, ...tail], i)=>[('  '.repeat(i)) + (i ? '╚> ' : '') + head, ...tail]);
+        this._reportContainer.innerHTML = this.createtReport(elem).join(' ');
+        // while(elem) {
+        //     report.push([`<${elem.tagName.toLowerCase()}>`, ...this.createtReport(elem)]);
+        //     elem = elem.parentElement;
+        //     depth += 1;
+        // }
+        // report = report.reverse()
+        //                 .map(([head, ...tail], i)=>[
+        //                     ('  '.repeat(i)) + (i ? '╚> ' : '') + head
+        //                             // add indentation
+        //                   , ...(tail.map(entry=>{
+        //                         if(typeof entry !== 'string')
+        //                             return entry;
+        //                         let indent = '\n' + ('  '.repeat(i + Math.min(1, i)));
+        //                         return entry.split('\n').join(indent);
+        //                     }))
+        //                 ]);
+        //
+        // console.log(
+        //     ...report.reduce((accum, [head, ...tail])=>[...(accum || []), '\n\n' + head, ...tail], ['clicked===>']));
 
-        console.log(
-            ...report.reduce((accum, [head, ...tail])=>[...(accum || []), '\n\n' + head, ...tail], ['clicked===>']));
+
+        // FIXME: Maybe, we want to exclude all of the widgets, also
+        // when they are directly, stand alone version, in the content
+        // window. However, these are also subject of e.g. opsz or grade
+        // so it makes some sense to make the widgets inspectable as well,
+        // then this "bug" would be a "feature".
+        //
+        // Exclude at least the this._toggleSwitch  from the prevent
+        // default, so we can turn off inspection mode.
+        if(this._toggleSwitch.root === evt.target || this._toggleSwitch.root.contains(evt.target))
+            return;
         evt.preventDefault();
         evt.stopPropagation();
     }
