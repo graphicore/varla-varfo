@@ -1080,7 +1080,7 @@ export function parseFontVariationSettings(variations) {
     for(let kv of variations.split(',')) {
         let[k, v] = kv.trim().split(' ');
         k = k.replaceAll(/["']/g, '');
-        v = parseInt(v);
+        v = parseFloat(v);
         result.set(k, v);
     }
     return result;
@@ -1840,7 +1840,8 @@ function _getLineTreatmentParameters(elem, modeKey, options) {
             wideningStops = 0;
             break;
     }
-
+    // Only for reporting in the inspect widget and as debugging info.
+    setProperty('--info-line-adjust-stops', `"-${narrowingStops || 0}, +${wideningStops || 0}"`);
 
         // bind some args to the inner generator
     let linesGenerator = carryOverElement=>

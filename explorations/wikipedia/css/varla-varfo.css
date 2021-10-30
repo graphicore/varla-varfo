@@ -776,11 +776,13 @@ b, strong {
 }
 
 i, cite, em, var, dfn {
-    --font-style: italic;
+    --font-style: italic; /* applis to AmstelVar */
+    --font-slnt: -10; /* applies to RobotoFlex*/
 }
 
 .hatnote {
-    --font-style: italic;
+    --font-style: italic; /* applis to AmstelVar */
+    --font-slnt: -10; /* applies to RobotoFlex*/
 }
 .mw-body h1, .mw-body-content h1, .mw-body-content h2 {
     /* Positioning the headline underline (border-bottom) closely to the box.

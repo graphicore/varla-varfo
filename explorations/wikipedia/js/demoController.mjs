@@ -1,5 +1,6 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import {getElementSizesInPx, getComputedStyle} from '../../calibrate/js/domTool.mjs';
+import {getElementSizesInPx, getComputedStyle, getComputedPropertyValues
+                                } from '../../calibrate/js/domTool.mjs';
 import WidgetsContainerWidget, {ID}  from './WidgetsContainerWidget.mjs';
 import {JustificationController, parseFontVariationSettings} from './justification.mjs';
 
@@ -26,6 +27,10 @@ class _ContainerWidget {
         for(let conf of widgetsConfig) {
             if(typeof conf === 'string') {
                 this._domTool.appendHTML(this._widgetsContainer, conf);
+                continue;
+            }
+            if(typeof conf.nodeType === 'number') {
+                this._domTool.appendChildren(this._widgetsContainer, conf);
                 continue;
             }
             let [Ctor, ...args] = conf;
@@ -750,7 +755,6 @@ const INSPECTOR_TEMPLATE = `
 <fieldset>
     <legend>Inspect</legend>
     <!-- insert: widgets -->
-    <pre class="varla_varfo-font_spec_inspector-report"></pre>
 </fieldset>
 `;
 const INSPECTION_MODE_CLASS = 'varla_varfo-font_spec_inspector';
@@ -758,13 +762,13 @@ class InspectorWidget extends _ContainerWidget {
     constructor(domTool, baseElement, targetElement) {
         super(domTool, baseElement);
         this._targetElement = targetElement;
-        var klass = 'inspector';
+        var klass = this._class = 'inspector';
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': klass},
             INSPECTOR_TEMPLATE
         );
-        this._reportContainer = dom.querySelector('.varla_varfo-font_spec_inspector-report');
-
+        this._reportContainer = this._domTool.createElement('ul'
+                                    , {'class': `${klass}-report_container`});
 
         this.container = dom;
         this._baseElement.appendChild(dom);
@@ -787,12 +791,11 @@ class InspectorWidget extends _ContainerWidget {
                 (isOn)=> {
                     // actually the indicator should listen/subscribe
                     // to changes on the this._targetElement about this!
-                    console.log('CheckboxWidget toggle!', `${klass}-toggle_selection_tool`, isOn, this._targetElement);
                     this._targetElement.classList[isOn ? 'add':'remove'](INSPECTION_MODE_CLASS);
 
                 }
             ],
-
+            this._reportContainer
 
             // when inspection in ON we need to listen to click events
             // from the content window and filter elements to see if
@@ -845,95 +848,331 @@ class InspectorWidget extends _ContainerWidget {
         }
     }
     createtReport(elem) {
-        let result = []
-          , style = getComputedStyle(elem)
-          , rawFontVariationSettings = style.getPropertyValue('font-variation-settings')
-          , fontVariations = parseFontVariationSettings(rawFontVariationSettings)
-          , ptpx=(ptsize)=>`${ptsize}&nbsp;pt/${ptsize*1.333333}&nbsp;px`
-          , ptpxrem=(ptsize, docpptsize)=>`${ptpx(ptsize)}/${ptsize/docpptsize}&nbsp;rem`
-          , pxptrem=(pxsize, docpptsize)=>ptpxrem(pxsize*0.75, docpptsize)
-          , pxptem=(pxsize, empxsize)=>`${pxsize/empxsize}&nbsp;em/${pxsize*0.75}&nbsp;pt/${pxsize}&nbsp;px`
-          , styleAsNumber=(prop)=>parseFloat(style.getPropertyValue(prop))
+        // runion functional elements hiearchy stack
+        let stack = [
+            'runion-line'
+          , 'runion-justification-host' // defining a .line_handling_mode-{name}
+          , 'runion-01'
+        ];
+
+        let result = [];
+
+        let current = elem
+          , found = new Map()
           ;
 
-        // --default-browser-font-size
-        // --document-font-size: ${}&nbsp;pt/${}&nbsp;px (1 rem)
-        {
-            let browserFontSize = styleAsNumber('--default-browser-font-size');
-            result.push('\ndefault browser font-size:', ptpx(browserFontSize));
+        for(let class_ of stack) {
+            ancestors:
+            while(current) {
+                if(current.classList.contains(class_)) {
+                    // => identified for class class
+                    found.set(class_, current);
+                    // will look at current again for next class
+                    // because elements can have double role, e.g.
+                    // 'runion-justification-host' can also be a 'runion-01'
+                    break ancestors;
+                }
+                current = current.parentElement;
+            }
+            if(!current)
+                if(found.size)
+                    break;
+                // reset to search for next class
+                current = elem;
         }
+        let mkfrac = (htmlOrChildren)=> typeof htmlOrChildren === 'string'
+                        ? this._domTool.createFragmentFromHTML(htmlOrChildren)
+                        : this._domTool.createFragment(htmlOrChildren)
+          , mkelem = (tag, htmlOrChildren, attr)=>this._domTool.createElement(
+                        tag, attr, typeof htmlOrChildren === 'string'
+                                                ? mkfrac(htmlOrChildren)
+                                                : htmlOrChildren)
+          , mkData = (label, content)=>mkelem('span'
+                    , [mkelem('span', label, {'class': `${this._class}-report_data-label`})
+                        , ': ', content]
+                    , {'class': `${this._class}-report_data-line`}
+            )
+          , roundTo = (decimaldigits, num) => {
+                let scale = 10 ** decimaldigits;
+                return Math.round(num * scale) / scale ;
+            }
+          , round2 = num=>roundTo(2, num)
+          , mkSizePt = (label, sizePt, dpr, rem)=>mkData(label, mkfrac([
+                mkelem('span', `${round2(sizePt)} pt`, {title:
+                                    `${round2(sizePt * 4/3)} px`
+                                  + `, ${round2(sizePt * 4/3 * dpr)} device-px`
+                                  + (typeof rem === 'number'
+                                        ?   `, ${sizePt / rem} rem`
+                                        : '')
+                                })
+            ]))
+          , mkSizeEn = (label, sizeEn, rem)=>mkData(label, mkfrac([
+                mkelem('span', `${round2(sizeEn)} en`, {title:
+                                    `${round2(sizeEn / 2)} em`
+                                  + `, ${round2(sizeEn / 2 * rem)} pt`
+                                  + `, ${round2(sizeEn / 2 * rem * 4/3)} px`
+                                })
+            ]))
+          , mkTag = elem=>`<${elem.localName}${(elem.classList.length ? ' class="' + elem.classList + '"' : '')}>`
+          , mkElement = elem=>mkfrac([mkData('tag', elem.localName)
+                , ...(elem.classList.length
+                        ? [mkData(elem.classList.length === 1
+                                        ? 'class'
+                                        : 'classes', elem.classList)]
+                        : [])
+            ])
+            // Will return NaN for undefined and unparseable values, but e.g
+            // 12px will be parsed as a 12, discarding the "px".
+          , getPropertiesAsNumber=(elem, ...properties)=>getComputedPropertyValues(elem, ...properties).map(parseFloat)
+          , reports = []
+          , reporters = new Map([
+                // for all reporters: elem may be undefined!
+                [undefined, (elem/*, type*/)=>
+                    mkfrac(
+                      `<em>NOT IMPLEMENTED</em> `
+                      + (elem
+                            ? `on element ${mkTag(elem)}`
+                            : 'without element.')
+                    )
+                ]
+              , ['global', (elem, {devicePixelRatio}/*, type*/)=>{
+                    // elem should be <html>/document.defaultView
+                    let fontSizePt = parseFloat(elem.style
+                            .getPropertyValue('--default-browser-font-size'));
 
+                    return mkfrac([
+                        mkSizePt('browser font size', fontSizePt, devicePixelRatio)
+                      , mkData('devicePixelRatio', devicePixelRatio)
+                    ]);
+                }]
+              , ['document', (elem, {devicePixelRatio, documentFontSize}/*, type*/)=>{
+                    // elem should be <html>/document.defaultView
+                    return mkfrac([
+                        mkSizePt('document font size (= 1 rem)', documentFontSize, devicePixelRatio, documentFontSize)
+                    ]);
+                }]
+              , ['runion-01', (elem, {documentFontSize}/*, type*/)=>{
+                return mkfrac([
+                    mkElement(elem)
+                  , mkData('column-count', `${elem.style.getPropertyValue('--column-count')} em`)
+                  , ...[
+                        ['--column-gap-en', 'column gap/gutter']
+                      , ['--column-width-en', 'line width']
+                      , ['--padding-left-en', 'padding left']
+                      , ['--padding-right-en', 'padding right']
+                   ].map(([propName, label])=>mkSizeEn(label, parseFloat(
+                                elem.style.getPropertyValue(propName)),
+                                documentFontSize))
+                  , mkData('line-height', `${elem.style.getPropertyValue('--js-line-height')} em`)
+                ]);
+                }]
+              , ['runion-justification-host', (elem/*, {documentFontSize}*//*, type*/)=>{
+                    // line_handling_mode-{class}
 
-        let docElemStyle = getComputedStyle(elem.ownerDocument.documentElement)
-          , docFontSizePx = parseFloat(docElemStyle.getPropertyValue('font-size'))
-          , docFontSize = docFontSizePx * 0.75
+                let [fontSizePx] = getPropertiesAsNumber(elem, 'font-size')
+                  , wordSpaceSize = elem.style.getPropertyValue('--word-space-size')
+                  , hasOwnWordSpaceSize = wordSpaceSize !== ''
+                  , wordSpaceSizePx = parseFloat(wordSpaceSize)
+                  , lineAdjust = new Map()
+                  ;
+                for(let propName of elem.style) {
+                    if(!propName.startsWith('--line-adjust-')) continue;
+                    // --line-adjust-step-xtra: 1.08333;
+                    // --line-adjust-xtra-min: 460.667;
+                    // --line-adjust-xtra-default: 468;
+                    // --line-adjust-xtra-max: 472.333;
+                    let [key, val] = propName.split('-').slice(4, 6);
+                    if(key === 'step')
+                        // step is special, could be fixed.
+                        // [key, val] = [val, key];
+                        // but we don't need to report the step-size.
+                        continue;
+
+                    if(!lineAdjust.has(key))
+                        lineAdjust.set(key, {});
+                    lineAdjust.get(key)[val] = elem.style.getPropertyValue(propName);
+                }
+
+                let lineHandlingMode;
+                for(let klass of elem.classList) {
+                    let prefix = 'line_handling_mode-';
+                    if(!klass.startsWith(prefix)) continue;
+                    lineHandlingMode = klass.slice(prefix.length);
+                    break;
+                }
+                return mkfrac([
+                    mkElement(elem)
+                  , mkData('line handling mode', lineHandlingMode)
+                  , ...(hasOwnWordSpaceSize ? [
+                        mkData('measured word space size',
+                                `${roundTo(5, wordSpaceSizePx/fontSizePx)} `
+                                + `em, ${wordSpaceSizePx} px`)
+                    ] : [])
+                  , mkData('line adjustment ranges (min, default, max)', mkelem('dl',
+                            Array.from(lineAdjust.entries())
+                                .map(([dt, dd])=>
+                                    mkfrac([mkelem('dt', dt),
+                                    mkelem('dd', `${dd.min}, ${dd.default}, ${dd.max}`)])
+                            )
+                     ))
+                    // calling it steps in the UI, as it's also --line-adjust-step
+                  , mkData('line adjustment steps/range',
+                        elem.style.getPropertyValue('--info-line-adjust-stops').replaceAll('"', ''))
+                ]);
+                }]
+              , ['runion-line', (elem/*, {devicePixelRatio, documentFontSize}*//*, type*/)=>{
+                  // TODO: get resulting calculated values ...
+
+                // These need maintenance if anything is added
+                // Chrome does not give us custom property names
+                // in the calculated style, in that case we could look
+                // for the dynamic prefix...
+                let style = getComputedStyle(elem)
+                  , dynamicProps = []
+                  , calculatedResults
+                  ;
+                for(let propName of [ '--dynamic-letter-space'
+                                    , '--dynamic-word-space'
+                                    , '--dynamic-font-xtra'
+                                    , '--dynamic-font-width']){
+
+                    let val = style.getPropertyValue(propName);
+                    if(val === '' || val === 'initial') continue;
+                    dynamicProps.push([propName, val]);
+                }
+                // The values look like e.g.:
+                //      clamp( -0.0866667, calc( 0 + 2.25 * 0.0383333), 0.153333 )
+                // We are going to use font-variation-settings to get the
+                // results of these formulas.
+                // CSS.registerProperty() or @property would solve this,
+                // and getComputedStyle would return the solved values,
+                // but these are not yet available in Firefox and Safari.
+                if(dynamicProps.length) {
+                    let prop = [];
+                    for(let i=0, l=dynamicProps.length; i<l; i++) {
+                        let propKey = `XXX${i}`.slice(-4)
+                          , [, val] = dynamicProps[i]
+                          ;
+                        dynamicProps[i].push(propKey);
+                        // e.g.: "XXX0"  clamp( -0.0866667, calc( 0 + 2.25 * 0.0383333), 0.153333 )
+                        prop.push(`"${propKey}" ${val}`);
+                    }
+                    let calculator = this._domTool.createElement('span',
+                                    {style: `font-variation-settings: ${prop.join(', ')}`});
+                    // must be in the document
+                    this._reportContainer.appendChild(calculator);
+                    // font-variation-settings is charming
+                    calculatedResults = parseFontVariationSettings(
+                            getComputedStyle(calculator)
+                            .getPropertyValue('font-variation-settings'));
+                    calculator.remove();
+                }
+                return mkfrac([
+                    mkElement(elem)
+                  , mkData('line adjustment step', elem.style.getPropertyValue('--line-adjust-step'))
+                  , ...dynamicProps.map(([name, ,propKey])=>mkData(
+                                        name.slice('--dynamic-'.length).replace('-', ' ')
+                                      , calculatedResults.get(propKey)))
+                ]);
+                }]
+              , ['clicked', (elem, {devicePixelRatio, documentFontSize}/*, type*/)=>{
+                    let style = getComputedStyle(elem)
+                      , fontVariations = parseFontVariationSettings(
+                            style.getPropertyValue('font-variation-settings'))
+
+                      , [fontSizePx, lineHeightPx, letterSpacing, wordSpacing
+                            ] = getPropertiesAsNumber(elem
+                                                        , 'font-size'
+                                                        , 'line-height'
+                                                        , 'letter-spacing'
+                                                        , 'word-spacing')
+                      ;
+                    //  same as font-size in PT and only there for debugging, non-functional.
+                    fontVariations.delete('VVFS');
+
+                    return mkfrac([
+                      mkElement(elem)
+                    , mkData('font family', style.getPropertyValue('font-family'))
+                    , mkData('font style',
+                            fontVariations.get('slnt') !== 0
+                                ? `slanted ${fontVariations.get('slnt')} deg`
+                                : (style.getPropertyValue('font-style') === 'italic'
+                                        ? 'italic'
+                                        : 'normal/upright')
+                      )
+                    , mkSizePt('font size', fontSizePx * 0.75 , devicePixelRatio, documentFontSize)
+                    , mkData('line-height ', `${round2(lineHeightPx/fontSizePx)} em`)
+                    , mkData('letter-spacing', isNaN(letterSpacing)
+                                    ? style.getPropertyValue('letter-spacing')
+                                    : `${roundTo(5, letterSpacing/fontSizePx)} em`)
+                    , mkData('word-spacing', `${roundTo(5, wordSpacing/fontSizePx)} em`)
+                    , mkData('font-variation-settings', mkelem('dl',
+                                    Array.from(fontVariations.entries())
+                                         .map(([dt, dd])=>
+                                            mkfrac([mkelem('dt', dt), mkelem('dd', dd)])
+                                    )
+                     ))
+                    ]);
+                }]
+            ])
+          , key2label = {'global': 'global/browser defaults'}
+          , report=(type, element, shared)=>reports.push([
+                mkelem('li',[
+                    mkfrac(`<strong class="${this._class}-report_heading">${key2label[type] || type}</strong>`)
+                  , reporters.get(reporters.has(type) ? type : undefined)
+                                 (element, shared, type)
+                ])
+            ])
           ;
+        {
+            let reportedInitialElement
+              , doc = elem.ownerDocument
+              , win = doc.defaultView
+              , htmlElem = doc.documentElement
+              , shared = {
+                    devicePixelRatio: win.devicePixelRatio
+                  , documentFontSize: parseFloat(getComputedStyle(htmlElem)
+                                        .getPropertyValue('font-size')
+                                    ) * 0.75
+                }
+              ;
 
-        result.push('\ndocument font-size:', ptpxrem(docFontSize, docFontSize));
+            report('clicked', elem, shared);
 
-        result.push(`\n<${elem.tagName.toLowerCase()}>`
-                            ,'classes:', elem.classList + '');
-
-
-        result.push('\nfont family:', style.getPropertyValue('font-family'));
-        result.push('\nstyle:');
-        if(fontVariations.get('slnt') !== 0)
-            result.push('slanted', `${fontVariations.get('slnt')}&nbsp;deg`);
-        else if(style.getPropertyValue('font-style') === 'italic')
-            result.push('italic');
-        else
-            result.push('normal/upright');
-
-
-        let fontSizePx = styleAsNumber('font-size');
-        result.push('\nelement font-size:', pxptrem(fontSizePx, docFontSize));
-
-
-        // FIXME: column-width/line-length/ --column-width-en // not as easy to read out
-
-        let lineHeightPx = styleAsNumber('line-height')
-          , letterSpacingPx = styleAsNumber('letter-spacing')
-          , wordSpacingPx = styleAsNumber('word-spacing')
-          ;
-
-        result.push('\nline height:', pxptem(lineHeightPx, fontSizePx));
-
-        result.push('\nXTRA:', fontVariations.get('XTRA'));
-        result.push('\nletter spacing:', pxptem(letterSpacingPx));
-        result.push('\nword spacing:', pxptem(wordSpacingPx));
-
-
-        // font-family
-        // font-size 16px
-        // font-style italic OR it's a slnt axis: slnt -10
-        result.push('\nfont-variation-settings:');
-        // same as font-size in PT and only there for debugging, non-functional.
-        fontVariations.delete('VVFS');
-        for(let [k, v] of fontVariations.entries    ())
-            result.push('\n    ', k, v);
-
-        //let ineterstingProps = new Set(['word-spacing', 'letter-spacing']);
-        // i.e. font-size should be displayed in PT
-        // Also relative to document em (rem) is interesting.
-        //for(let prop of style) {
-            // about -- custom properties, we could get all rules that apply
-            // to element and collect all propery names that are
-            // mentioned. Then we only show the calculated value if it
-            // is directly applied somewhere.
-            //
-            // Custom properties don't come up in Chrome, so we can as
-            // well skip them all.
-        //    if(prop.startsWith('font-') || ineterstingProps.has(prop))
-        //        result.push('\n', prop, style.getPropertyValue(prop));
-        //}
+            for(let _class of stack) {
+                if(!reportedInitialElement) {
+                    // Start reporting after an intial element was found
+                    // then also the missing of elements will be reported.
+                    if(!found.has(_class)) continue;
+                    reportedInitialElement = true;
+                }
+                report(_class, found.get(_class), shared);
+            }
+            report('document', htmlElem, shared);// "document" "controlled by us, applied to the complete document"
+            report('global', htmlElem, shared); // "global defaults" "Controlled by the environment and browser."
+            for(let report of reports.reverse())
+                result.push(...report);
+        }
         return result;
     }
     _clickHandler(evt) {
+        // FIXME: Maybe, we want to exclude all of the widgets, also
+        // when they are directly, stand alone version, in the content
+        // window. However, these are also subject of e.g. opsz or grade
+        // so it makes some sense to make the widgets inspectable as well,
+        // then this "bug" would be a "feature".
+        //
+        // Exclude at least the this._toggleSwitch  from the prevent
+        // default, so we can turn off inspection mode.
+        if(this._toggleSwitch.root === evt.target || this._toggleSwitch.root.contains(evt.target))
+            return;
+
         let elem = evt.target
           //, report = []
           //, depth = 0
           ;
-        this._reportContainer.innerHTML = this.createtReport(elem).join(' ');
+        this._domTool.clear(this._reportContainer);
+        this._domTool.appendChildren(this._reportContainer, this.createtReport(elem));
         // while(elem) {
         //     report.push([`<${elem.tagName.toLowerCase()}>`, ...this.createtReport(elem)]);
         //     elem = elem.parentElement;
@@ -955,16 +1194,7 @@ class InspectorWidget extends _ContainerWidget {
         //     ...report.reduce((accum, [head, ...tail])=>[...(accum || []), '\n\n' + head, ...tail], ['clicked===>']));
 
 
-        // FIXME: Maybe, we want to exclude all of the widgets, also
-        // when they are directly, stand alone version, in the content
-        // window. However, these are also subject of e.g. opsz or grade
-        // so it makes some sense to make the widgets inspectable as well,
-        // then this "bug" would be a "feature".
-        //
-        // Exclude at least the this._toggleSwitch  from the prevent
-        // default, so we can turn off inspection mode.
-        if(this._toggleSwitch.root === evt.target || this._toggleSwitch.root.contains(evt.target))
-            return;
+
         evt.preventDefault();
         evt.stopPropagation();
     }

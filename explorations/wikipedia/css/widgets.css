@@ -263,6 +263,51 @@ label.portal_augmentation-amplify_grade::after {
   background: lime;
 }
 
+.inspector-report_container{
+    margin: 0;
+    padding: 0 .3em;
+    list-style: none;
+    background: #ccc;
+}
+
+.inspector-report_container > li {
+    margin: 0;
+    padding: 0;
+}
+
+.inspector-report_heading{
+    display: block;
+    margin-top: .5em;
+    text-decoration: underline;
+    --font-size-rem: 1.1;
+    --font-weight: 350;
+
+}
+.inspector-report_data-line {
+    display: block;
+}
+.inspector-report_data-label,
+.inspector-report_data-line dt {
+    --font-xtra: 350;
+    --font-weight: 350;
+}
+.inspector-report_data-line dl{
+    margin: 0 0 0 1em;
+}
+.inspector-report_data-line dt, .inspector-report_data-line dd{
+    display: inline;
+    margin: 0;
+}
+
+.inspector-report_data-line dt::after {
+    content: ': ';
+}
+
+.inspector-report_data-line dd::after {
+    display: block;
+    content: '';
+}
+
 .varla_varfo-font_spec_inspector,
 .inspector-toggle_selection_tool > input:checked ~ * {
     cursor: var(---cursor-crosshair-url), auto;

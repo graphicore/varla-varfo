@@ -275,6 +275,14 @@ class PortalPropertiesWidget {
     }
 
 }
+function setDefaultFontSize(document) {
+    var root = document.querySelector(':root')
+      , style = document.defaultView.getComputedStyle(root)
+      , fontSizePX = parseFloat(style.getPropertyValue('font-size'))
+      , fontSizePT = fontSizePX * (3/4)
+      ;
+    root.style.setProperty('--default-browser-font-size', `${fontSizePT}`);
+}
 
 function main(window) {
     let userSettingsWidget = null
@@ -299,6 +307,8 @@ function main(window) {
     let document = window.document
       , userSettingsWidgetContainer = document.querySelector('.insert_user_settings')
       ;
+    // this is required for varla-varfo.css
+    setDefaultFontSize(document);
     userSettingsWidget = new WidgetsContainerWidget(
                     userSettingsWidgetContainer,
                     [
