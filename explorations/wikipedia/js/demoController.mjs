@@ -1012,7 +1012,7 @@ class InspectorWidget extends _ContainerWidget {
                             Array.from(lineAdjust.entries())
                                 .map(([dt, dd])=>
                                     mkfrac([mkelem('dt', dt),
-                                    mkelem('dd', `${dd.min}, ${dd.default}, ${dd.max}`)])
+                                    mkelem('dd', `${roundTo(5, dd.min)}, ${roundTo(5, dd.default)}, ${roundTo(5, dd.max)}`)])
                             )
                      ))
                     // calling it steps in the UI, as it's also --line-adjust-step
