@@ -1006,7 +1006,7 @@ class InspectorWidget extends _ContainerWidget {
                   , ...(hasOwnWordSpaceSize ? [
                         mkData('measured word space size',
                                 `${roundTo(5, wordSpaceSizePx/fontSizePx)} `
-                                + `em, ${wordSpaceSizePx} px`)
+                                + `em, ${roundTo(5, wordSpaceSizePx)} px`)
                     ] : [])
                   , mkData('line adjustment ranges (min, default, max)', mkelem('dl',
                             Array.from(lineAdjust.entries())
