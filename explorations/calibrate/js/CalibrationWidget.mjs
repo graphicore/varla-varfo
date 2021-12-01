@@ -184,8 +184,8 @@ export default class CalibrationWidget {
         addEvent(this.resizeBox.parentElement, ['touchend', 'touchcancel'], (e)=>this.pinchEnd(e));
         addEvent(this.resizeBox.parentElement, 'touchstart', (e)=>this.pinchStart(e));
 
-        addEvent(this.resizeSelectObject, 'change', (_)=>this._setupResizeBox());
-        addEvent(this.setOrientation, 'change', (_)=>this._setup());
+        addEvent(this.resizeSelectObject, 'change', (/* _ */)=>this._setupResizeBox());
+        addEvent(this.setOrientation, 'change', (/* _ */)=>this._setup());
 
         let group = null;
         for(let [i, {label, optgroup, w, h, unit}] of CALIBRATION_OBJECTS.entries()){
@@ -261,8 +261,8 @@ export default class CalibrationWidget {
         // (when this.rulerUnit changes ???)
         var len = CalibrationWidget.pxToUnit(
                 this.isPortrait
-                    ? this.rulerMeasureBox.clientHeight
-                    : this.rulerMeasureBox.clientWidth,
+                    ? this.rulerMeasureBox.getBoundingClientRect().height
+                    : this.rulerMeasureBox.getBoundingClientRect().width,
                 this.rulerUnit.value
             ) / this.scale2real;
         this.rulerVal.value = `${len.toFixed(3)}`;
@@ -277,12 +277,12 @@ export default class CalibrationWidget {
         if(this.isPortrait){
             this.rulerFeedback.style.setProperty('width', '');
             this.rulerFeedback.style.setProperty('height',
-                `${this.scale2real * this.rulerMeasureBox.clientHeight}px`);
+                `${this.scale2real * this.rulerMeasureBox.getBoundingClientRect().height}px`);
         }
         else {
             this.rulerFeedback.style.setProperty('height', '');
             this.rulerFeedback.style.setProperty('width',
-                `${this.scale2real * this.rulerMeasureBox.clientWidth}px`);
+                `${this.scale2real * this.rulerMeasureBox.getBoundingClientRect().width}px`);
 
         }
 
@@ -290,7 +290,7 @@ export default class CalibrationWidget {
         // Times two to have each stripe (50%) at one unit.
         // Meter (m) is not a CSS-unit, we use a decimeters in that case.
         // Decimeter also because a meter wide pattern won't show often.
-        let rawUnit = `2${this.rulerUnit.value == 'm' ? '0cm': this.rulerUnit.value}`
+        let rawUnit = `2${this.rulerUnit.value === 'm' ? '0cm': this.rulerUnit.value}`
          ,  scaledUnit = `calc(${rawUnit} * ${this.scale2real})`
          ;
         this.rulerMeasureBox.style.setProperty('background-size',
@@ -303,9 +303,8 @@ export default class CalibrationWidget {
         var inputValue = parseFloat( this.rulerVal.value.replace(',', '.') )
           , inputValuePx
           , cssValuePx = this.isPortrait
-                ? this.rulerMeasureBox.clientHeight
-                : this.rulerMeasureBox.clientWidth
-          , ratio
+                ? this.rulerMeasureBox.getBoundingClientRect().height
+                : this.rulerMeasureBox.getBoundingClientRect().width
           ;
         if(inputValue !== inputValue) // NaN
             return;
@@ -378,7 +377,7 @@ export default class CalibrationWidget {
     /* This works quite nicely on iOS, tested on an iPhone and iPad
      * to make sure "pinch-zoom" does not scale the calibration "test device".
      */
-    handleVisualViewportResize(event) {
+    handleVisualViewportResize(/*event*/) {
         var viewport = this.window.visualViewport
           , targets = [
                 this.rulerMeasureBox.parentElement
@@ -415,6 +414,7 @@ export default class CalibrationWidget {
         event.preventDefault();
         if(this.dragstate !== null)
             return;
+        let resizeBoxBCR = this.resizeBox.getBoundingClientRect();
         this.dragstate = {
             eventHandlers: [
                 ['mousemove', this.dragMove.bind(this), false],
@@ -422,7 +422,7 @@ export default class CalibrationWidget {
             ]
           , lastX: event.pageX
           , lastY: event.pageY
-          , aspectRatio: this.resizeBox.clientWidth / this.resizeBox.clientHeight
+          , aspectRatio: resizeBoxBCR.width / resizeBoxBCR.height
         };
 
         for(let eventDefinition of this.dragstate.eventHandlers)
@@ -431,15 +431,16 @@ export default class CalibrationWidget {
 
     resizeSetScale2Real() {
         // Picking the longer side `w`, in the hope it reduces manual measurement error.
-        let { w, h, unit } = CALIBRATION_OBJECTS[this.resizeSelectObject.value]
+        let { w, h, unit } = CALIBRATION_OBJECTS[this.resizeSelectObject.value] // jshint ignore:line
+          , resizeBoxBCR = this.resizeBox.getBoundingClientRect()
           , clientSize = this.isPortrait
-                                ? this.resizeBox.clientHeight
-                                : this.resizeBox.clientWidth
+                                ? resizeBoxBCR.height
+                                : resizeBoxBCR.width
           ;
         this.scale2real = clientSize / CalibrationWidget.unitToPx(w, unit);
     }
 
-    dragEnd(event) {
+    dragEnd(/*event*/) {
         for(let eventDefinition of this.dragstate.eventHandlers)
             this._baseElement.ownerDocument.removeEventListener(...eventDefinition);
         this.resizeSetScale2Real();
@@ -455,16 +456,17 @@ export default class CalibrationWidget {
         var widthChange = event.pageX - this.dragstate.lastX
           , heightChange = event.pageY - this.dragstate.lastY
           , width, height
+          , resizeBoxBCR = this.resizeBox.getBoundingClientRect()
           ;
         this.dragstate.lastX = event.pageX;
         this.dragstate.lastY = event.pageY;
 
         if(Math.abs(widthChange) >= Math.abs(heightChange)) {
-            width = this.resizeBox.clientWidth + widthChange;
+            width = resizeBoxBCR.width + widthChange;
             height = width / this.dragstate.aspectRatio;
         }
         else {
-            height = this.resizeBox.clientHeight + heightChange;
+            height = resizeBoxBCR.height + heightChange;
             width = height * this.dragstate.aspectRatio;
         }
         this.updateResizeBox(width, height);
@@ -475,18 +477,19 @@ export default class CalibrationWidget {
     }
 
     pinchStart(event) {
-        if (event.targetTouches.length != 2)
+        if (event.targetTouches.length !== 2)
             return;
         // All 2-touch touchstart events are handled here (and end here).
         event.preventDefault();
         if(this.pinchstate !== null)
             return;
 
+        let resizeBoxBCR = this.resizeBox.getBoundingClientRect();
         this.pinchstate = {
             currentTouches: new Map()
-          , aspectRatio: this.resizeBox.clientWidth / this.resizeBox.clientHeight
-          , startWidth: this.resizeBox.clientWidth
-          , startHeight: this.resizeBox.clientHeight
+          , aspectRatio: resizeBoxBCR.width / resizeBoxBCR.height
+          , startWidth: resizeBoxBCR.width
+          , startHeight: resizeBoxBCR.height
         };
 
         for (let touch of event.targetTouches)
@@ -504,7 +507,7 @@ export default class CalibrationWidget {
                 this.pinchstate.currentTouches.delete(touch.identifier);
         }
 
-        if(this.pinchstate.currentTouches.size == 2)
+        if(this.pinchstate.currentTouches.size === 2)
             return;
 
         this.resizeSetScale2Real();
