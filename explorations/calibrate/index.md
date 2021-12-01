@@ -838,3 +838,4 @@ Please [suggest more links via the discussions board](https://github.com/graphic
 ## Changelog
 
  * initial version *2021-03-15*
+ * fixed a rounding issue in CalibrationWidget [#21](https://github.com/graphicore/varla-varfo/issues/21) *2021-12-01*
