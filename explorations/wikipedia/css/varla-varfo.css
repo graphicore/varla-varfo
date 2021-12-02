@@ -1050,6 +1050,8 @@ i, cite, em, var, dfn {
     --font-style: italic; /* applis to AmstelVar */
     --font-slnt: -10; /* applies to RobotoFlex*/
 }
+
+/* .mw-bodyXXX classes are spscific to the wikipedia exploration. */
 .mw-body h1, .mw-body-content h1, .mw-body-content h2 {
     /* Positioning the headline underline (border-bottom) closely to the box.
      * Too this from original markup, I'm not sure this is the best way.*/
@@ -1115,6 +1117,92 @@ i, cite, em, var, dfn {
  */
 .line_handling_mode-main  .runion-line {
     white-space: normal;
+}
+
+
+
+
+
+/* all the following will be wiring*/
+/* reset all */
+.line_handling_element {
+    --inter-line-harmonization-factor: initial;
+    --dynamic-font-width: initial;
+    --dynamic-letter-space: initial;
+    --dynamic-word-space: initial;
+    --dynamic-font-xtra: initial;
+}
+
+.line_handling_apply-font-width {
+    --dynamic-font-width: clamp(
+            var(--line-adjust-wdth-min),
+            calc( var(--line-adjust-wdth-default) + var(--line-adjust-step) * var(--line-adjust-step-wdth)),
+            var(--line-adjust-wdth-max)
+        );
+}
+
+.line_handling_apply-word-space {
+     --dynamic-word-space: clamp(
+            var(--line-adjust-wordspace-min),
+            calc( var(--line-adjust-wordspace-default) + var(--line-adjust-step) * var(--line-adjust-step-wordspace)),
+            var(--line-adjust-wordspace-max)
+        );
+}
+
+.line_handling_apply-letter-space {
+    --dynamic-letter-space: clamp(
+            var(--line-adjust-tracking-min),
+            calc( var(--line-adjust-tracking-default) + var(--line-adjust-step) * var(--line-adjust-step-tracking)),
+            var(--line-adjust-tracking-max)
+        );
+}
+
+.line_handling_apply-font-xtra {
+    --dynamic-font-xtra: clamp(
+            var(--line-adjust-xtra-min),
+            calc( var(--line-adjust-xtra-default) + var(--line-adjust-step) * var(--line-adjust-step-xtra)),
+            var(--line-adjust-xtra-max)
+        );
+}
+
+
+
+/**
+ * in _lineTreatmentGenerator each block element is modeKey = 'body'/
+ * unless one of the following classes match the element
+ * It's not possible to simply match "block elements" with CSS-selectors,
+ * afterall CSS can itself be used to make an element a block element.
+ * but, _lineTreatmentGenerator may still treat an unmarked block as
+ * "body", or we even mark all, also inline elements as "body", and
+ * take care that we only a) handle blocks b) override matches and subsequent
+ */
+
+/* The wildcard selector has a low specificity, which is good, but
+ * it breaks up inheritance of custom properties, which I believe is
+ * what we expect here. We'll find out.
+ */
+* {
+    --line-handling-mode: body;
+    --line-handling-properties: word-space letter-space font-xtra ;
+}
+
+h1 {
+    --line-handling-mode: main;
+    --line-handling-properties: font-width;
+    --inter-line-harmonization-factor: 0.5;
+    white-space: normal;
+}
+
+h2 {
+    --line-handling-mode: sub;
+    --line-handling-properties: word-space letter-space font-xtra;
+}
+
+blockquote,
+/* blockquote > p is due to how markdown converts this */
+blockquote > p {
+    --line-handling-mode: pull;
+    --line-handling-properties: word-space font-xtra ; /* new Set(computedStyle.getPropertyValue('--line-handling').split(/\s+/))*/
 }
 
  /* these are sectioning elements, should be configurable per document */
