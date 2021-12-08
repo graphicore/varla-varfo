@@ -1092,7 +1092,7 @@ i, cite, em, var, dfn {
             var(--line-adjust-xtra-max)
         );
     --dynamic-font-width: initial;
-    --inter-line-harmonization-factor: initial;
+    --xxx--inter-line-harmonization-factor: initial;
 }
 
 .line_handling_mode-pull, .line_handling_mode-pull * {
@@ -1126,7 +1126,7 @@ i, cite, em, var, dfn {
 /* all the following will be wiring*/
 /* reset all */
 .line_handling_element {
-    --inter-line-harmonization-factor: initial;
+    --inter-line-harmonization-factor: initial; /* don't think this belongs here ...*/
     --dynamic-font-width: initial;
     --dynamic-letter-space: initial;
     --dynamic-word-space: initial;
@@ -1184,25 +1184,29 @@ i, cite, em, var, dfn {
 * {
     --line-handling-mode: body;
     --line-handling-properties: word-space letter-space font-xtra ;
+    --line-handling-direction: "both"; /* "both" is the default, others are: "widening" "narrowing"*/
 }
 
 h1 {
     --line-handling-mode: main;
     --line-handling-properties: font-width;
     --inter-line-harmonization-factor: 0.5;
+    --line-handling-direction: "narrowing"; /* only narrowing */
     white-space: normal;
 }
 
 h2 {
     --line-handling-mode: sub;
     --line-handling-properties: word-space letter-space font-xtra;
+    --line-handling-direction: "narrowing"; /* only narrowing */
 }
 
 blockquote,
 /* blockquote > p is due to how markdown converts this */
 blockquote > p {
     --line-handling-mode: pull;
-    --line-handling-properties: word-space font-xtra ; /* new Set(computedStyle.getPropertyValue('--line-handling').split(/\s+/))*/
+    --line-handling-properties: word-space font-xtra ;
+    --line-handling-direction: "narrowing"; /* only narrowing */
 }
 
  /* these are sectioning elements, should be configurable per document */
