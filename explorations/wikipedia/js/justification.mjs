@@ -882,6 +882,8 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
     else{
         // add in progress classes
         elements[0].classList.add('line-in-progress-first-elem');
+        for(let elem of elements)
+            elem.classList.add('line-in-progress');
     }
     if(isInitialLine || isTerminalLine) {
         for(let elem of elements) {
@@ -1464,6 +1466,9 @@ function* _linesGenerator(carryOverElement, [narrowingStops, wideningStops]
             initialStep = (stepBeforeLastStep - lastStep) * interLineHarmonizationFactor + lastStep;
             initialStep = Math.min(wideningStops, Math.max(-narrowingStops, initialStep));
             // Set this for the whole parent as the base to operate on.
+            // FIXME: applying an interLineHarmonizationFactor e.g. to
+            // "pull" mode currently breaks justification, we should make
+            // this property save to use, even if we don't apply it there.
             carryOverElement.style.setProperty('--line-adjust-step', initialStep);
         }
         stepBeforeLastStep = lastStep;
@@ -1696,284 +1701,79 @@ function _getWordSpaceForElement(elem) {
 }
 
 const _JUSTIFICATION_HOST_CLASS = 'runion-justification-host'
-    , _LINE_HANDLING_MODE_CLASS_PREFIX = 'line_handling_mode-';
+    , _LINE_HANDLING_CLASS_PREFIX = 'line_handling_';
 
-function _getLineTreatmentParameters(elem, modeKey, options) {
-    // This is removed in unjustify.
-    var properties = []
-      , setProperty = (name, val)=>properties.push([name, val])
-      , interLineHarmonizationFactor = 0
-      , narrowingStops, wideningStops
-      ;
-
-    switch(modeKey) {
-        case "pull":
-            // Like body but not tracking!
-            //      Pull - cold size, wght, wdth, track
-            //      Warm: xtra, wordspace
-            // FIXME only "warm", how should this effect the result?
-        case "body":
-            // This is interesting because it has another
-            // font-spec than body. Also, it should not do any widening.
-        case "sub":
-            // calling this "body" for now
-            // This is setting up the justification environment.
-            let wsPx = _getWordSpaceForElement(elem);
-            setProperty('--word-space-size', `${wsPx}px`);
-            // console.log('--word-space-size', `${wsPx}px`);
-
-            let fontSpec = _getFontSpec(elem)
-              , [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
-              , [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
-              , [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
-              // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
-              // seems to work fine and is noticeably quicker,
-              , stopsFidelityFactor = 1
-              ;
-                  // To be able to use a scale, where step/unit size is the same
-                  // between narrowing and widening, the last possible step of each
-                  // parameter will be a the decimal partial step and then be
-                  // clipped by min/max.
-                  // This provides a simple interface for CSS where we can
-                  // just set a "step" magnitude via "--jsutification-step".
-                  // CAUTION: step sizes only appear to be the same, because of
-                  // min/max for each parameter and the composition of all
-                  // parameters, the actual difference a step makes changes.
-            narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor);
-            wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor);
-            let xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
-              , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
-              , xtraStepSize = options.XTRA
-                          ? Math.max(
-                                  xtraNarrowingRange / narrowingStops,
-                                  xtraWideningRange / wideningStops
-                                  )
-                          : 0
-              , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
-              , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
-              , trackingStepSize = options.letterSpacing
-                          ? Math.max(
-                                  trackingNarrowingRange / narrowingStops,
-                                  trackingWideningRange / wideningStops
-                                  )
-                          : 0
-              , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
-              , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
-              , wordspaceStepSize = options.wordSpacing
-                          ? Math.max(
-                                  wordspaceNarrowingRange / narrowingStops,
-                                  wordspaceWideningRange / wideningStops
-                              )
-                          : 0
-              ;
-            setProperty('--line-adjust-step-xtra', `${xtraStepSize}`);
-            setProperty('--line-adjust-xtra-min', `${xtraMin}`);
-            setProperty('--line-adjust-xtra-default', `${xtraDefault}`);
-            setProperty('--line-adjust-xtra-max', `${xtraMax}`);
-
-            if(modeKey !== 'pull') {
-                // TODO: this could even be set, it's turned off in CSS:
-                //      --dynamic-letter-space: initial;
-                // This function should be much more data driven and
-                // only react to the CSS, setting the values requested by
-                // it, when e.g. in this case ' --dynamic-letter-space' is
-                // not set to initial.
-                // This would remove this redundant condition completely
-                // and make this function more consise.
-                setProperty('--line-adjust-step-tracking', `${trackingStepSize}`);
-                setProperty('--line-adjust-tracking-min', `${trackingMin}`);
-                setProperty('--line-adjust-tracking-default', `${trackingDefault}`);
-                setProperty('--line-adjust-tracking-max', `${trackingMax}`);
-            }
-
-            setProperty('--line-adjust-step-wordspace', `${wordspaceStepSize}`);
-            setProperty('--line-adjust-wordspace-min', `${wordspaceMin}`);
-            setProperty('--line-adjust-wordspace-default', `${wordspaceDefault}`);
-            setProperty('--line-adjust-wordspace-max', `${wordspaceMax}`);
-
-            // This prevents that we apply "empty steps", that don't change anything,
-            // since we can separately turn off the justification parameters.
-            let effectiveNarrowingStops = Math.max(0, ...[
-                xtraNarrowingRange / xtraStepSize
-                , trackingNarrowingRange / trackingStepSize
-                , wordspaceNarrowingRange / wordspaceStepSize
-                ].filter(x=>isFinite(x))
-            );
-
-            let effectiveWideningStops = Math.max(0, ...[
-                xtraWideningRange / xtraStepSize
-                , trackingWideningRange / trackingStepSize
-                , wordspaceWideningRange / wordspaceStepSize
-                ].filter(x=>isFinite(x))
-            );
-            if(modeKey === 'sub' || modeKey === 'pull') // no widening
-                // FIXME: control this via CSS
-                effectiveWideningStops = 0;
-            // console.log('effectiveNarrowingStops, effectiveWideningStops:'
-            //                  , effectiveNarrowingStops, effectiveWideningStops);
-            narrowingStops = effectiveNarrowingStops;
-            wideningStops = effectiveWideningStops;
-            break;
-        case "main":
-            let [rawWDTHDefault, rawFontFamily] = getComputedPropertyValues(
-                                    elem,  '--font-width', '--font-family')
-                // This value should be in sync with --font-width in any
-                // case, otherwise the default deviates and that can
-                // confuse the algorithm. This is because a --line-adjust-step
-                // of 0 would not match the default, which is expected.
-              , wdthDefault = parseFloat(rawWDTHDefault)
-              , fontFamily = rawFontFamily.trim()
-              , wdthMax = wdthDefault // axis goes up to RobotFlex: 151 AmstelVar: 125
-              // FIXME: we should have these differences defined as data.
-              , spec = {
-                        RobotoFlex: [35 /* axis goes down to 25 */]
-                      , AmstelVar: [50 /* axis goes down to 50 */]
-                }
-              , [wdthMin] = spec[fontFamily]
-              // TODO: this should be dependent from absolute font size
-              // as a step at a big font size has a bigger absolute effect
-              // and may even visibly create an "uneven" edge.
-              , wdthStepSize = 1
-              ;
-            narrowingStops = (wdthDefault - wdthMin) / wdthStepSize;
-            // false turns off widening completely
-            wideningStops = ((wdthMax - wdthDefault) / wdthStepSize) || false;
-            interLineHarmonizationFactor = 0.5;
-            setProperty('--line-adjust-wdth-min', wdthMin);
-            setProperty('--line-adjust-wdth-default', wdthDefault);
-            setProperty('--line-adjust-step-wdth', wdthStepSize);
-            setProperty('--line-adjust-wdth-max', wdthMax);
-            break;
-        default:
-            narrowingStops = 0;
-            wideningStops = 0;
-            break;
-    }
-    // Only for reporting in the inspect widget and as debugging info.
-    setProperty('--info-line-adjust-stops', `"-${narrowingStops || 0}, +${wideningStops || 0}"`);
-
-        // bind some args to the inner generator
-    let linesGenerator = carryOverElement=>
-                            _linesGenerator(carryOverElement,
-                                        [narrowingStops, wideningStops],
-                                        interLineHarmonizationFactor)
-        // bind the inner generator to the outer generator
-      , inlinesHandler = notBlockNodes=>
-                    _inlinesHandler(linesGenerator, notBlockNodes)
-      ;
-    return [inlinesHandler, properties];
-}
-
-
-function _nextGetLineTreatmentParameters(elem, options) {
+function _getLineTreatmentParameters(elem, options) {
     // This is removed in unjustify.
 
     let properties = []
       , setProperty = (name, val)=>properties.push([name, val])
+      , allLineHandlingProperties = new Set([
+                'wdth', 'wordspace', 'tracking', 'xtra'])
       , [modeKey, lineHandlingPropertiesRaw,interLineHarmonizationFactorRaw,
          lineHandlingDirectionRaw
-                    ] = getComputedPropertyValues(elem,
+        ] = getComputedPropertyValues(elem,
                             '--line-handling-mode'
                           , '--line-handling-properties'
                           , '--inter-line-harmonization-factor'
                           , '--line-handling-direction'
                           ).map(s=>s.trim())
-      , lineHandlingProperties = new Set(lineHandlingPropertiesRaw.split(/\s+/))
+      , usedLineHandlingProperties = new Set(lineHandlingPropertiesRaw.split(/\s+/)
+                // Make sure we know them all, so unusedLineHandlingProperties
+                // will be correct and can be used to unset/reset some CSS-properties.
+                .filter(prop=>allLineHandlingProperties.has(prop)))
+      , unusedLineHandlingProperties = new Set([...allLineHandlingProperties]
+                .filter(prop=>!usedLineHandlingProperties.has(prop)))
       , interLineHarmonizationFactor = parseFloat(interLineHarmonizationFactorRaw) || 0
       , lineHandlingDirections = new Set(['both', 'narrowing', 'widening'])
       , lineHandlingDirection_ = lineHandlingDirectionRaw.replace(/["']+/g, '')
       , lineHandlingDirection = lineHandlingDirections.has(lineHandlingDirection_)
                                         ? lineHandlingDirection_ : 'both'
       , fontSpec = _getFontSpec(elem)
-
-        // Used to be around ~ 3 (i.e. fontSpec.length) but this value (1)
-        // seems to work fine and is noticeably quicker,
-        // , stopsFidelityFactor = 1
-    // To be able to use a scale, where step/unit size is the same
-    // between narrowing and widening, the last possible step of each
-    // parameter will be a the decimal partial step and then be
-    // clipped by min/max.
-    // This provides a simple interface for CSS where we can
-    // just set a "step" magnitude via "--jsutification-step".
-    // CAUTION: step sizes only appear to be the same, because of
-    // min/max for each parameter and the composition of all
-    // parameters, the actual difference a step makes changes.
-
-
-    // Here some real world step setups resulting from
-    // basing them on xtra:
-    // "body_AmstelVar@wght:400;wdth:100;opsz:12;"
-    //      --info-line-adjust-stops: "-37, +15";
-    // "body_RobotoFlex@wght:400;wdth:100;opsz:12;"
-    //      --info-line-adjust-stops: "-6.769230769230782, +4";
-    // "body_AmstelVar@wght:400;wdth:100;opsz:9.32;"
-    //      --info-line-adjust-stops: "-23.739644970414254, +17";
-    // "body_RobotoFlex@wght:400;wdth:100;opsz:9.32;"
-    //      --info-line-adjust-stops: "-6, +6";
-    // "main_RobotoFlex@wght:650;wdth:85;opsz:84;"
-    //      --info-line-adjust-stops: "-50, +0";
-    // "pull_AmstelVar@wght:200;wdth:50;opsz:31.9992;"
-    //      --info-line-adjust-stops: "-23, +0";
-    //
-    // The "main" does not depend on font size in these examples, it's
-    // just the hard coded value for AmstelVar snd wdth.
-    //
-    // It kind of makes sense to have more steps with bigger type and
-    // less steps with smaller type, because the fidelity with big type
-    // should go up, as in terms of absolute change the impact becomes
-    // bigger with each step when everything is scaled.
-    // Having less steps will also reduce the number of tries the algorithm
-    // has to justify text, so this could also be a means to improve the
-    // performance as a trade with fidelity of line fitting.
-    //
-    // So, I think I'll make up a number of steps related to font size
-    // and interpolate, e.g. 8pt: 30 (narrowing and widening)
-    //                       144pt: 120 (narrowing and widening)
-    // and then see how it works out.
-    // Maybe we need to make this configurable, it could also further be
-    // relative to the line-length, as the impact is bigger with longer
-    // lines!
-
-
-    // OLD
-    // narrowingStops = Math.round(Math.abs(xtraMin - xtraDefault) * stopsFidelityFactor);
-    // wideningStops = Math.round(Math.abs(xtraMax - xtraDefault) * stopsFidelityFactor);
-      , numberOfAxis = lineHandlingProperties.size
-      , documentFontSizePT = parseFloat(getComputedStyle(elem.ownerDocument.documentElement)
-                                        .getPropertyValue('font-size')
-                                    ) * 0.75
+      , numberOfAxis = usedLineHandlingProperties.size
       , [absoluteFontSizePX, runionColumnWidthEN] = getComputedPropertyValues(elem,
                         'font-size', '--column-width-en').map(parseFloat)
       , absoluteFontSizePT = absoluteFontSizePX * 0.75
-      , rem = absoluteFontSizePT/documentFontSizePT
-      , lineLengthInREN = runionColumnWidthEN // * rem
-       // FIXME: put explanataipon here!
+        // It makes sense to have more steps with bigger type and bigger
+        // line length and less steps with smaller type and smaller line
+        // length, because the fidelity with big type should go up, as in
+        // terms of absolute change the impact becomes bigger with each
+        // step when everything is scaled. Having less steps will also
+        // reduce the number of tries the algorithm has to justify text.
+        // This could be a way to tweak the performance as a trade off
+        // between fidelity of line fitting vs amount of steps.
+        //
+        // Each axis in here is treated as having the same impact on the
+        // length as well, we could use numbers > 0 and < 1 for axis with
+        // less range compared to a "standard" and numbers > 1 for axis
+        // with a bigger impact than the standard. This would have to be
+        // configured per font.
      ,  narrowingStops = numberOfAxis
-                        //
+                        // 12 pt and 65 ren are some magic/random numbers
+                        // that relate this calculation to some real world
+                        // appearance.
                         * (absoluteFontSizePT / 12)
-                        * (lineLengthInREN / 65)
+                        * (runionColumnWidthEN / 65)
                         // 10 is a magic number, guess for an apropriate
-                        // amount of steps  based on a 12pt 65ren widthcolumn
+                        // amount of steps  based on a 12 pt font size and
+                        // at 65 ren  width of column.
                         * 10
-      // FIXME: remove
-      , _log = console.log('narrowingStops', narrowingStops,
-                                    'numberOfAxis', numberOfAxis,
-                                    'absoluteFontSizePT', absoluteFontSizePT,
-                                    'rem', rem,
-                                    'lineLengthInREN', lineLengthInREN,
-                                    'absoluteFontSizePT / 8', absoluteFontSizePT / 12,
-                                    'lineLengthInEN / 40', lineLengthInREN / 65
-                                    , '\n'
-                                    , 'interLineHarmonizationFactor', interLineHarmonizationFactor
-                                    ,  'interLineHarmonizationFactorRaw', interLineHarmonizationFactorRaw
-                                    )
       , wideningStops = narrowingStops
       , allNarrowingStops = []
       , allWideningStops = []
       ;
-    for(let prop of lineHandlingProperties) {
+    for(let prop of unusedLineHandlingProperties) {
+        // This makes the formulae in the --dynamic-xxxx properties
+        // invalid, i.e. it turns them off when they are unused.
+        // I tried to do this with CSS classes to add and remove
+        // the --dynamic-xxxx properties, but due to the nature of
+        // CSS selectors, it turned out to be overly complicted.
+        // This is much simpler.
+        setProperty(`--line-adjust-step-${prop}`, 'initial');
+    }
+    for(let prop of usedLineHandlingProperties) {
         switch(prop) {
-            case 'font-xtra':
+            case 'xtra':
                 let [xtraMin, xtraDefault, xtraMax] = fontSpec.XTRA
                   , xtraNarrowingRange = Math.abs(xtraMin - xtraDefault)
                   , xtraWideningRange = Math.abs(xtraMax - xtraDefault)
@@ -1991,7 +1791,7 @@ function _nextGetLineTreatmentParameters(elem, options) {
                 allNarrowingStops.push(xtraNarrowingRange / xtraStepSize);
                 allWideningStops.push(xtraWideningRange / xtraStepSize);
                 break;
-            case 'letter-space':
+            case 'tracking':
                 let [trackingMin, trackingDefault ,trackingMax] = fontSpec.tracking
                   , trackingNarrowingRange = Math.abs(trackingMin - trackingDefault)
                   , trackingWideningRange = Math.abs(trackingMax - trackingDefault)
@@ -2009,7 +1809,7 @@ function _nextGetLineTreatmentParameters(elem, options) {
                 allNarrowingStops.push(trackingNarrowingRange / trackingStepSize);
                 allWideningStops.push(trackingWideningRange / trackingStepSize);
                 break;
-            case 'word-space':
+            case 'wordspace':
                 let [wordspaceMin, wordspaceDefault ,wordspaceMax] = fontSpec.wordspace
                   , wordspaceNarrowingRange = Math.abs(wordspaceMin - wordspaceDefault)
                   , wordspaceWideningRange = Math.abs(wordspaceMax - wordspaceDefault)
@@ -2029,7 +1829,7 @@ function _nextGetLineTreatmentParameters(elem, options) {
                 allNarrowingStops.push(wordspaceNarrowingRange / wordspaceStepSize);
                 allWideningStops.push(wordspaceWideningRange / wordspaceStepSize);
                 break;
-            case 'font-width':
+            case 'wdth':
                 let [rawWDTHDefault, rawFontFamily] = getComputedPropertyValues(
                         elem,  '--font-width', '--font-family')
                     // This value should be in sync with --font-width in any
@@ -2038,11 +1838,15 @@ function _nextGetLineTreatmentParameters(elem, options) {
                     // of 0 would not match the default, which is expected.
                   , wdthDefault = parseFloat(rawWDTHDefault)
                   , fontFamily = rawFontFamily.trim()
-                  // , wdthMax = wdthDefault // axis goes up to RobotFlex: 151 AmstelVar: 125
-                    // FIXME: we should have these differences defined as data.
-
+                    // FIXME: we should have these defined as data, as much
+                    // as "fontSpec"/_getFontSpec(elem).
                     // This is a stub, it's not taking into account e.g. font-size
                     // etc. because we just use it so far for main headlines.
+                    // axis goes up to RobotFlex: 151 AmstelVar: 125
+                    // FIXME: for h1/type "main" we use only:
+                    //          --line-handling-direction: "narrowing";
+                    // Hence, widening with these values is not confirmed
+                    // to be good.
                   , wdthSpec = {
                             RobotoFlex: [35 /* axis goes down to 25 */, 151 /* we don't use wdth widening so far*/]
                           , AmstelVar: [50 /* axis goes down to 50 */, 125  /* we don't use wdth widening so far*/]
@@ -2051,9 +1855,9 @@ function _nextGetLineTreatmentParameters(elem, options) {
                   , [wdthMin, wdthMax] = wdthSpec[fontFamily]
                   , wdthNarrowingRange = Math.abs(wdthMin - wdthDefault)
                   , wdthWideningRange = Math.abs(wdthMax - wdthDefault)
-                    // FIXME: no options.wdth, can't manipulate this so
-                    //        far from the UI!!!
-                  , wdthStepSize = //options.wordSpacing
+                    // FIXME: no options.wdth so far, can't turn this on/off
+                    // from the UI so far.
+                  , wdthStepSize = //options.wdth
                               //?
                                Math.max(
                                       wdthNarrowingRange / narrowingStops,
@@ -2087,7 +1891,7 @@ function _nextGetLineTreatmentParameters(elem, options) {
         effectiveNarrowingStops = 0; // no narrowing
 
     // Only for reporting in the inspect widget and as debugging info.
-    setProperty('--info-line-adjust-stops', `"lineHandlingDirection ${lineHandlingDirection}: -${effectiveNarrowingStops || 0}, +${effectiveWideningStops || 0} interLineHarmonizationFactor: ${interLineHarmonizationFactor}"`);
+    setProperty('--info-line-adjust-stops', `"-${effectiveWideningStops || 0}, +${effectiveNarrowingStops || 0} line-handling direction ${lineHandlingDirection}"`);
 
         // bind some args to the inner generator
     let linesGenerator = carryOverElement=>
@@ -2103,64 +1907,21 @@ function _nextGetLineTreatmentParameters(elem, options) {
 
 // skip === [skipSelector, skipClass]
 function* _lineTreatmentGenerator(elem, skip, options) {
-        // FIXME: * Ideally these modules will select and configure the
-        //          code to run, so this can be configured per publication/
-        //          target/website. But that will need a bit more maturing
-        //          of the current approach.
-        //        * "body" and "main" are the correct names for
-        //          the style we are appliying now, but the "body"/"main" styles
-        //          may change, and hence these are likely not good names for
-        //          the modeKey, as e.g. main prevails but it's style/mode changes.
-    let modeKey = 'body'// the default
-        // FIXME: CSS should set a property to decide the "mode", however
-        // it really is even more controlled by the --dynamic-{property}
-        // settings it has and these modules will likely disappear, could
-        // be kept for reporting/debugging though.
-        // So, the classes that follow by selecting the nodes and deciding
-        // the module should do directly what the ".line-handling-mode-xxx"
-        // class does here. This will be reasonable by generating those
-        // rules from a central configuration.
-      , modules = [
-            // CAUTION: order is importnt, first hit matches.
-            ['h1', 'main']
-          , ['h2', 'sub']
-            // blockquote > p is due to how markdown converts this
-          , ['blockquote, blockquote > p', 'pull']
-        ]
-      ;
-
-    for(let [selectorString, _modeKey] of modules){
-        if(elem.matches(selectorString)){
-            modeKey = _modeKey;
-            break;
-        }
-    }
-    let fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
+    let [
+            modeKey, inlinesHandler, elementProperties
+        ] = _getLineTreatmentParameters(elem, options)
+      , fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
       , [inheritedFontSpecKey] = getComputedPropertyValues(elem, '--font-spec-key')
       , fontSpecChanged = fontSpecKey !== inheritedFontSpecKey
-      , [inlinesHandler, elementProperties] = _getLineTreatmentParameters(elem, modeKey, options)
       ;
-    //   , [nxt_modeKey, nxt_inlinesHandler, nxt_elementProperties] = _nextGetLineTreatmentParameters(elem, options)
-    //   ;
-    //
-    //
-    // console.log(`modeKey ${modeKey} nxt_modeKey ${nxt_modeKey}`, elem);
-    // console.log('elementProperties', elementProperties);
-    // console.log('nxt_elementProperties', nxt_elementProperties);
-    // if(!fontSpecChanged) console.log('NO SWITCH fontspec');
-    // [modeKey, inlinesHandler, elementProperties] = [nxt_modeKey, nxt_inlinesHandler, nxt_elementProperties];
 
     if(fontSpecChanged) {
         // initialize
-        console.log('Switch to font-spec:', fontSpecKey, 'from:', inheritedFontSpecKey || '(none)'); //, 'in', elem, ...elem.classList);
         elem.classList.add(_JUSTIFICATION_HOST_CLASS);
         // This is only for the check above, it doesn't change the font
         // spec. Also, it makes use of the CSS inhertance of custom
         // properties.
         elem.style.setProperty('--font-spec-key', fontSpecKey);
-        // This is removed in unjustify.
-        let modeClass = `${_LINE_HANDLING_MODE_CLASS_PREFIX}${modeKey}`;
-        elem.classList.add(modeClass);
         for(let [prop, val] of elementProperties)
             elem.style.setProperty(prop, val);
     }
@@ -2283,7 +2044,7 @@ export class JustificationController{
         for(let elem of [this._elem, ...this._elem.querySelectorAll(`.${_JUSTIFICATION_HOST_CLASS}`)]) {
             elem.classList.remove(_JUSTIFICATION_HOST_CLASS);
             for(let klass of elem.classList){
-                if(klass.startsWith(_LINE_HANDLING_MODE_CLASS_PREFIX))
+                if(klass.startsWith(_LINE_HANDLING_CLASS_PREFIX))
                     elem.classList.remove(klass);
             }
             for(let propertyName of [
@@ -2305,6 +2066,7 @@ export class JustificationController{
                                 , '--line-adjust-wdth-default'
                                 , '--line-adjust-step-wdth'
                                 , '--line-adjust-wdth-max'
+                                , '--info-line-adjust-stops'
                                 ])
                 elem.style.removeProperty(propertyName);
         }

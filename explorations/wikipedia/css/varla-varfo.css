@@ -679,7 +679,7 @@ sub, sub * {
 .runion-line {
     /* This is forcing the browser.*/
     white-space: nowrap;
-    /* This is the cool when we toggle the color-coded-lines class*/
+    /* This is cool when we toggle the color-coded-lines class*/
     transition: background 3s;
     /* Prevent Safari from displaying hyphens where there should be none.
      * Safari will hyphenate some lines regardless when they are close
@@ -692,6 +692,30 @@ sub, sub * {
     --hyphens: none;
 }
 
+/* the following will be wiring */
+.runion-line, .line-in-progress {
+    /* If not used, these are deactivated in js by setting: --line-adjust-step-{property}: initial */
+    --dynamic-font-width: clamp(
+            var(--line-adjust-wdth-min),
+            calc( var(--line-adjust-wdth-default) + var(--line-adjust-step) * var(--line-adjust-step-wdth)),
+            var(--line-adjust-wdth-max)
+        );
+    --dynamic-word-space: clamp(
+            var(--line-adjust-wordspace-min),
+            calc( var(--line-adjust-wordspace-default) + var(--line-adjust-step) * var(--line-adjust-step-wordspace)),
+            var(--line-adjust-wordspace-max)
+        );
+    --dynamic-letter-space: clamp(
+            var(--line-adjust-tracking-min),
+            calc( var(--line-adjust-tracking-default) + var(--line-adjust-step) * var(--line-adjust-step-tracking)),
+            var(--line-adjust-tracking-max)
+        );
+    --dynamic-font-xtra: clamp(
+            var(--line-adjust-xtra-min),
+            calc( var(--line-adjust-xtra-default) + var(--line-adjust-step) * var(--line-adjust-step-xtra)),
+            var(--line-adjust-xtra-max)
+        );
+}
 
 .color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
@@ -1069,144 +1093,40 @@ i, cite, em, var, dfn {
     text-indent: 0;
 }
 
-/* line_handling_mode-XXX will be defined a bit diefferently
- * we may, for debogging and inspection, put a "--line_handling_mode: pull"
- * property on the appropriate selectors.
- */
-.line_handling_mode-body, .line_handling_mode-body *,
-.line_handling_mode-pull, .line_handling_mode-pull *,
-.line_handling_mode-sub, .line_handling_mode-sub * {
-     --dynamic-word-space: clamp(
-            var(--line-adjust-wordspace-min),
-            calc( var(--line-adjust-wordspace-default) + var(--line-adjust-step) * var(--line-adjust-step-wordspace)),
-            var(--line-adjust-wordspace-max)
-        );
-    --dynamic-letter-space: clamp(
-            var(--line-adjust-tracking-min),
-            calc( var(--line-adjust-tracking-default) + var(--line-adjust-step) * var(--line-adjust-step-tracking)),
-            var(--line-adjust-tracking-max)
-        );
-    --dynamic-font-xtra: clamp(
-            var(--line-adjust-xtra-min),
-            calc( var(--line-adjust-xtra-default) + var(--line-adjust-step) * var(--line-adjust-step-xtra)),
-            var(--line-adjust-xtra-max)
-        );
-    --dynamic-font-width: initial;
-    --xxx--inter-line-harmonization-factor: initial;
-}
-
-.line_handling_mode-pull, .line_handling_mode-pull * {
-    --dynamic-letter-space: initial;
-}
-
-.line_handling_mode-main, .line_handling_mode-main * {
-    --inter-line-harmonization-factor: 0.5;
-    --dynamic-letter-space: initial;
-    --dynamic-word-space: initial;
-    --dynamic-font-xtra: initial;
-    --dynamic-font-width: clamp(
-            var(--line-adjust-wdth-min),
-            calc( var(--line-adjust-wdth-default) + var(--line-adjust-step) * var(--line-adjust-step-wdth)),
-            var(--line-adjust-wdth-max)
-        );
-}
-/* FIXME: should probably be handled differently, e.g. via a custom property
- * in the rule above. Same thing for hyphenation, but that is good when
- * handled in the direct h1 etc. as well (but should be a property).
- * Because of css-inheritance/specificity mechanics...
- */
-.line_handling_mode-main  .runion-line {
-    white-space: normal;
-}
-
-
-
-
-
-/* all the following will be wiring*/
-/* reset all */
-.line_handling_element {
-    --inter-line-harmonization-factor: initial; /* don't think this belongs here ...*/
-    --dynamic-font-width: initial;
-    --dynamic-letter-space: initial;
-    --dynamic-word-space: initial;
-    --dynamic-font-xtra: initial;
-}
-
-.line_handling_apply-font-width {
-    --dynamic-font-width: clamp(
-            var(--line-adjust-wdth-min),
-            calc( var(--line-adjust-wdth-default) + var(--line-adjust-step) * var(--line-adjust-step-wdth)),
-            var(--line-adjust-wdth-max)
-        );
-}
-
-.line_handling_apply-word-space {
-     --dynamic-word-space: clamp(
-            var(--line-adjust-wordspace-min),
-            calc( var(--line-adjust-wordspace-default) + var(--line-adjust-step) * var(--line-adjust-step-wordspace)),
-            var(--line-adjust-wordspace-max)
-        );
-}
-
-.line_handling_apply-letter-space {
-    --dynamic-letter-space: clamp(
-            var(--line-adjust-tracking-min),
-            calc( var(--line-adjust-tracking-default) + var(--line-adjust-step) * var(--line-adjust-step-tracking)),
-            var(--line-adjust-tracking-max)
-        );
-}
-
-.line_handling_apply-font-xtra {
-    --dynamic-font-xtra: clamp(
-            var(--line-adjust-xtra-min),
-            calc( var(--line-adjust-xtra-default) + var(--line-adjust-step) * var(--line-adjust-step-xtra)),
-            var(--line-adjust-xtra-max)
-        );
-}
-
-
-
-/**
- * in _lineTreatmentGenerator each block element is modeKey = 'body'/
- * unless one of the following classes match the element
- * It's not possible to simply match "block elements" with CSS-selectors,
- * afterall CSS can itself be used to make an element a block element.
- * but, _lineTreatmentGenerator may still treat an unmarked block as
- * "body", or we even mark all, also inline elements as "body", and
- * take care that we only a) handle blocks b) override matches and subsequent
- */
-
-/* The wildcard selector has a low specificity, which is good, but
- * it breaks up inheritance of custom properties, which I believe is
- * what we expect here. We'll find out.
- */
-* {
+/* line-treatment setup */
+article {
+    /* maximal justified */
     --line-handling-mode: body;
-    --line-handling-properties: word-space letter-space font-xtra ;
+    --line-handling-properties: wordspace tracking xtra ;
     --line-handling-direction: "both"; /* "both" is the default, others are: "widening" "narrowing"*/
+    --inter-line-harmonization-factor: initial;
+
 }
 
 h1 {
     --line-handling-mode: main;
-    --line-handling-properties: font-width;
-    --inter-line-harmonization-factor: 0.5;
+    --line-handling-properties: wdth;
     --line-handling-direction: "narrowing"; /* only narrowing */
+    --inter-line-harmonization-factor: 0.5;
     white-space: normal;
 }
 
 h2 {
     --line-handling-mode: sub;
-    --line-handling-properties: word-space letter-space font-xtra;
+    --line-handling-properties: wordspace tracking xtra;
     --line-handling-direction: "narrowing"; /* only narrowing */
+    --inter-line-harmonization-factor: initial;
 }
 
-blockquote,
-/* blockquote > p is due to how markdown converts this */
-blockquote > p {
+blockquote {
     --line-handling-mode: pull;
-    --line-handling-properties: word-space font-xtra ;
+    --line-handling-properties: wordspace xtra ;
     --line-handling-direction: "narrowing"; /* only narrowing */
+    /* FIXME: setting a value to --inter-line-harmonization-factor
+     * here is broken at the moment, but it should be save to use,
+     * even though we're no really doing it.
+     */
+    --inter-line-harmonization-factor: initial;
 }
 
  /* these are sectioning elements, should be configurable per document */
