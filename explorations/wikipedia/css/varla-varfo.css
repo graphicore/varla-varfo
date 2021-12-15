@@ -1094,13 +1094,12 @@ i, cite, em, var, dfn {
 }
 
 /* line-treatment setup */
-article {
+article, .runion-01 {
     /* maximal justified */
     --line-handling-mode: body;
     --line-handling-properties: wordspace tracking xtra ;
     --line-handling-direction: "both"; /* "both" is the default, others are: "widening" "narrowing"*/
     --inter-line-harmonization-factor: initial;
-
 }
 
 h1 {
