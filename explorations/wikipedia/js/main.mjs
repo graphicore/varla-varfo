@@ -2,6 +2,7 @@
 import {ID}  from './WidgetsContainerWidget.mjs';
 import DOMTool from '../../calibrate/js/domTool.mjs';
 import {main} from './demoController.mjs';
+import { typeSpec } from './typeSpec.mjs';
 
 
 function massageWikipediaMarkup(documentOrElement) {
@@ -315,11 +316,11 @@ class WikipediaArticleURLWidget {
 }
 
 
-const config = {
+const inject = {
     WikipediaArticleURLWidget: WikipediaArticleURLWidget
   , massageMarkupFunc: massageWikipediaMarkup
 };
 
 window.onload = ()=>{
-    main(window, config);
+    main(window, inject, typeSpec);
 };

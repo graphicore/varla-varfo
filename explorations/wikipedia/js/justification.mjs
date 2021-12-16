@@ -922,113 +922,6 @@ function _interpolateArray(t, upperValues, lowerValues) {
     return result;
 }
 
-
-const FONT_SPEC_CONFIG_AMSTEL_VAR = {
-    // weight
-        // width
-            // opsz
-    900: {
-        100: {
-
-            144: {XTRA: [540, 562, 569], tracking: [-0.4 , 0, 0.9], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 171/144 - 1]}
-           , 14: {XTRA: [500, 562, 580], tracking: [-0.3 , 0, 0.15], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 22/14 - 1]}
-           ,  8: {XTRA: [540, 562, 570], tracking: [-0.05 , 0, 0.15], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
-        }
-    }
-  , 400: {
-        125: {
-            // FIXME: PDF is not clear regarding tracking: also [-1, 0, 1]
-            //          also suggest -1 instead of -0.1!
-            //          Google Sheets "Amstelvar Justification saved" sugests [-1, 0, 0.8]
-            144: {XTRA: [550, 562, 570], tracking: [-0.1, 0, 0.8], wordspace: [96/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
-            // FIXME: PDF is not clear regarding tracking: also [-0.3, 0, 0.2]
-            //          Google Sheets "Amstelvar Justification saved" sugests [-.3, 0, 0.3]
-            // FIXME: PDF is not clear regarding XTRA: also [540, 562, 575]
-            //          Google Sheets "Amstelvar Justification saved" sugests [540, ?, 580]
-           , 14: {XTRA: [540, 562, 580], tracking: [-0.3, 0, 0.3], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-           ,  8: {XTRA: [510, 562 ,571], tracking: [-0.1, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
-        }
-        // default reading text spec:
-      , 100: {
-            144: {XTRA: [545, 562, 570], tracking:[-0.3, 0, 0.7],  wordspace: [120/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
-           , 14: {XTRA: [515, 562, 575], tracking:[-0.4, 0, 0.2],  wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-            // FIXME: PDF is not clear regarding tracking: also [-0.1, 0, 0.2]
-            //          Google Sheets "Amstelvar Justification saved" sugests [-0.1, 0, 0.25]
-           ,  8: {XTRA: [545, 562, 580], tracking:[-0.1, 0, 0.25], wordspace: [6/8 - 1, 1 - 1 /*8/8*/, 12/8 - 1]}
-        }
-      , 50: {
-            144: {XTRA: [550, 562, 568], tracking: [-0.3, 0, 0.5], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
-            // FIXME: PDF is not clear regarding XTRA: also [562, 562, 575]
-            //          Google Sheets "Amstelvar Justification saved" sugests: [540, ?, 575]
-           , 14: {XTRA: [540, 562, 575], tracking: [0, 0, 0.2], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-           ,  8: {XTRA: [540, 562, 568], tracking: [-0.1, 0, 0.15], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
-        }
-    }
-  , 100: {
-        100: {
-            // FIXME: PDF is not clear regarding wordspace: also [126/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]
-            //          Google Sheets "Amstelvar Justification saved" sugests: [126/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]
-            144: {XTRA: [552, 562, 568], tracking: [-0.2, 0, 0.7], wordspace: [126/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
-            // FIXME: PDF is not clear regarding XTRA: also [515, 562, 575]
-            //          Google Sheets "Amstelvar Justification saved" sugests: [535, ?, 575]
-           , 14: {XTRA: [535, 562, 575], tracking: [-0.2 , 0, 0.2], wordspace: [8/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-           ,  8: {XTRA: [545, 562, 570], tracking: [-0.01 , 0, 0.27], wordspace: [8/8 - 1, 1 - 1/*8/8*/, 12/8 - 1]}
-        }
-    }
-};
-
-const FONT_SPEC_CONFIG_ROBOTO_FLEX = {
-    // weight
-        // width
-            // opsz
-    1000: {
-        100: {
-            144: {XTRA: [458, 468, 473], tracking: [-0.8, 0, 0.5], wordspace: [96/144 - 1, 1 - 1/*144/144*/, 150/144 - 1]}
-           , 14: {XTRA: [458, 468, 472], tracking: [-0.2, 0, 0.13], wordspace: [10/14 - 1, 1 - 1/*14/14*/, 18/14 - 1]}
-            // FIXME: PDF is not clear regarding XTRA: also [462, 468, 475]
-           ,  8: {XTRA: [444, 468, 475], tracking: [-0.06, 0, 0.2], wordspace: [6/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
-        }
-    }
-  , 400: {
-        151: {
-            144: {XTRA: [455, 468, 479], tracking: [-0.3, 0, 0.5], wordspace: [118/144 - 1, 1 - 1/*144/144*/, 180/144 - 1]}
-            // FIXME: PDF is not clear regarding XTRA: also [450, 468, 471]
-           , 14: {XTRA: [458, 468, 475], tracking: [-0.1, 0, 0.13], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
-           ,  8: {XTRA: [462, 468, 475], tracking: [-0.06, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
-        }
-        // default reading text spec:
-      , 100: {
-            144: {XTRA: [460, 468, 471], tracking:[-0.5, 0, 0.5],  wordspace: [114/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
-           , 14: {XTRA: [460, 468, 471], tracking:[-0.1, 0, 0.13],  wordspace: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
-           ,  8: {XTRA: [462, 468, 475], tracking:[-0.06, 0, 0.2], wordspace: [7/8 - 1, 1 - 1 /*8/8*/,   14/8 - 1]}
-        }
-      , 25: {
-            // FIXME: PDF is not clear regarding wordspace: also: [120/144 - 1, 1 - 1/*144/144*/, 192/144 - 1]}
-            // FIXME: PDF is not clear regarding XTRA: also: [466, 468, 473]
-            144: {XTRA: [468, 468, 473], tracking: [-0.07, 0, 0.15], wordspace: [120/144 - 1, 1 - 1/*144/144*/, 168/144 - 1]}
-            // FIXME: PDF is not clear regarding wordspace: also: [12/14 - 1, 1 - 1/*14/14*/, 19/14 - 1]}
-           , 14: {XTRA: [463, 468, 472], tracking: [-0.1, 0, 0.13], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 16/14 - 1]}
-            // FIXME: PDF is not clear regarding tracking: also: [-0.06, 0, 0.2]
-           ,  8: {XTRA: [464, 468, 475], tracking: [0, 0, 0.2], wordspace: [7/8 - 1, 1 - 1/*8/8*/, 10/8 - 1]}
-        }
-    }
-  , 100: {
-        100: {
-            144: {XTRA: [460, 468, 473], tracking: [-0.3, 0, 0.65], wordspace: [126/144 - 1, 1 - 1/*144/144*/, 216/144 - 1]}
-           // FIXME: PDF is not clear regarding XTRA, also: [458, 468, 471]
-           , 14: {XTRA: [458, 468, 472], tracking: [-0.1, 0, 0.13], wordspace: [12/14 - 1, 1 - 1/*14/14*/, 20/14 - 1]}
-           // FIXME: PDF is not clear regarding tracking, also: [-0.04, 0, 0.2]
-           ,  8: {XTRA: [460, 468, 471], tracking: [-0.03, 0, 0.16], wordspace: [8/8 - 1, 1 - 1/*8/8*/, 14/8 - 1]}
-        }
-    }
-};
-
-const FONT_SPECS = {
-    AmstelVar: FONT_SPEC_CONFIG_AMSTEL_VAR,
-    RobotoFlex: FONT_SPEC_CONFIG_ROBOTO_FLEX
-};
-
-
 function _findPosBetween(mark, sortedKeys) {
     let lower = sortedKeys[0]
       , upper = lower
@@ -1101,9 +994,9 @@ function _getFontSpecProperties(referenceElement) {
     return [fontFamily, weight, width, opticalFontSizePt];
 }
 
-function _getFontSpec(referenceElement) {
+function _getFontSpec(justificationSpecs, referenceElement) {
     var [fontFamily, weight, width, opticalFontSizePt] = _getFontSpecProperties(referenceElement)
-      , fontSpecConfig = FONT_SPECS[fontFamily]
+      , fontSpecConfig = justificationSpecs[fontFamily]
       , spec =  _calculateFontSpec(fontSpecConfig, [weight, width, opticalFontSizePt])
       ;
     console.log(`Font Spec for ${fontFamily} @ wght ${weight} wdth ${width} ${opticalFontSizePt} pt`, spec);
@@ -1628,7 +1521,7 @@ function* _inlinesHandler(linesGenerator, notBlockNodes) {
     range.deleteContents();
 }
 
-function* _blockHandler(elem, [skipSelector, skipClass], options, inlinesHandler) {
+function* _blockHandler(justificationSpec, elem, [skipSelector, skipClass], options, inlinesHandler) {
     let notBlocks = []
         // This way we don't create confusion in the iterator about
         // which nodes to visit, after we changed the element, it may
@@ -1663,7 +1556,7 @@ function* _blockHandler(elem, [skipSelector, skipClass], options, inlinesHandler
                 if(isBreaking) {/*pass*/}
                 else if(!skip) {
                     // changes the node in place
-                    total += yield* _lineTreatmentGenerator(node, [skipSelector, skipClass], options);
+                    total += yield* _lineTreatmentGenerator(justificationSpec, node, [skipSelector, skipClass], options);
                 }
                 else if(skipClass)
                     node.classList.add(skipClass);
@@ -1703,10 +1596,10 @@ function _getWordSpaceForElement(elem) {
 const _JUSTIFICATION_HOST_CLASS = 'runion-justification-host'
     , _LINE_HANDLING_CLASS_PREFIX = 'line_handling_';
 
-function _getLineTreatmentParameters(elem, options) {
+function _getLineTreatmentParameters(justificationSpec, elem, options) {
     // This is removed in unjustify.
-
-    let properties = []
+    let {justificationSpecs, wdthJustificationSpecs} = justificationSpec
+      , properties = []
       , setProperty = (name, val)=>properties.push([name, val])
       , allLineHandlingProperties = new Set([
                 'wdth', 'wordspace', 'tracking', 'xtra'])
@@ -1729,7 +1622,7 @@ function _getLineTreatmentParameters(elem, options) {
       , lineHandlingDirection_ = lineHandlingDirectionRaw.replace(/["']+/g, '')
       , lineHandlingDirection = lineHandlingDirections.has(lineHandlingDirection_)
                                         ? lineHandlingDirection_ : 'both'
-      , fontSpec = _getFontSpec(elem)
+      , fontSpec = _getFontSpec(justificationSpecs, elem)
       , numberOfAxis = usedLineHandlingProperties.size
       , [absoluteFontSizePX, runionColumnWidthEN] = getComputedPropertyValues(elem,
                         'font-size', '--column-width-en').map(parseFloat)
@@ -1838,21 +1731,7 @@ function _getLineTreatmentParameters(elem, options) {
                     // of 0 would not match the default, which is expected.
                   , wdthDefault = parseFloat(rawWDTHDefault)
                   , fontFamily = rawFontFamily.trim()
-                    // FIXME: we should have these defined as data, as much
-                    // as "fontSpec"/_getFontSpec(elem).
-                    // This is a stub, it's not taking into account e.g. font-size
-                    // etc. because we just use it so far for main headlines.
-                    // axis goes up to RobotFlex: 151 AmstelVar: 125
-                    // FIXME: for h1/type "main" we use only:
-                    //          --line-handling-direction: "narrowing";
-                    // Hence, widening with these values is not confirmed
-                    // to be good.
-                  , wdthSpec = {
-                            RobotoFlex: [35 /* axis goes down to 25 */, 151 /* we don't use wdth widening so far*/]
-                          , AmstelVar: [50 /* axis goes down to 50 */, 125  /* we don't use wdth widening so far*/]
-                    }
-
-                  , [wdthMin, wdthMax] = wdthSpec[fontFamily]
+                  , [wdthMin, wdthMax] = wdthJustificationSpecs[fontFamily]
                   , wdthNarrowingRange = Math.abs(wdthMin - wdthDefault)
                   , wdthWideningRange = Math.abs(wdthMax - wdthDefault)
                     // FIXME: no options.wdth so far, can't turn this on/off
@@ -1906,10 +1785,10 @@ function _getLineTreatmentParameters(elem, options) {
 }
 
 // skip === [skipSelector, skipClass]
-function* _lineTreatmentGenerator(elem, skip, options) {
+function* _lineTreatmentGenerator(justificationSpec, elem, skip, options) {
     let [
             modeKey, inlinesHandler, elementProperties
-        ] = _getLineTreatmentParameters(elem, options)
+        ] = _getLineTreatmentParameters(justificationSpec, elem, options)
       , fontSpecKey = `"${modeKey}_${_getFontSpecKey(elem)}"`
       , [inheritedFontSpecKey] = getComputedPropertyValues(elem, '--font-spec-key')
       , fontSpecChanged = fontSpecKey !== inheritedFontSpecKey
@@ -1927,7 +1806,7 @@ function* _lineTreatmentGenerator(elem, skip, options) {
     }
 
     let t0 = performance.now();
-    let total = yield* _blockHandler(elem, skip, options, inlinesHandler);
+    let total = yield* _blockHandler(justificationSpec, elem, skip, options, inlinesHandler);
     let t1 = performance.now();
     // Makes white-space: no-wrap; must be removed on unjustify.
 
@@ -1938,7 +1817,8 @@ function* _lineTreatmentGenerator(elem, skip, options) {
 }
 
 export class JustificationController{
-    constructor(elem, skip, options) {
+    constructor(justificationSpec, elem, skip, options) {
+        this._justificationSpec = justificationSpec;
         this._elem = elem;
         this._skip = skip;
         this._options = options || {};
@@ -1997,7 +1877,7 @@ export class JustificationController{
             if(!this._gen) {
                 this._reportStatus('init');
                 this._unjustify();
-                this._gen = _lineTreatmentGenerator(this._elem, this._skip, this._options);
+                this._gen = _lineTreatmentGenerator(this._justificationSpec, this._elem, this._skip, this._options);
             }
             else
                 this._reportStatus('continue');
