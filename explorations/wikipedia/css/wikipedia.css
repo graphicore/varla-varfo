@@ -37,7 +37,7 @@
  */
 .templatequote {
     --font-family: var(--body-font-family);
-    --grad-animation-name: var(--headlines-grad-animation-name);
+    --grad-animation-name: var(--body-font-grad-animation-name);
     --font-xtra: var(--headlines-font-xtra);
     --font-style: italic; /* AmstelVar */
     --font-slnt: -10; /* RobotoFlex */

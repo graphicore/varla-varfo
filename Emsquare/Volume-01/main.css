@@ -19,7 +19,7 @@ nav.relative-navigation li {
 
 header, nav, footer, .content-page{
     --font-family: var(--headlines-font-family);
-    --grad-animation-name: var(--headlines-grad-animation-name);
+    --grad-animation-name: var(--headlines-font-grad-animation-name);
     --font-xtra: var(--headlines-font-xtra);
 }
 footer{
@@ -43,7 +43,7 @@ figure {
      * to the ".runion-justification-host" element.
      */
     --font-family: var(--headlines-font-family);
-    --grad-animation-name: var(--headlines-grad-animation-name);
+    --grad-animation-name: var(--headlines-font-grad-animation-name);
     --font-xtra: var(--headlines-font-xtra);
     /*
      *  9 pt if default is 12 pt, same as in wikipedia page UI:
@@ -84,7 +84,7 @@ header {
 
 header .title{
     --font-family: var(--headlines-font-family);
-    --grad-animation-name: var(--headlines-grad-animation-name);
+    --grad-animation-name: var(--headlines-font-grad-animation-name);
     --font-xtra: var(--headlines-font-xtra);
 
     /* inherited from header --font-size-rem: 2.6666; /* ~ 32 pt @ 12 pt body*/

@@ -951,7 +951,7 @@ b, strong {
       --grad-400: -22;
       --grad-700: -120;
     }
-    100% { /*18 ot */
+    100% { /*18 pt */
       --grad-supported: 1;
       --grad-400: -24;
       --grad-700: -125;
@@ -1047,7 +1047,7 @@ h4,
  */
 @keyframes synth-sub-and-super-script {
     0% { /* 8pt */
-        --sup-scale: .65
+        --sup-scale: .65;
     }
     4.41% { /*   14pt  (14-8)/(144-8) * 100  */
         --sup-scale: .57;
