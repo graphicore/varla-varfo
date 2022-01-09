@@ -14,7 +14,7 @@ export const COLUMN_CONFIG = {
         // used as default for now
         // as a factor of font-size, actual value relative positioned to line-length
         // as shorter lines require shorter line-height.
-        minLineHeight: 1.1
+      minLineHeight: 1.1
     , maxLineHeight: 1.3
         // Kind of a duplicate, could be calculated from
         // the "columns" setting.

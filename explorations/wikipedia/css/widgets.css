@@ -310,9 +310,25 @@ label.portal_augmentation-amplify_grade::after {
 
 .varla_varfo-font_spec_inspector,
 .inspector-toggle_selection_tool > input:checked ~ * {
-    cursor: var(---cursor-crosshair-url), auto;
+    cursor: var(---cursor-crosshair-url) 10 10, crosshair;
 }
 
-.varla_varfo-font_spec_inspector *:hover{
+.varla_varfo-font_spec_inspector :not(.insert_user_settings):not(.insert_user_settings *):hover{
     box-shadow: 0 0 10px deeppink;
 }
+
+.varla_varfo-font_spec_inspector .varla_varfo-font_spec_inspector-beacon {
+    /* looks like a carret.*/
+    outline: solid 2px yellow;
+}
+
+.justification-context-block .varla_varfo-font_spec_inspector-beacon {
+    /*ignore in jusification
+     * F***, doesn't work!
+     * Lines always separate at elements, so they can be the innermost
+     * element, containing jsut text nodes, but here we want the beacon
+     * to become part of the line. :-(
+     */
+    display: none;
+}
+

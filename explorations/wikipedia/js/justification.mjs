@@ -853,6 +853,36 @@ function _getDirectChild(ancestorElement, descendantNode) {
     return descendantNode;
 }
 
+
+function _onlyVoidBetween(elem1, elem2) {
+    // must be siblings
+    if(elem1.parentElement !== elem2.parentElement)
+        return false;
+
+    // elem2 precedes elem1
+    if(elem1.compareDocumentPosition(elem2) & Node.DOCUMENT_POSITION_PRECEDING)
+        // the old switcheroo
+        [elem1, elem2] = [elem2, elem1];
+
+    let next = elem1.nextSibling;
+    while(next) {
+        if(next === elem2)
+            return true;
+        if((next.nodeType === next.TEXT_NODE && next.textContent.length === 0)
+                || next.nodeType === next.COMMENT_NODE) {
+            next = next.nextSibling;
+            continue;
+        }
+        return false;
+    }
+    // never reaches this.
+    return false;
+}
+
+// FIXME: INSPECTION_MODE_BEACON_CLASS should be injected by the caller.
+const INSPECTION_MODE_CLASS = 'varla_varfo-font_spec_inspector'
+    , INSPECTION_MODE_BEACON_CLASS = `${INSPECTION_MODE_CLASS}-beacon`
+    ;
 function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
                                 isInitialLine, addHyphen, isTerminalLine) {
     let elements = [];
@@ -873,6 +903,7 @@ function _packLine(addFinalClasses, tagName, nodes, startRange, endRange,
         r.surroundContents(element);
         elements.unshift(element);
     }
+
     if(addFinalClasses) {
         for(let elem of elements)
             elem.classList.add('runion-line');
@@ -1209,6 +1240,43 @@ function* _findLineApplyNarrowing(findLinesArguments, stops, firstLine,
         // The nodes from newSpans are already removed as children of these elements.
         elem.replaceWith(...elem.childNodes);
     }
+
+    // This merges elements of (there should be only one, like a cursor)
+    // INSPECTION_MODE_BEACON_CLASS with preceding and following line
+    // elements. That element should really be at the lowest level,
+    // especieally not inbetween lines.
+    // This also changes the `elements` array and the actual elements
+    // as well, so this is rather expensive, but since it's only happenening
+    // in one specific line at a time, it should be OK.
+    // Be aware that elements here does only contain line-elements,
+    // not sibllings etc. Also, elements may not have the same parentElement.
+    for(let i=0,l=newSpans.length;i<l;i++) {
+        let elem = newSpans[i];
+        if(elem.previousElementSibling
+                && elem.previousElementSibling.classList.contains(INSPECTION_MODE_BEACON_CLASS)
+                && _onlyVoidBetween(elem.previousElementSibling, elem)) {
+            // prepend to children, so it's inside of the line element
+            elem.insertBefore(elem.previousElementSibling, elem.firstChild);
+        }
+        else if(elem.nextElementSibling
+                && elem.nextElementSibling.classList.contains(INSPECTION_MODE_BEACON_CLASS)
+                && _onlyVoidBetween(elem, elem.nextElementSibling)) {
+            elem.append(elem.nextElementSibling);
+
+            // merge next element,  so it's inside of the line element
+            let nextElem = newSpans[i+1];
+            if(nextElem && _onlyVoidBetween(elem, nextElem)) {
+                elem.append(...nextElem.childNodes);
+                nextElem.remove();
+                newSpans.splice(i+1, 1);
+                l = l-1;
+                for(let class_ of nextElem.classList)
+                    // hyphen/last element in line classes
+                    elem.classList.add(class_);
+            }
+        }
+    }
+
     // TODO: would be interesting to plot how often each value appears
     // maybe, in the sweetspot range, if there is any, small changed could
     // have big effects. But it would differ between line length and
@@ -1378,7 +1446,14 @@ function* _linesGenerator(carryOverElement, [narrowingStops, wideningStops]
         if(lastLine === null)
             startNode = carryOverElement;
         else {
-            skipUntilAfter = lastLine[lastLine.length-1].firstChild;
+            skipUntilAfter = lastLine[lastLine.length-1].lastChild;
+            // possible because of the INSPECTION_MODE_BEACON_CLASS span element
+            if(skipUntilAfter.nodeType === skipUntilAfter.ELEMENT_NODE) {
+                let emptyText = skipUntilAfter.ownerDocument.createTextNode('');
+                skipUntilAfter.parentElement.appendChild(emptyText);
+                skipUntilAfter = emptyText;
+            }
+
             startNode = _getDirectChild(carryOverElement, skipUntilAfter);
         }
         if(!startNode)

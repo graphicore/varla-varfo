@@ -377,7 +377,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
             else
                 this._justificationController.cancel();
 
-            // on initilization this is not possible
+            // on initialization this is not possible
             if(this._widgets !== null)
                 this.getWidgetById('justificationRunning')
                     .setChecked(this._justificationController.running);
@@ -750,18 +750,22 @@ class UserPreferencesWidget extends _ContainerWidget{
     }
 }
 
-
+// FIXME: import from justification.mjs (which doesn't export this yet)
+const JUSTIFICATION_CONTEXT_BLOCK_CLASS = 'justification-context-block';
 const INSPECTOR_TEMPLATE = `
 <fieldset>
     <legend>Inspect</legend>
     <!-- insert: widgets -->
 </fieldset>
 `;
-const INSPECTION_MODE_CLASS = 'varla_varfo-font_spec_inspector';
+const INSPECTION_MODE_CLASS = 'varla_varfo-font_spec_inspector'
+    , INSPECTION_MODE_BEACON_CLASS = `${INSPECTION_MODE_CLASS}-beacon`
+    ;
 class InspectorWidget extends _ContainerWidget {
-    constructor(domTool, baseElement, targetElement) {
+    constructor(domTool, baseElement, targetElement, skipSelector='') {
         super(domTool, baseElement);
         this._targetElement = targetElement;
+        this._skipSelector = skipSelector;
         var klass = this._class = 'inspector';
         var dom = this._domTool.createElementfromHTML(
             'div', {'class': klass},
@@ -794,6 +798,12 @@ class InspectorWidget extends _ContainerWidget {
                     this._targetElement.classList[isOn ? 'add':'remove'](INSPECTION_MODE_CLASS);
 
                 }
+            ],
+            [   SimpleButtonWidget, {
+                      klass: `${klass}-reset`
+                    , text: 'reset'
+                },
+                () => this.reset()
             ],
             this._reportContainer
 
@@ -834,6 +844,12 @@ class InspectorWidget extends _ContainerWidget {
                                 this._toggleObserverCallback.bind(this));
         this._toggleObserver.observe(this._targetElement,
                                 { attributes: true });
+        this._beaconObserver = new targetWindow.MutationObserver(
+                                this._beaconObserverCallback.bind(this));
+        this._beaconObserver.observe(this._targetElement,
+                                { subtree: true, childList: true
+                                , attributeFilter: ['class', 'style']});
+
         this._widgets = this._initWidgets(widgetsConfig);
         this._toggleSwitch = this.getWidgetById('inspect-element-toggle');
         // stays of unless the default is changed above.
@@ -846,6 +862,91 @@ class InspectorWidget extends _ContainerWidget {
                 break;
             }
         }
+    }
+    _beaconObserverCallback (mutationRecords) {
+        // Determine wheather to update the inspector report.
+        // console.log('_beaconObserverCallback', mutationRecords.length);
+        let reportNeedsUpdate = false
+          , reason = '(not set)'
+          , beacon = this._targetElement.ownerDocument.querySelector(
+                `:not(.${JUSTIFICATION_CONTEXT_BLOCK_CLASS}) .${INSPECTION_MODE_BEACON_CLASS}`)
+          ;
+        RECORDS:
+        for( let rec of mutationRecords) {
+            if(rec.target.closest(`.${JUSTIFICATION_CONTEXT_BLOCK_CLASS}`)) {
+                // Target is in/itself the justification in progress element, ignore!
+                continue;
+            }
+
+            if(rec.type === 'attributes') {
+                if(beacon && rec.target.contains(beacon)){
+                    reportNeedsUpdate = true;
+                    reason = `attribute changed: ${rec.attributeName}`;
+                    break RECORDS;
+                }
+            }
+            else if(rec.type !== 'childList') {
+                console.warn(`UNHANDLED rec.type ${rec.type} in _`
+                            + `beaconObserverCallback not childList`, rec);
+                continue;
+            }
+
+            // using :scope prevents that the selector also matches when
+            // target is e.g. the <article> but beacon is much deeper in
+            // the structure, which is rather not interesting in the "childList"
+            // case. But time will tell.
+            let b_con = rec.target.querySelector(`:scope > .${INSPECTION_MODE_BEACON_CLASS}`);
+            if(b_con) {
+                // Detects the justification reset case.
+                // Unfortunately this fires a bit too often, e.g.
+                // when justification.mjs calls _getWordSpaceForElement
+                // (look in rec at textNodes added or removed with a content
+                // of "] ["). It also fires often before the other
+                // tighter defined cases below and partly shadows those.
+                // TODO: this is not perfect, but good enough for now.
+                reportNeedsUpdate = true;
+                reason = 'looks like reset';
+                break RECORDS;
+            }
+
+            if(rec.target.closest(this._skipSelector) !== null)
+                continue;
+            for(let node of rec.addedNodes) {
+                if(node.nodeType !== node.ELEMENT_NODE)
+                    continue;
+                if(node.classList.contains(JUSTIFICATION_CONTEXT_BLOCK_CLASS))
+                    // don't report for the justificaton in progress element
+                    continue;
+
+                if(!node.classList.contains(INSPECTION_MODE_BEACON_CLASS))
+                    // the node is not the beacon
+                    continue;
+                // The added node is the beacon.
+                // This always requires updating the report:
+                //      on initial insert and on move
+                reportNeedsUpdate = true;
+                reason = 'initial insert or move';
+                break RECORDS;
+            }
+            for(let node of rec.removedNodes) {
+                if(node.nodeType !== node.ELEMENT_NODE)
+                    continue;
+                if(node.classList.contains(JUSTIFICATION_CONTEXT_BLOCK_CLASS))
+                    continue;
+                if(!node.classList.contains(INSPECTION_MODE_BEACON_CLASS))
+                    continue;
+                // The removed node was the beacon.
+                // This always requires updating the report:
+                //      on removal and on move
+                reportNeedsUpdate = true;
+                reason = 'removal or move';
+                break RECORDS;
+            }
+        }
+        if(!reportNeedsUpdate)
+            return;
+        // console.warn('>>>> REPORT NEEDS UPDATE', reason);
+        this._updateReport();
     }
     createtReport(elem) {
         // runion functional elements hiearchy stack
@@ -1155,6 +1256,59 @@ class InspectorWidget extends _ContainerWidget {
         }
         return result;
     }
+    /**
+     * CAUTION: This is based on a code example in the docs of
+     * two **NON-STANDARD** but complementary methods in mdn:
+     *      https://developer.mozilla.org/en-US/docs/Web/API/Document/caretRangeFromPoint
+     *      https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
+     */
+    _insertBeacon({clientX, clientY}) {
+        let range, textNode, offset
+          , document = this._targetElement.ownerDocument
+          ;
+        if (document.caretRangeFromPoint) {
+            range = document.caretRangeFromPoint(clientX, clientY);
+            textNode = range.startContainer;
+            offset = range.startOffset;
+        }
+        else if (document.caretPositionFromPoint) {
+            range = document.caretPositionFromPoint(clientX, clientY);
+            textNode = range.offsetNode;
+            offset = range.offset;
+        }
+        else {
+            //  TODO:This browser supports neither document.caretRangeFromPoint
+            // nor document.caretPositionFromPoint. We should warn in the
+            // inspector window that the info is not updated automatically!
+            return;
+        }
+        // Only split and insert into TEXT_NODEs
+        if (!textNode || textNode.nodeType !== 3)
+            return;
+
+        let newNode = textNode.splitText(offset)
+          , beacon = document.createElement('span')
+          ;
+        beacon.classList.add(INSPECTION_MODE_BEACON_CLASS);
+        textNode.parentNode.insertBefore(beacon, newNode);
+        return beacon;
+    }
+    _removeBeacons() {
+        for(let oldBeacon of this._targetElement.ownerDocument
+                    .querySelectorAll(`.${INSPECTION_MODE_BEACON_CLASS}`))
+            oldBeacon.remove();
+    }
+    _updateReport() {
+        let beacon = this._targetElement.ownerDocument.querySelector(
+                `:not(.${JUSTIFICATION_CONTEXT_BLOCK_CLASS}) .${INSPECTION_MODE_BEACON_CLASS}`)
+         , elem = beacon && beacon.parentElement
+         ;
+        this._domTool.clear(this._reportContainer);
+        if(elem)
+            this._domTool.appendChildren(
+                        this._reportContainer, this.createtReport(elem));
+    }
+
     _clickHandler(evt) {
         // FIXME: Maybe, we want to exclude all of the widgets, also
         // when they are directly, stand alone version, in the content
@@ -1162,42 +1316,30 @@ class InspectorWidget extends _ContainerWidget {
         // so it makes some sense to make the widgets inspectable as well,
         // then this "bug" would be a "feature".
         //
-        // Exclude at least the this._toggleSwitch  from the prevent
+        // At least exclude the this._toggleSwitch from the prevent
         // default, so we can turn off inspection mode.
-        if(this._toggleSwitch.root === evt.target || this._toggleSwitch.root.contains(evt.target))
+        // Actually, it's really counter intuitive to be able to select
+        // and inspect all of the user controls.
+        if(this._toggleSwitch.root ===  evt.target || this._toggleSwitch.root.contains(evt.target))
+            return;
+        if(evt.target.closest(this._skipSelector) !== null)
+            return;
+        if(evt.target.closest(`.${JUSTIFICATION_CONTEXT_BLOCK_CLASS}`) !== null)
+            // don't apply in in progress element.
             return;
 
-        let elem = evt.target
-          //, report = []
-          //, depth = 0
-          ;
-        this._domTool.clear(this._reportContainer);
-        this._domTool.appendChildren(this._reportContainer, this.createtReport(elem));
-        // while(elem) {
-        //     report.push([`<${elem.tagName.toLowerCase()}>`, ...this.createtReport(elem)]);
-        //     elem = elem.parentElement;
-        //     depth += 1;
-        // }
-        // report = report.reverse()
-        //                 .map(([head, ...tail], i)=>[
-        //                     ('  '.repeat(i)) + (i ? '╚> ' : '') + head
-        //                             // add indentation
-        //                   , ...(tail.map(entry=>{
-        //                         if(typeof entry !== 'string')
-        //                             return entry;
-        //                         let indent = '\n' + ('  '.repeat(i + Math.min(1, i)));
-        //                         return entry.split('\n').join(indent);
-        //                     }))
-        //                 ]);
-        //
-        // console.log(
-        //     ...report.reduce((accum, [head, ...tail])=>[...(accum || []), '\n\n' + head, ...tail], ['clicked===>']));
+        // To be able to update the clicked "psoition" even after lines
+        // markup etc. change, insert a marker "beacon" element.
 
-
-
+        // First remove any old beacon(s):
+        this._removeBeacons();
+        // Plant the beacon, report creation will be trigered by the
+        // mutation observer.
+        this._insertBeacon(evt);
         evt.preventDefault();
         evt.stopPropagation();
     }
+
     _startClickHandling() {
         let doc = this._targetElement.ownerDocument;
         this._abortController = new doc.defaultView.AbortController();
@@ -1229,8 +1371,13 @@ class InspectorWidget extends _ContainerWidget {
         else
             this._stopClickHandling();
     }
+    reset() {
+        this._removeBeacons();
+        this._stopClickHandling();
+    }
     destroy () {
         this._toggleObserver.disconnect();
+        this._beaconObserver.disconnect();
     }
 }
 
@@ -1600,6 +1747,7 @@ export function main(
     let justificationController = null
       , userSettingsWidget = null
       , userSettingsWidgetSelector = '.insert_user_settings'
+      , toggleUserSettingsSelector = '.toggle-user_settings'
         // NOTE: '.mw-parser-output' is a very specialized guess for our case here!
       , runionTargetSelector = '.runify-01, .mw-parser-output'
       , justificationSkip = [
@@ -1692,7 +1840,8 @@ export function main(
                                     contentDocument.documentElement,
                                     handleUserSettingsChange],
                             [InspectorWidget,
-                                    contentDocument.documentElement],
+                                    contentDocument.documentElement,
+                                    `${userSettingsWidgetSelector}, ${toggleUserSettingsSelector}`],
                             [SimpleButtonWidget, {
                                           klass: `widgets_container-reset_all`
                                         , text: 'reset all'
@@ -1709,7 +1858,7 @@ export function main(
         if(widgetInParent) {
             // Don't show or activate the widget toggle button, will
             // be handled in parent window.
-            for(let elem of document.querySelectorAll('.toggle-user_settings')) {
+            for(let elem of document.querySelectorAll(toggleUserSettingsSelector)) {
                 elem.style.setProperty('display', 'none');
             }
             widgetHostWindow.registerSettingsWidget.push(userSettingsWidget);
@@ -1726,7 +1875,7 @@ export function main(
                 if(userSettingsWidget.isActive)
                     userSettingsWidget.container.style.setProperty('top', top);
             };
-            for(let elem of document.querySelectorAll('.toggle-user_settings')) {
+            for(let elem of document.querySelectorAll(toggleUserSettingsSelector)) {
                 if(toggleUserSettingsWidget !== null) {
                     elem.removeEventListener('click', toggleUserSettingsWidget);
                 }
