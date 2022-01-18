@@ -170,10 +170,11 @@ font-weight: var(--x-font-weight);
 /* FIXME: some of these should rather be in configuration land.*/
 table,
 .thumb,
-ul, ol.not(:first-child) {
+ul, ol:not(:first-child) {
     /* likely not what we're going to use, but it aligns with the line height. */
     margin-block-start: calc(1pt * var(--font-size) * var(--line-height));
 }
+
 .runion-01 .hatnote,
 table,
 .thumb,
@@ -186,7 +187,11 @@ p, ul ul{
 }
 
 h2 + p,
-h3 + p {
+h3 + p,
+h2 + ul,
+h3 + ul,
+h2 + ol,
+h3 + ol {
     margin-block-start: 0;
 }
 
@@ -1159,4 +1164,12 @@ blockquote {
 .runion-01 h2,
 .runion-01 h3 {
     column-span: all;
+}
+
+/* otherwise margins of e.g. ul followed by h3 don't collapse,
+ * i.e. they add up and the gap is getting too big. */
+.runion-01.single-column h1,
+.runion-01.single-column h2,
+.runion-01.single-column h3 {
+    column-span: none;
 }

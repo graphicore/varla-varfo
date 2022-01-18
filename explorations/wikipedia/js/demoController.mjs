@@ -1518,6 +1518,13 @@ function runion_01 (columnConfig, elem) {
       ;
 
     elem.style.setProperty('--column-count', `${columns}`);
+
+    if(columns <= 1)
+        // TODO: should also be removed on reset
+        elem.classList.add('single-column');
+    else
+        elem.classList.remove('single-column');
+
     elem.style.setProperty('--column-gap-en', `${columnGapEn}`);
     elem.style.setProperty('--column-width-en', `${lineLengthEn}`);
     elem.style.setProperty('--padding-left-en', `${paddingLeftEn}`);
@@ -1534,7 +1541,7 @@ function runion_01 (columnConfig, elem) {
     // let totalEn = columns * lineLengthEn + (columns-1) * columnGapEn + paddingLeftEn + paddingRightEn;
     // elem.style.setProperty('--result-totals', `${totalEn}en ${totalEn * enInPx}px`);
 
-    // NOTE: classes may need to be removed if a runion changes its type!
+    // TODO: classes may need to be removed if a runion changes its type!
     elem.classList.add('runion-01');
 }
 
@@ -1752,7 +1759,7 @@ export function main(
       , runionTargetSelector = '.runify-01, .mw-parser-output'
       , justificationSkip = [
             /* skipSelector selects elements to skip*/
-            '.hatnote, #toc, h3, ul, ol, table, .do-not-jsutify,figure>*:not(figcaption)',
+            '.hatnote, #toc, h3, ul, ol, table, .do-not-justify,figure>*:not(figcaption)',
             /* skipClass: added to skipped elements */
             'skip-justify'
        ]
