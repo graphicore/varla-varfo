@@ -1,6 +1,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Emsquare — Volume {{include.volume}} — Issue {{include.issue}}: {{page.title}}</title>
+  {% if page.override_title %}
+    <title>{{page.override_title}}</title>
+  {% else %}
+    <title>Emsquare — Volume {{include.volume}} — Issue {{include.issue}}: {{page.title}}</title>
+  {% endif %}
+
+
+
 {%- for style in page.styles %}
   <link rel="stylesheet" href="{{ style | relative_url }}">
 {%- endfor -%}

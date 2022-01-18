@@ -15,7 +15,11 @@
     </div>
     <div class="insert_user_settings"></div>
     <header>
+        {% if page.override_header %}
+            <span class="title">{{page.override_header}}</span>
+        {% else %}
         <span class="title">Emsquare&nbsp;— Volume&nbsp;{{volume}}&nbsp;— Issue&nbsp;{{issue}}</span>
+        {% endif %}
     </header>
 
 
