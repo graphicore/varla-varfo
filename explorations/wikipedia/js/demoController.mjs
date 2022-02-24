@@ -379,6 +379,9 @@ class PortalAugmentationWidget extends _ContainerWidget {
 
             // on initialization this is not possible
             if(this._widgets !== null)
+                // FIXME: justificationRunning should listen to an
+                // event dispatched by _justificationController to set its
+                // status.
                 this.getWidgetById('justificationRunning')
                     .setChecked(this._justificationController.running);
         };
@@ -410,6 +413,7 @@ class PortalAugmentationWidget extends _ContainerWidget {
                 }
             ],
             '<hr />',
+            // FIXME: maybe move to "User Preferences"
             // [checkbox] font-switcheroo
             [
                CheckboxWidget, {
