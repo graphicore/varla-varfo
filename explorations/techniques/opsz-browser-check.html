@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html class="page_content-item client-js" lang="en">
+    <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SNAFU: Optical Sizes Browser Check</title>
+    <style>
+@font-face {
+    font-family: 'RobotoFlex';
+    src: url('../fonts/Roboto-Flex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf') format('truetype');
+    font-weight: 100 900;
+    -xx-font-style: normal;
+    font-style: oblique 0deg -10deg;
+}
+
+@font-face {
+    font-family: 'AmstelVar';
+    src: url('../fonts/Amstelvar/Amstelvar-Roman[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,wdth,wght,opsz].ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+}
+
+:root {
+    font-family: 'RobotoFlex';
+    font-weight: 400;
+}
+
+p {
+    max-width: 32em;
+}
+
+code {
+    white-space: nowrap;
+}
+
+.screens {
+    width: 100%;
+    overflow-x: scroll;
+    position: relative;
+}
+
+.screens > * {
+    padding: .3em;
+}
+
+.screens > * > * {
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}
+
+.screens .proof {
+    color: rgb(255 10 10 / 50%);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+    </style>
+    <script>
+
+const SAMPLE_TEXT ="Would it save you a lot of time if I just gave up and went mad now?"; // (Douglas Adams, The Hitchhiker's Guide to the Galaxy)
+
+function makeSample(fontSize, explicitOPSZ) {
+    let elem = document.createElement('p');
+    elem.textContent = SAMPLE_TEXT;
+    elem.style.setProperty('font-size', `${fontSize}pt`);
+    if(explicitOPSZ)
+        elem.style.setProperty('font-variation-settings', `'opsz' ${12}`);
+    return elem;
+}
+
+function makeWaterfall(parent, bigSize, smallSize, explicitOPSZ, smallToBig){
+    [bigSize, smallSize] = [bigSize, smallSize].sort();
+    let samples = [];
+    for(let fontSize=bigSize;fontSize>=smallSize;fontSize--) {
+        let elem = makeSample(fontSize, explicitOPSZ);
+        samples.push(elem);
+    }
+    if (smallToBig)
+        samples.reverse();
+    parent.append(...samples);
+}
+
+window.onload = () => {
+    let bigSize = 144
+      , smallSize = 8
+      , smallToBig = true
+      ;
+    for(elem of document.querySelectorAll('.screens .test'))
+        makeWaterfall(elem, bigSize, smallSize, false, smallToBig);
+    for(elem of document.querySelectorAll('.screens .proof'))
+        makeWaterfall(elem, bigSize, smallSize, true, smallToBig);
+}
+    </script>
+</head>
+<body>
+    <h1>SNAFU: Optical Sizes Browser Check</h1>
+
+    <p>By default your browser is supposed to chose the optical size value of a variable
+    font automatically based on the actual font size.</p>
+    <p>Currently <strong>every major browser engine</strong> is doing it wrongly. To
+    illustrate this, below are two specimen of a waterfall view. As a proof, the red
+    overlay is setting <code>opsz</code> correctly (in pt) and explicitly using the CSS
+    <code>font-variation-settings</code> property. The black text is the actual test.</p>
+    <p>If the red and black are different, you browser is still broken in this regard.
+    Good luck!</p>
+
+    <div class="screens">
+        <div class="test"></div>
+        <div class="proof"></div>
+    </div>
+</body>
+</html>
