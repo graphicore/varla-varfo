@@ -1608,7 +1608,7 @@ function _fixGrade(elem, style, properties, stops, cache) {
 
     let [/*normalizedFontSize*/, propertyValues
                            ] = _interpolatePiecewise(stops, fontSizePt);
-
+    console.log('_fixGrade', `fontSizePt ${fontSizePt} pt`, ...propertyValues);
     return propertyValues;
 }
 

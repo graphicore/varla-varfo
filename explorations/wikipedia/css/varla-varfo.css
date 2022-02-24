@@ -148,7 +148,14 @@ font-variation-settings:
             "XTRA" var(--dynamic-font-xtra, var(--font-xtra)),
             "opsz" var(--font-opsz, var(--font-size)),
             "wdth" var(--dynamic-font-width, var(--font-width)),
-            "VVFS" var(--font-size)
+            "VVFS" var(--font-size),
+            "g400" var(--grad-400, 0),
+            "g700" var(--grad-700, 0),
+            "sups" var(--sup-scale, 0),
+            "suap" var(--sup-animation-progression, 0),
+            "gafs" var(--grad-actual-font-size),
+            "grap" var(--grad-animation-progression, 0),
+            "gade"  calc(-1 * var(--grad-animation-progression))
             ;
 /* This is not required for the variable fonts, as font-variation-settings
  * will win, however, it helps with the type-ramp bookmarklet to
@@ -494,11 +501,20 @@ sup, sub{
     /* this redefines --font-size, with our scaling factor that way,
      * it goes directly into OPSZ etc., without us changing the definitions
      */
-    --no-animation: no-animation;
-    animation-name: synth-sub-and-super-script, var(--grad-active-animation);
-    animation-play-state: paused, paused;
-    animation-fill-mode: both, both;
-    animation-timing-function: linear, linear;
+    /* FIXME: indirectly the grad animation depends on --sup-scale to
+     * get the actual font-size. I'm pretty sure this worked before, but
+     * it stoped working, at least there's now a case where I can proof that
+     * it doesn't work. Maybe the browser stopped doing the right thing,
+     * but probably the orriginal case didn't reveal it and do the right
+     * thing because the font-size was min out anyways,
+     * It would still be interesting if chrome did it better half a year
+     * ago.
+     *
+     * */
+    animation-name: synth-sub-and-super-script;/*, var(--grad-active-animation) */;
+    animation-play-state: paused;/*, paused; */
+    animation-fill-mode: both;/*, both; */
+    animation-timing-function: linear;/*, linear; */
     /* FIXME: move to data instead of wiring.
      * But leave some (incomplete) fallbacks and (complete) documentation
      *
@@ -517,10 +533,10 @@ sup, sub{
               (var(--sup-actual-base-font-size) - var(--sup-min-base-font-size))
             / (var(--sup-max-base-font-size) - var(--sup-min-base-font-size))
             );
-    animation-duration: 1s, 1s;
-    animation-delay: calc(-1s * var(--sup-animation-progression)),
-                     calc(-1s * var(--grad-animation-progression));
-
+    animation-duration: 1s;/*, 1s;*/
+    animation-delay: calc(-1s * var(--sup-animation-progression));/*,
+                     calc(-1s * var(--grad-animation-progression))
+                     ;*/
     --font-size: calc(var(--sup-scale) * var(--font-size-rem, 1) * var(--document-font-size));
 
 
@@ -540,7 +556,28 @@ sup, sub{
 
 sup *, sub *{
     font-size: inherit;
-    --font-size: inherit;
+    --nope--font-size: inherit;
+    /* not even this works. though the font size is applied to the element
+     * obviously, so for some reason, it's now(?) impossible to resolve
+     * the --sup-scale dependency before. I have a hunch that solving the
+     * dependency graph was removed from the browser and maybe spec for
+     * performance reasons, but this would need to be investigated.
+     * Important questions:
+     *  - Did an older chromium version handle this better?
+     *    Like around march or june 2021?
+     *    Otherwise, why did I think this worked?
+     *  - If it worked, when and how did it stop to work?
+     * If it never worked I need to change course.
+     * If it is supposed to work by spec but broke recently in chrome:
+     *   - I'll file an issue.
+     *   - That will likely take forever, so I need a to change course.
+     * If it is supposed to work, but never worked in chrome:
+     *   - I don't see how an issue will move chrome devs to work this.
+     * If it is not supposed to work but worked once:
+     *   - maybe request this at the w3c github.
+     *   - also move on.
+     * */
+    --font-size: calc(var(--sup-scale) * var(--font-size-rem, 1) * var(--document-font-size));
 }
 
 sup, sup * {
