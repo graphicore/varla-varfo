@@ -3,8 +3,8 @@ title: "Space the initial frontier"
 modules:
     - "Emsquare/Volume-01/js/main.mjs"
 styles:
-    - "explorations/wikipedia/css/varla-varfo.css"
-    - "explorations/wikipedia/css/widgets.css"
+    - "lib/css/varla-varfo.css"
+    - "lib/css/widgets.css"
     - "Emsquare/Volume-01/main.css"
 ---
 Typography can contain a lot of different elements, beyond text and space, like symbols, icons rules ornaments and effects seen in shadows, blurs and motion. But for the most part, it contains just the marks of glyphs and the spaces within and around them. While fonts contain all of the glyphs, they also contains some of the space, both inside of and around the glyphs, while composition supplies the space around the type and between lines of text that are not part of the font.

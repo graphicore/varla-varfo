@@ -5,8 +5,8 @@ class: content-page
 modules:
     - "Emsquare/Volume-01/js/main.mjs"
 styles:
-    - "explorations/wikipedia/css/varla-varfo.css"
-    - "explorations/wikipedia/css/widgets.css"
+    - "lib/css/varla-varfo.css"
+    - "lib/css/widgets.css"
     - "Emsquare/Volume-01/main.css"
 ---
 {% assign path_parts = page.path | split: "/" %}

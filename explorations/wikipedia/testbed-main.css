@@ -1,5 +1,5 @@
-@import "css/varla-varfo.css";
-@import "css/widgets.css";
+@import "../../../lib/css/varla-varfo.css";
+@import "../../../lib/css/widgets.css";
 
 #testbed-subject {
     /* Invert back; the iframe provides it's own
