@@ -1,5 +1,5 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import DOMTool from '../../calibrate/js/domTool.mjs';
+import DOMTool from './domTool.mjs';
 
 const WIDGETS_CONTAINER_NO_CLOSE_TEMPLATE = `
 <!-- insert: child widgets -->

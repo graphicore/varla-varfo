@@ -1,5 +1,5 @@
 /* jshint browser: true, devel: true, esversion: 9, laxcomma: true, laxbreak: true, unused: true */
-import {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
+import {getElementSizesInPx} from './domTool.mjs';
 
 /***
  * Justification

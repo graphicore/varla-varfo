@@ -1,5 +1,5 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import DOMTool, {getElementSizesInPx} from '../../calibrate/js/domTool.mjs';
+import DOMTool, {getElementSizesInPx} from './domTool.mjs';
 import WidgetsContainerWidget from './WidgetsContainerWidget.mjs';
 import {JustificationController} from './justification.mjs';
 
