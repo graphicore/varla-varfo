@@ -1,5 +1,5 @@
-import { main } from './../../../explorations/wikipedia/js/demoController.mjs';
-import { typeSpec } from './../../../explorations/wikipedia/js/typeSpec.mjs';
+import { main } from '../../../lib/js/demoController.mjs';
+import { typeSpec } from '../../../lib/js/typeSpec.mjs';
 
 function reduceColumnConfig (columnConfig) {
     let result = {};

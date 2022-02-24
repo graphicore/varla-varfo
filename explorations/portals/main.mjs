@@ -1,5 +1,5 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import WidgetsContainerWidget from '../wikipedia/js/WidgetsContainerWidget.mjs';
+import WidgetsContainerWidget from '../../lib/js/WidgetsContainerWidget.mjs';
 
 
 const PORTALS = [

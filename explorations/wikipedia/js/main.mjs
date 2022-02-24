@@ -1,8 +1,8 @@
 /* jshint browser: true, esversion: 9, laxcomma: true, laxbreak: true */
-import {ID}  from './WidgetsContainerWidget.mjs';
-import DOMTool from '../../calibrate/js/domTool.mjs';
-import {main} from './demoController.mjs';
-import { typeSpec } from './typeSpec.mjs';
+import {ID}  from '../../../lib/js/WidgetsContainerWidget.mjs';
+import DOMTool from '../../../lib/js/domTool.mjs';
+import {main} from '../../../lib/js/demoController.mjs';
+import { typeSpec } from '../../../lib/js/typeSpec.mjs';
 
 
 function massageWikipediaMarkup(documentOrElement) {
