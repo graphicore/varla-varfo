@@ -52,6 +52,13 @@ code {
     line-height: 1;
 }
 
+.screens .test p {
+    /* "auto" is the default, make it "none" to see that the browser
+    is indeed applying optical sizing.
+    */
+    font-optical-sizing: auto
+}
+
 .screens .proof {
     color: rgb(255 10 10 / 50%);
     position: absolute;
@@ -68,7 +75,7 @@ function makeSample(fontSize, explicitOPSZ) {
     elem.textContent = SAMPLE_TEXT;
     elem.style.setProperty('font-size', `${fontSize}pt`);
     if(explicitOPSZ)
-        elem.style.setProperty('font-variation-settings', `'opsz' ${12}`);
+        elem.style.setProperty('font-variation-settings', `'opsz' ${fontSize}`);
     return elem;
 }
 
