@@ -10,3 +10,7 @@ header .title{
 main {
     max-width: 33em;
 }
+
+blockquote {
+    text-indent: 0;
+}

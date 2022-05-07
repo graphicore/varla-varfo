@@ -184,14 +184,17 @@ article, .runion-01 {
     --line-handling-mode: body;
     --line-handling-properties: wordspace tracking xtra ;
     --line-handling-direction: "both"; /* "both" is the default, others are: "widening" "narrowing"*/
+    /* TODO: add a property to widen to max using wordspace ... */
     --inter-line-harmonization-factor: initial;
 }
 
 h1 {
-    --line-handling-mode: main;
-    --line-handling-properties: wdth;
-    --line-handling-direction: "narrowing"; /* only narrowing */
+    --line-handling-mode: none;
+    --line-handling-properties: none;/* wdth;*/ /* nice, `none` works! TODO: Document*/
+    /* these can be ignored now
+    --line-handling-direction: "narrowing";
     --inter-line-harmonization-factor: 0.5;
+    */
     white-space: normal;
 }
 
