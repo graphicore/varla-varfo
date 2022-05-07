@@ -1,0 +1,12 @@
+@import '/varla-varfo/lib/css/general.css';
+@import 'type-spec.css';
+@import '/varla-varfo/lib/css/widgets.css';
+
+header .title{
+    display: block;
+    padding: 3em 0;
+    --font-size: 16;
+}
+main {
+    max-width: 33em;
+}

@@ -1,0 +1,230 @@
+
+@font-face {
+    font-family: 'Alinia';
+    src: url('../../lib/fonts/Roboto-Flex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+:root {
+    --body-font-family: Alinia;
+    --body-font-grad-animation-name: Alinia-grad-by-font-size;
+    /* FIXME: get default --font-xtra (XTRA) value by font-size and font-family
+     *
+     * used to be 520 but making it narrow to work out justification */
+    /* interestingly, vabro.js suggests to sart at 375 and to max out at 402
+     * was 440 and I thought it was tight.
+     */
+    --body-font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+    --headlines-font-family: Alinia;
+    --headlines-font-grad-animation-name: Alinia-grad-by-font-size;
+    --headlines-font-xtra: 468; /*FIXME: consider full spec, including esp. --font-size (pt)*/
+}
+
+/** Does not apply for this application, I let it here to hint that in
+ * general this feature is available and an option
+.switched-fonts {
+}
+*/
+
+
+
+/* Works together with the @properties nicely in Chromium, but Firefox
+ * support is not soon to expect. A solution seems to be to set
+ * --grad-400 and --grad-700 by hand/directly in CSS, whenever --font-size,
+ * --font-family, or --font-weight is set, but it wouldn't take into
+ * account the final absolute --font-size, which makes it rather unusable.
+ * So probably JavaScript has to walk through all elements and set those
+ * --grad-X00 variables where one of the three input variables changes
+ * compared to  the parent.
+ * I keep this though, because it's impressive what can be done with the
+ * new CSS stuff and it's a good actual working example. Javascript will
+ * be a fallback, need to feature detect.
+ */
+@keyframes Alinia-grad-by-font-size {
+    /* From 10 to 18 and a step size of 1 we have 8 steps: 12.5 % each.*/
+    0% { /* 10 pt*/
+      --grad-supported: 1;
+      --grad-400: 0;
+      --grad-700: 0;
+    }
+    12.5% { /* 11 pt*/
+      --grad-400: -6;
+      --grad-700: -6;
+    }
+    25% { /* 12 pt*/
+      --grad-400: -9;
+      --grad-700: -10;
+    }
+    37.5% { /* 13 pt*/
+      --grad-400: -12;
+      --grad-700: -15;
+    }
+    50% { /* 14 pt*/
+      --grad-400: -14;
+      --grad-700: -20;
+    }
+    62.5% { /* 15 pt*/
+      --grad-400: -16;
+      --grad-700: -30;
+    }
+    75% { /* 16 pt*/
+      --grad-400: -18;
+      --grad-700: -38;
+    }
+    87.5% { /* 17 pt*/
+      --grad-400: -22;
+      --grad-700: -43;
+    }
+    100% { /*18 ot */
+      --grad-supported: 1;
+      --grad-400: -24;
+      --grad-700: -54;
+    }
+}
+
+
+h1 { /* main headline */
+    /*
+     * Requested is to calculate opsz, size etc relative to the
+     * body/document text size, as in REM units, but we don't use rem
+     * as they have limitations getting the actual numerical font-size
+     * in pt from them, so rem are unusable in e.g. font-variation-settings
+     * or other calculations.
+     */
+    --font-size-rem: 5;
+    /* --font-opsz-rem: 7;*/
+
+    --font-weight: 650;
+    /* --font-width: 85;*/
+    /* With .8 this will colide at some widths, but it looks better with
+     * the smaller line gap when it does not. Hence we're searching for a
+     * solution here (e.g. YTRA?).
+     */
+    --line-height: .8; /*1.02;*/
+    /* only when line-height < 1.02 this is required so descenders don't
+     * hit the paragraph below.
+     */
+    margin-block-end: .15em;
+    --hyphens: none;
+}
+
+/* subsection headline */
+h2,
+.shorts h1
+{
+    --font-size-rem: 2.3333 ; /* ~ 28 pt @ 12 pt body*/
+    --font-weight: 750;
+    /*--font-width: 100;*/
+    --line-height: 1.02;
+    --hyphens: none;
+}
+/* sub-subsection headline/"Captionhead" */
+h3,
+.shorts h2
+{
+    --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
+    --font-weight: 850;
+    /*--font-width: 100;*/
+    --line-height: 1.02;
+    --hyphens: none;
+}
+/* h4 is not used in the Typography article, but in other Wikipedia.
+ * Also not used in Emsquare
+ */
+h4,
+.shorts h3
+ {
+
+    --font-size-rem: 1.5; /* ~ 18 pt @ 12 pt body*/
+    --font-weight: 850;
+   /* --font-width: 100;*/
+    --line-height: 1.02;
+    --hyphens: none;
+}
+
+
+/* We don't do this in this exampe
+ * get font size and
+ *
+ * * .57 scale size for 14 pt
+ * for 8 pt = .65,
+ * for 144 pt. .25
+
+@keyframes synth-sub-and-super-script {}
+ */
+
+b, strong {
+    --font-weight: 600;
+}
+
+i, cite, em, var, dfn {
+    /* I think this font doesn't support these styles anyway*/
+    --font-style: italic; /* applis to AmstelVar */
+    --font-slnt: -10; /* applies to RobotoFlex*/
+}
+
+
+
+/* no text-indent*/
+
+.runion-01 ul,
+.runion-01 ol,
+.runion-01 h1,
+.runion-01 h2,
+.runion-01 h3{
+    text-indent: 0;
+}
+
+/* line-treatment setup
+ * I leave these here as examples, they configure the justification
+ */
+article, .runion-01 {
+    /* maximal justified */
+    --line-handling-mode: body;
+    --line-handling-properties: wordspace tracking xtra ;
+    --line-handling-direction: "both"; /* "both" is the default, others are: "widening" "narrowing"*/
+    --inter-line-harmonization-factor: initial;
+}
+
+h1 {
+    --line-handling-mode: main;
+    --line-handling-properties: wdth;
+    --line-handling-direction: "narrowing"; /* only narrowing */
+    --inter-line-harmonization-factor: 0.5;
+    white-space: normal;
+}
+
+h2 {
+    --line-handling-mode: sub;
+    --line-handling-properties: wordspace tracking xtra;
+    --line-handling-direction: "narrowing"; /* only narrowing */
+    --inter-line-harmonization-factor: initial;
+}
+
+blockquote {
+    --line-handling-mode: pull;
+    --line-handling-properties: wordspace xtra ;
+    --line-handling-direction: "narrowing"; /* only narrowing */
+    /* FIXME: setting a value to --inter-line-harmonization-factor
+     * here is broken at the moment, but it should be save to use,
+     * even though we're no really doing it.
+     */
+    --inter-line-harmonization-factor: initial;
+}
+
+ /* these are sectioning elements, should be configurable per document */
+.runion-01 h1,
+.runion-01 h2,
+.runion-01 h3 {
+    column-span: all;
+}
+
+/* otherwise margins of e.g. ul followed by h3 don't collapse,
+ * i.e. they add up and the gap is getting too big. */
+.runion-01.single-column h1,
+.runion-01.single-column h2,
+.runion-01.single-column h3 {
+    column-span: none;
+}
+
