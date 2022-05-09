@@ -1,4 +1,4 @@
-import { main } from '../../../lib/js/demoController.mjs';
+import { main } from '../../lib/js/demoController.mjs';
 import { typeSpec } from './type-spec.mjs';
 
 

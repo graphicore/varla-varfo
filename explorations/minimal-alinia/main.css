@@ -1,6 +1,6 @@
-@import '/varla-varfo/lib/css/general.css';
-@import 'type-spec.css';
-@import '/varla-varfo/lib/css/widgets.css';
+@import '../../lib/css/general.css';
+@import './type-spec.css';
+@import '../../lib/css/widgets.css';
 
 header .title{
     display: block;
