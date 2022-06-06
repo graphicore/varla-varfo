@@ -748,6 +748,17 @@ sub, sub * {
         );
 }
 
+
+.justification-context-block .runion-line {
+    /* Safari on iOS has a different behavior when .color-coded-lines is
+     * on. This is rather very bad, but it also fixes so far in Safari
+     * the Error (in the function _findLineApplyNarrowing in justification.mjs):
+     *      "Assertion failed, expectedLineContent must equal `+ `startLineContent"
+     * Interestingly, from .color-coded-lines "mix-blend-mode" is required!
+     */
+    mix-blend-mode: darken;
+}
+
 .color-coded-lines .runion-line{
     /* with small line-heights and color coded line backgrounds, we
      * tend to clip descenders. Must be removed when no line color coding
