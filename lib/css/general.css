@@ -847,4 +847,11 @@ sub, sub * {
 .runion-line.r00-l-hyphen::after {
     content: '-'; /* I tried using soft hyphen &shy; '\00AD' but it
                      doesn't do anything*/
+    display: unset;
+}
+
+/* When yielding this will mark the line that is narrowed. */
+.line-in-progress {
+    background: yellow;
+    /* mix-blend-mode: darken; */
 }
