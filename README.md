@@ -16,6 +16,7 @@ they most likely won't work form the [GitHub Repository Homepage](https://github
  * [Calibrate CSS](./explorations/calibrate/)
  * [Real World Absolute Length Units Evaluation](./explorations/techniques/absolute_units_evaluation)
  * [SNAFU: Optical Sizes Browser Check](./explorations/techniques/opsz-browser-check.html)
+ * [Auto Optical Sizes Browser Check](./explorations/techniques/opsz-auto-visualization.html)
 
 ## Status Reports
 
