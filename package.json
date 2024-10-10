@@ -1,0 +1,20 @@
+{
+  "name": "varla-varfo",
+  "version": "0.0.1",
+  "description": "variable typography",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lasse Fister <commander@graphicore.de>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@eslint/js": "^9.12.0",
+    "eslint": "^9.12.0",
+    "globals": "^15.11.0"
+  }
+}
