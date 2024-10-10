@@ -191,6 +191,8 @@ function applyWikiPage({document}, {subDomain, data}) {
         // TODO: changing the "dir" attribute and changing the layout
         // to rtl direction is not supported yet. However, we don't have
         // fonts for those cases yet as well.
+
+        // FIXME: the newly fetched content should rather be spared by this.
         for(let elem of document.querySelectorAll(
                 // Some elements have a different language as their content
                 // and hence set lang, e.g. a word in an <em> in Greek also,
@@ -200,7 +202,7 @@ function applyWikiPage({document}, {subDomain, data}) {
             elem.setAttribute('lang', fetchedLang);
         }
     }
-    return true;
+    return {contentLanguage: fetchedLang};
 }
 
 const ARTICLE_URL_TEMPLATE = `
@@ -294,11 +296,11 @@ class WikipediaArticleURLWidget {
         .then(
             fetched=> {
                 // success
-                applyWikiPage(window, fetched);
+                const {contentLanguage} = applyWikiPage(window, fetched);
                 // -> set this._input value!
                 this._input.value = `https://${fetched.subDomain}.wikipedia.org/wiki/${fetched.page}`;
                 this.setLoadingStatus(null);
-                this._updateAfterChangedContent();
+                this._updateAfterChangedContent(contentLanguage);
             },
             err=>this.setLoadingStatus(`[${err.name}] ${err.message}`)
         );
