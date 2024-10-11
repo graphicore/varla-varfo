@@ -332,3 +332,7 @@ label.portal_augmentation-amplify_grade::after {
     display: none;
 }
 
+
+.portal_augmentation-type_spec-change-info{
+    padding-left: 1.3em
+}
